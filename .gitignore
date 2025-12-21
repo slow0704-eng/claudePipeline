@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# Claude Code
+.claude/
+
 # Sensitive files
 *.txt
 cookies*.txt
@@ -36,3 +39,4 @@ server.error.log
 # OS
 .DS_Store
 Thumbs.db
+nul
