@@ -1,7 +1,8 @@
 # Railway 배포 가이드
 
 ## 준비 완료 사항
-- ✅ PostgreSQL 드라이버 추가
+- ✅ MySQL 드라이버 설정 (로컬과 동일한 환경)
+- ✅ PostgreSQL 드라이버 추가 (선택사항)
 - ✅ Production 프로파일 설정 (application-prod.properties)
 - ✅ Procfile 생성
 - ✅ nixpacks.toml 설정
@@ -19,17 +20,17 @@
    - "Deploy from GitHub repo" 선택
    - `slow0704-eng/claudePipeline` 저장소 선택
 
-3. **PostgreSQL 데이터베이스 추가**
+3. **MySQL 데이터베이스 추가**
    - 프로젝트 대시보드에서 "+ New" 클릭
-   - "Database" → "Add PostgreSQL" 선택
-   - 자동으로 DATABASE_URL 환경 변수가 설정됩니다
+   - "Database" → "Add MySQL" 선택
+   - 자동으로 MYSQL_URL 환경 변수가 설정됩니다
 
 4. **환경 변수 설정**
    Railway 대시보드의 Variables 탭에서 다음 설정:
    ```
    SPRING_PROFILES_ACTIVE=prod
    ```
-   (DATABASE_URL과 PORT는 Railway가 자동으로 설정)
+   (MYSQL_URL과 PORT는 Railway가 자동으로 설정)
 
 5. **배포**
    - GitHub에 push하면 자동으로 배포됩니다
@@ -52,10 +53,10 @@
    railway init
    ```
 
-4. **PostgreSQL 추가**
+4. **MySQL 추가**
    ```bash
    railway add
-   # PostgreSQL 선택
+   # MySQL 선택
    ```
 
 5. **환경 변수 설정**
@@ -87,7 +88,8 @@
 - **빌드 시간**: 첫 배포 시 Maven 의존성 다운로드로 5-10분 소요
 - **메모리**: 무료 플랜은 512MB RAM 제한 있음
 - **파일 업로드**: 업로드된 파일은 재배포 시 삭제됨 (S3 등 외부 스토리지 사용 권장)
-- **데이터베이스**: 무료 플랜은 PostgreSQL 5GB 제한
+- **데이터베이스**: 무료 플랜은 MySQL 1GB 제한 (로컬과 동일한 MySQL 사용으로 환경 일치)
+- **환경 일치**: 로컬(MySQL)과 프로덕션(MySQL) 환경이 동일하여 예상치 못한 SQL 문법 차이 없음
 
 ## 트러블슈팅
 
@@ -98,8 +100,9 @@
 ```
 
 ### 데이터베이스 연결 실패 시
-- Railway 대시보드에서 DATABASE_URL 환경 변수 확인
-- PostgreSQL 플러그인이 제대로 연결되었는지 확인
+- Railway 대시보드에서 MYSQL_URL 환경 변수 확인
+- MySQL 플러그인이 제대로 연결되었는지 확인
+- Variables 탭에서 MYSQL_URL이 `mysql://` 형식인지 확인
 
 ### 메모리 부족 시
 - nixpacks.toml에서 JAVA_OPTS 조정:
