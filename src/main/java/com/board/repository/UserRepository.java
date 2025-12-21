@@ -1,0 +1,31 @@
+package com.board.repository;
+
+import com.board.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findByUsername(String username);
+
+    Optional<User> findByEmail(String email);
+
+    Optional<User> findByEmailAndName(String email, String name);
+
+    Optional<User> findByUsernameAndEmail(String username, String email);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByNickname(String nickname);
+
+    boolean existsByEmail(String email);
+
+    // 통계용 쿼리 메서드
+    long countByCreatedAtAfter(LocalDateTime dateTime);
+
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+}

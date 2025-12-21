@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시판</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-new {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .notification-btn {
+            position: relative;
+            background-color: #fff;
+            color: #333;
+            border: 2px solid #ddd;
+            cursor: pointer;
+        }
+        .notification-btn:hover {
+            background-color: #f8f9fa;
+            border-color: #007bff;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            text-align: center;
+        }
+        /* Notification Dropdown */
+        .notification-container {
+            position: relative;
+            display: inline-block;
+        }
+        .notification-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 380px;
+            max-height: 500px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+        .notification-dropdown.show {
+            display: block;
+            animation: dropdownSlideIn 0.3s ease;
+        }
+        @keyframes dropdownSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .notification-dropdown-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .notification-dropdown-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+        .notification-dropdown-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .notification-dropdown-actions button {
+            padding: 4px 10px;
+            font-size: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .notification-dropdown-actions button:hover {
+            background-color: #0056b3;
+        }
+        .notification-dropdown-actions button.btn-outline {
+            background-color: white;
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+        .notification-dropdown-actions button.btn-outline:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-dropdown-content {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .notification-dropdown-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .notification-dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-dropdown-item.unread {
+            background-color: #e7f3ff;
+        }
+        .notification-dropdown-item:last-child {
+            border-bottom: none;
+        }
+        .notification-item-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .icon-comment {
+            background-color: #e3f2fd;
+            color: #2196f3;
+        }
+        .icon-reply {
+            background-color: #f3e5f5;
+            color: #9c27b0;
+        }
+        .icon-like {
+            background-color: #ffebee;
+            color: #f44336;
+        }
+        .notification-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .notification-item-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        .notification-item-text {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .notification-item-time {
+            font-size: 11px;
+            color: #999;
+        }
+        .notification-dropdown-footer {
+            padding: 12px 20px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            background-color: #f8f9fa;
+        }
+        .notification-dropdown-footer a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            display: block;
+            padding: 5px;
+            transition: color 0.3s;
+        }
+        .notification-dropdown-footer a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        .notification-dropdown-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+        }
+        .notification-dropdown-empty i {
+            font-size: 40px;
+            color: #ddd;
+            margin-bottom: 10px;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .toolbar-left {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .toolbar select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .toolbar label {
+            font-weight: 600;
+            color: #333;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #007bff;
+            background-color: white;
+            transition: all 0.3s;
+        }
+        .pagination a:hover {
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+        }
+        .pagination .current {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            font-weight: bold;
+        }
+        .pagination .disabled {
+            color: #ccc;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        #scrollToTop {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        #scrollToTop:hover {
+            background-color: #0056b3;
+            transform: translateY(-5px);
+        }
+        #scrollToTop.show {
+            display: block;
+        }
+        .search-container {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .search-btn {
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .search-btn:hover {
+            background-color: #0056b3;
+        }
+        .search-suggestions {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .search-suggestions.show {
+            display: block;
+        }
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+        .popular-keywords {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .popular-keywords span {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+        }
+        .keyword-tag {
+            display: inline-block;
+            padding: 5px 12px;
+            background-color: white;
+            color: #007bff;
+            border: 1px solid #007bff;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .keyword-tag:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        .search-wrapper {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <h1 style="margin: 0;">게시판</h1>
+            <div class="nav-links">
+                <a sec:authorize="hasRole('ADMIN')" href="/admin" class="btn" style="background-color: #e74c3c;">⚙️ 관리자</a>
+
+                <!-- Notification Dropdown -->
+                <div sec:authorize="isAuthenticated()" class="notification-container">
+                    <button class="btn notification-btn" onclick="toggleNotificationDropdown(event)">
+                        🔔 알림
+                        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+                    </button>
+
+                    <div id="notificationDropdown" class="notification-dropdown">
+                        <div class="notification-dropdown-header">
+                            <h3>알림</h3>
+                            <div class="notification-dropdown-actions">
+                                <button class="btn-outline" onclick="markAllAsReadDropdown(event)">모두 읽음</button>
+                            </div>
+                        </div>
+                        <div class="notification-dropdown-content" id="notificationDropdownContent">
+                            <div class="notification-dropdown-empty">
+                                <div>🔔</div>
+                                <div>알림을 불러오는 중...</div>
+                            </div>
+                        </div>
+                        <div class="notification-dropdown-footer">
+                            <a href="/notifications">모든 알림 보기</a>
+                        </div>
+                    </div>
+                </div>
+
+                <a sec:authorize="isAuthenticated()" href="/mypage" class="btn btn-secondary">마이페이지</a>
+                <a sec:authorize="isAnonymous()" href="/auth/login" class="btn btn-secondary">로그인</a>
+                <a sec:authorize="isAnonymous()" href="/auth/register" class="btn btn-secondary">회원가입</a>
+                <a sec:authorize="isAuthenticated()" href="/auth/logout" class="btn btn-secondary">로그아웃</a>
+            </div>
+        </div>
+
+        <a sec:authorize="hasAnyRole('MEMBER', 'ADMIN')" href="/board/new" class="btn btn-new">새 글 작성</a>
+
+        <!-- Search Container -->
+        <div class="search-container">
+            <form class="search-form" action="/search" method="get">
+                <div class="search-wrapper" style="flex: 1;">
+                    <input type="text"
+                           name="q"
+                           id="searchInput"
+                           class="search-input"
+                           placeholder="제목, 내용, 작성자로 검색..."
+                           autocomplete="off"
+                           onkeyup="handleSearchInput(event)">
+                    <div id="searchSuggestions" class="search-suggestions"></div>
+                </div>
+                <button type="submit" class="search-btn">🔍 검색</button>
+            </form>
+            <div class="popular-keywords">
+                <span>인기 검색어:</span>
+                <div id="popularKeywords"></div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div>
+                    <label for="sortSelect">정렬:</label>
+                    <select id="sortSelect" onchange="changeSort()">
+                        <option value="createdAt,desc" th:selected="${sortBy == 'createdAt' && sortDir == 'desc'}">최신순</option>
+                        <option value="likeCount,desc" th:selected="${sortBy == 'likeCount' && sortDir == 'desc'}">인기순 (좋아요)</option>
+                        <option value="viewCount,desc" th:selected="${sortBy == 'viewCount' && sortDir == 'desc'}">조회수순</option>
+                        <option value="commentCount,desc" th:selected="${sortBy == 'commentCount' && sortDir == 'desc'}">댓글 많은 순</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="sizeSelect">페이지 크기:</label>
+                    <select id="sizeSelect" onchange="changePageSize()">
+                        <option value="10" th:selected="${pageSize == 10}">10개씩</option>
+                        <option value="20" th:selected="${pageSize == 20}">20개씩</option>
+                        <option value="50" th:selected="${pageSize == 50}">50개씩</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <span th:text="'전체 ' + ${boardPage.totalElements} + '개'">전체 0개</span>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 80px;">번호</th>
+                    <th>제목</th>
+                    <th style="width: 150px;">작성자</th>
+                    <th style="width: 100px;">조회수</th>
+                    <th style="width: 180px;">작성일</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${boardPage.totalElements == 0}">
+                    <td colspan="5" class="no-data">작성된 게시글이 없습니다.</td>
+                </tr>
+                <tr th:each="board : ${boardPage.content}">
+                    <td class="text-center" th:text="${board.id}">1</td>
+                    <td><a th:href="@{/board/{id}(id=${board.id})}" th:text="${board.title}">제목</a></td>
+                    <td>
+                        <a th:if="${board.userId != null}" th:href="@{/user/{id}(id=${board.userId})}"
+                           style="color: #007bff; text-decoration: none;"
+                           th:text="${board.nickname != null ? board.nickname : board.author}">작성자</a>
+                        <span th:if="${board.userId == null}" th:text="${board.nickname != null ? board.nickname : board.author}">작성자</span>
+                    </td>
+                    <td class="text-center" th:text="${board.viewCount}">0</td>
+                    <td th:text="${#temporals.format(board.createdAt, 'yyyy-MM-dd HH:mm')}">2023-01-01</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pagination" th:if="${boardPage.totalPages > 0}">
+            <!-- Previous button -->
+            <a th:if="${currentPage > 0}"
+               th:href="@{/board(page=${currentPage - 1}, size=${pageSize}, sortBy=${sortBy}, sortDir=${sortDir})}"
+               th:classappend="${currentPage == 0} ? 'disabled' : ''">이전</a>
+            <span th:if="${currentPage == 0}" class="disabled">이전</span>
+
+            <!-- Page numbers -->
+            <th:block th:with="startPage=${currentPage < 2 ? 0 : currentPage - 2},
+                               endPage=${currentPage + 2 >= boardPage.totalPages ? boardPage.totalPages - 1 : currentPage + 2}">
+                <a th:if="${startPage > 0}" th:href="@{/board(page=0, size=${pageSize}, sortBy=${sortBy}, sortDir=${sortDir})}">1</a>
+                <span th:if="${startPage > 1}">...</span>
+
+                <th:block th:each="i : ${#numbers.sequence(startPage, endPage)}">
+                    <span th:if="${i == currentPage}" class="current" th:text="${i + 1}">1</span>
+                    <a th:if="${i != currentPage}"
+                       th:href="@{/board(page=${i}, size=${pageSize}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                       th:text="${i + 1}">1</a>
+                </th:block>
+
+                <span th:if="${endPage < boardPage.totalPages - 2}">...</span>
+                <a th:if="${endPage < boardPage.totalPages - 1}"
+                   th:href="@{/board(page=${boardPage.totalPages - 1}, size=${pageSize}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                   th:text="${boardPage.totalPages}">10</a>
+            </th:block>
+
+            <!-- Next button -->
+            <a th:if="${currentPage < boardPage.totalPages - 1}"
+               th:href="@{/board(page=${currentPage + 1}, size=${pageSize}, sortBy=${sortBy}, sortDir=${sortDir})}"
+               th:classappend="${currentPage == boardPage.totalPages - 1} ? 'disabled' : ''">다음</a>
+            <span th:if="${currentPage == boardPage.totalPages - 1}" class="disabled">다음</span>
+        </div>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTop" title="맨 위로">↑</button>
+
+    <script>
+        function changeSort() {
+            const sortValue = document.getElementById('sortSelect').value;
+            const [sortBy, sortDir] = sortValue.split(',');
+            const currentSize = [[${pageSize}]];
+            window.location.href = `/board?page=0&size=${currentSize}&sortBy=${sortBy}&sortDir=${sortDir}`;
+        }
+
+        function changePageSize() {
+            const newSize = document.getElementById('sizeSelect').value;
+            const currentSortBy = '[[${sortBy}]]';
+            const currentSortDir = '[[${sortDir}]]';
+            window.location.href = `/board?page=0&size=${newSize}&sortBy=${currentSortBy}&sortDir=${currentSortDir}`;
+        }
+
+        // Scroll to Top functionality
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        // Show/hide button based on scroll position
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.classList.add('show');
+            } else {
+                scrollToTopBtn.classList.remove('show');
+            }
+        });
+
+        // Scroll to top when button is clicked
+        scrollToTopBtn.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Load notification count
+        function loadNotificationCount() {
+            fetch('/api/notifications/count')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notificationBadge');
+                    if (badge && data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'block';
+                    }
+                })
+                .catch(error => console.error('Error loading notification count:', error));
+        }
+
+        // Load notification count on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotificationCount();
+            // Refresh count every 30 seconds
+            setInterval(loadNotificationCount, 30000);
+
+            // Load popular keywords
+            loadPopularKeywords();
+        });
+
+        // Notification Dropdown Functions
+        let notificationDropdownOpen = false;
+
+        function toggleNotificationDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('notificationDropdown');
+
+            if (!notificationDropdownOpen) {
+                dropdown.classList.add('show');
+                notificationDropdownOpen = true;
+                loadNotificationDropdown();
+            } else {
+                dropdown.classList.remove('show');
+                notificationDropdownOpen = false;
+            }
+        }
+
+        function loadNotificationDropdown() {
+            const content = document.getElementById('notificationDropdownContent');
+
+            fetch('/api/notifications/recent?limit=10')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.notifications && data.notifications.length > 0) {
+                        content.innerHTML = data.notifications.map(notification => {
+                            const iconClass = notification.type === 'COMMENT' ? 'icon-comment' :
+                                            (notification.type === 'REPLY' ? 'icon-reply' : 'icon-like');
+                            const icon = notification.type === 'COMMENT' ? '💬' :
+                                       (notification.type === 'REPLY' ? '↩️' : '❤️');
+                            const unreadClass = !notification.isRead ? 'unread' : '';
+
+                            return `
+                                <div class="notification-dropdown-item ${unreadClass}"
+                                     onclick="handleNotificationDropdownClick(${notification.id}, '${notification.referenceType}', ${notification.referenceId})">
+                                    <div class="notification-item-icon ${iconClass}">
+                                        ${icon}
+                                    </div>
+                                    <div class="notification-item-content">
+                                        <div class="notification-item-title">${escapeHtml(notification.title)}</div>
+                                        <div class="notification-item-text">${escapeHtml(notification.content)}</div>
+                                        <div class="notification-item-time">${formatTimeAgo(notification.createdAt)}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        content.innerHTML = `
+                            <div class="notification-dropdown-empty">
+                                <div>🔔</div>
+                                <div>새로운 알림이 없습니다</div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                    content.innerHTML = `
+                        <div class="notification-dropdown-empty">
+                            <div>⚠️</div>
+                            <div>알림을 불러오는데 실패했습니다</div>
+                        </div>
+                    `;
+                });
+        }
+
+        function handleNotificationDropdownClick(id, referenceType, referenceId) {
+            // Mark as read first
+            fetch(`/api/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).then(() => {
+                // Close dropdown
+                document.getElementById('notificationDropdown').classList.remove('show');
+                notificationDropdownOpen = false;
+
+                // Navigate to the target
+                if (referenceType === 'POST') {
+                    window.location.href = `/board/${referenceId}`;
+                } else if (referenceType === 'COMMENT') {
+                    // Reload to show updated notification count
+                    window.location.reload();
+                }
+            });
+        }
+
+        function markAllAsReadDropdown(event) {
+            event.stopPropagation();
+
+            fetch('/api/notifications/read-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).then(() => {
+                // Reload notifications
+                loadNotificationDropdown();
+                loadNotificationCount();
+            });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const container = document.querySelector('.notification-container');
+
+            if (dropdown && container && !container.contains(event.target)) {
+                dropdown.classList.remove('show');
+                notificationDropdownOpen = false;
+            }
+        });
+
+        // Prevent dropdown from closing when clicking inside
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) {
+                dropdown.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+            }
+        });
+
+        // Helper function to format time ago
+        function formatTimeAgo(dateString) {
+            const now = new Date();
+            const past = new Date(dateString);
+            const diffMs = now - past;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return '방금 전';
+            if (diffMins < 60) return `${diffMins}분 전`;
+            if (diffHours < 24) return `${diffHours}시간 전`;
+            if (diffDays < 7) return `${diffDays}일 전`;
+
+            // Format as date
+            const year = past.getFullYear();
+            const month = String(past.getMonth() + 1).padStart(2, '0');
+            const day = String(past.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Search functionality
+        let searchTimeout;
+        function handleSearchInput(event) {
+            const keyword = event.target.value.trim();
+
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Hide suggestions if input is empty or too short
+            if (keyword.length < 2) {
+                document.getElementById('searchSuggestions').classList.remove('show');
+                return;
+            }
+
+            // Search on Enter key
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.querySelector('.search-form').submit();
+                return;
+            }
+
+            // Debounce the API call
+            searchTimeout = setTimeout(() => {
+                loadSearchSuggestions(keyword);
+            }, 300);
+        }
+
+        function loadSearchSuggestions(keyword) {
+            fetch(`/api/search/suggestions?q=${encodeURIComponent(keyword)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const suggestionsDiv = document.getElementById('searchSuggestions');
+                    suggestionsDiv.innerHTML = '';
+
+                    if (data.suggestions && data.suggestions.length > 0) {
+                        data.suggestions.forEach(suggestion => {
+                            const item = document.createElement('div');
+                            item.className = 'suggestion-item';
+                            item.textContent = suggestion;
+                            item.onclick = () => {
+                                document.getElementById('searchInput').value = suggestion;
+                                suggestionsDiv.classList.remove('show');
+                                document.querySelector('.search-form').submit();
+                            };
+                            suggestionsDiv.appendChild(item);
+                        });
+                        suggestionsDiv.classList.add('show');
+                    } else {
+                        suggestionsDiv.classList.remove('show');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading suggestions:', error);
+                });
+        }
+
+        function loadPopularKeywords() {
+            fetch('/api/search/popular?limit=5')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('popularKeywords');
+                    container.innerHTML = '';
+
+                    if (data.keywords && data.keywords.length > 0) {
+                        data.keywords.forEach(keyword => {
+                            const tag = document.createElement('span');
+                            tag.className = 'keyword-tag';
+                            tag.textContent = keyword;
+                            tag.onclick = () => {
+                                document.getElementById('searchInput').value = keyword;
+                                document.querySelector('.search-form').submit();
+                            };
+                            container.appendChild(tag);
+                        });
+                    } else {
+                        container.innerHTML = '<span style="color: #999; font-size: 12px;">검색 기록이 없습니다</span>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading popular keywords:', error);
+                    document.getElementById('popularKeywords').innerHTML = '<span style="color: #999; font-size: 12px;">로딩 실패</span>';
+                });
+        }
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(event) {
+            const searchWrapper = document.querySelector('.search-wrapper');
+            const suggestions = document.getElementById('searchSuggestions');
+            if (!searchWrapper.contains(event.target)) {
+                suggestions.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

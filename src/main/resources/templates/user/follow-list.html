@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${profileUser != null and profileUser.nickname != null ? profileUser.nickname + '님의 ' + (listType == 'followers' ? '팔로워' : '팔로잉') : '팔로우 목록'}">팔로우 목록</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .nav-bar {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #5568d3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .header {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #666;
+        }
+        .user-list {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .user-item {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+        .user-item:hover {
+            background-color: #f8f9fa;
+        }
+        .user-item:last-child {
+            border-bottom: none;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            font-weight: bold;
+        }
+        .user-details {
+            flex: 1;
+        }
+        .user-nickname {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        .user-username {
+            font-size: 14px;
+            color: #666;
+        }
+        .user-link {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+        .user-link:hover .user-nickname {
+            color: #667eea;
+        }
+        .no-users {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <h2 style="margin: 0; color: #667eea;"
+                th:text="${listType == 'followers'} ? '팔로워 목록' : '팔로잉 목록'">팔로우 목록</h2>
+            <div class="nav-links">
+                <a sec:authorize="hasRole('ADMIN')" href="/admin" class="btn" style="background-color: #e74c3c;">⚙️ 관리자</a>
+                <a th:href="@{/user/{id}(id=${profileUser.id})}" class="btn">프로필로 돌아가기</a>
+                <a href="/board" class="btn btn-secondary">게시판</a>
+            </div>
+        </div>
+
+        <div class="header">
+            <h1>
+                <span th:if="${profileUser != null and profileUser.nickname != null}"
+                      th:text="${profileUser.nickname} + '님의 ' + (listType == 'followers' ? '팔로워' : '팔로잉')">팔로우 목록</span>
+                <span th:if="${profileUser == null or profileUser.nickname == null}">팔로우 목록</span>
+            </h1>
+            <p th:text="'총 ' + ${users.size()} + '명'">0명</p>
+        </div>
+
+        <div class="user-list" th:if="${users != null and !users.isEmpty()}">
+            <div class="user-item" th:each="user : ${users}">
+                <a th:href="@{/user/{id}(id=${user.id})}" class="user-link">
+                    <div class="user-avatar">
+                        <span th:if="${user.nickname != null and !user.nickname.isEmpty()}"
+                              th:text="${user.nickname.substring(0, 1)}">U</span>
+                        <span th:if="${user.nickname == null or user.nickname.isEmpty()}">U</span>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-nickname">
+                            <span th:text="${user.nickname}">닉네임</span>
+                        </div>
+                        <div class="user-username">
+                            <span th:text="'@' + ${user.username}">@username</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="no-users" th:if="${users == null or users.isEmpty()}">
+            <p th:text="${listType == 'followers'} ? '팔로워가 없습니다.' : '팔로잉이 없습니다.'">목록이 비어있습니다.</p>
+        </div>
+    </div>
+</body>
+</html>

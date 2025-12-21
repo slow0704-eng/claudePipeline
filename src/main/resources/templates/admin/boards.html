@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>게시글 관리</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+        }
+        .sidebar h2 {
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+        }
+        .sidebar-menu {
+            list-style: none;
+        }
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: #34495e;
+        }
+        .main-content {
+            flex: 1;
+            padding: 30px;
+        }
+        .header {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+        }
+        .content-section {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .btn {
+            padding: 6px 12px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="sidebar">
+            <h2>🛠️ 관리자 콘솔</h2>
+            <ul class="sidebar-menu">
+                <li><a href="/admin">📊 대시보드</a></li>
+                <li><a href="/admin/users">👥 사용자 관리</a></li>
+                <li><a href="/admin/boards" class="active">📝 게시글 관리</a></li>
+                <li><a href="/board">🏠 게시판으로</a></li>
+                <li><a href="/mypage">👤 마이페이지</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>게시글 관리</h1>
+            </div>
+
+            <div class="content-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>제목</th>
+                            <th>작성자</th>
+                            <th>조회수</th>
+                            <th>좋아요</th>
+                            <th>댓글</th>
+                            <th>작성일</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${boards.isEmpty()}">
+                            <td colspan="8" style="text-align: center; padding: 30px; color: #999;">
+                                게시글이 없습니다.
+                            </td>
+                        </tr>
+                        <tr th:each="board : ${boards}">
+                            <td th:text="${board.id}">1</td>
+                            <td>
+                                <a th:href="@{/board/{id}(id=${board.id})}"
+                                   style="color: #3498db; text-decoration: none;"
+                                   th:text="${board.title}">제목</a>
+                            </td>
+                            <td>
+                                <a th:if="${board.userId != null}"
+                                   th:href="@{/user/{id}(id=${board.userId})}"
+                                   style="color: #3498db; text-decoration: none;"
+                                   th:text="${board.nickname != null ? board.nickname : board.author}">작성자</a>
+                                <span th:if="${board.userId == null}"
+                                      th:text="${board.nickname != null ? board.nickname : board.author}">작성자</span>
+                            </td>
+                            <td th:text="${board.viewCount}">0</td>
+                            <td th:text="${board.likeCount}">0</td>
+                            <td th:text="${board.commentCount}">0</td>
+                            <td th:text="${#temporals.format(board.createdAt, 'yyyy-MM-dd HH:mm')}">2023-01-01</td>
+                            <td>
+                                <a th:href="@{/board/{id}(id=${board.id})}" class="btn">보기</a>
+                                <button class="btn btn-danger"
+                                        th:onclick="'deleteBoard(' + ${board.id} + ')'">
+                                    삭제
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        function deleteBoard(boardId) {
+            if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/admin/boards/${boardId}`, {
+                method: 'DELETE',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+    </script>
+</body>
+</html>

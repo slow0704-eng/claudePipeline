@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메시지함</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { color: #333; }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #545b62; }
+        .stats {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+        }
+        .stat-item {
+            flex: 1;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .conversation-list {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .conversation-item {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .conversation-item:hover { background-color: #f8f9fa; }
+        .conversation-item:last-child { border-bottom: none; }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .conversation-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .partner-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+        .conversation-time {
+            font-size: 12px;
+            color: #999;
+        }
+        .last-message {
+            color: #666;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .last-message.from-me {
+            color: #999;
+        }
+        .unread-badge {
+            background: #dc3545;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 20px;
+            text-align: center;
+        }
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: #999;
+        }
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>메시지함</h1>
+            <div class="nav-links">
+                <a href="/mypage" class="btn btn-secondary">← 마이페이지</a>
+                <a href="/board" class="btn btn-primary">게시판</a>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" th:text="${unreadCount}">0</div>
+                <div class="stat-label">읽지 않은 메시지</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" th:text="${conversations.size()}">0</div>
+                <div class="stat-label">대화 목록</div>
+            </div>
+        </div>
+
+        <div class="conversation-list">
+            <div th:if="${conversations.isEmpty()}" class="empty-state">
+                <div class="empty-state-icon">💬</div>
+                <h3>메시지가 없습니다</h3>
+                <p style="margin-top: 10px;">아직 주고받은 메시지가 없습니다.</p>
+            </div>
+
+            <div class="conversation-item"
+                 th:each="conv : ${conversations}"
+                 th:onclick="'location.href=\'/messages/conversation/' + ${conv.partnerId} + '\''"
+                 th:classappend="${conv.unreadCount > 0} ? 'has-unread' : ''">
+
+                <div class="avatar" th:text="${#strings.substring(conv.partnerNickname, 0, 1)}">U</div>
+
+                <div class="conversation-content">
+                    <div class="conversation-header">
+                        <span class="partner-name" th:text="${conv.partnerNickname}">사용자</span>
+                        <span class="conversation-time"
+                              th:text="${#temporals.format(conv.lastMessageTime, 'yyyy-MM-dd HH:mm')}">시간</span>
+                    </div>
+                    <div class="last-message"
+                         th:classappend="${conv.isLastMessageFromMe} ? 'from-me' : ''"
+                         th:text="${conv.isLastMessageFromMe ? '나: ' + conv.lastMessage : conv.lastMessage}">
+                        마지막 메시지
+                    </div>
+                </div>
+
+                <div class="unread-badge"
+                     th:if="${conv.unreadCount > 0}"
+                     th:text="${conv.unreadCount}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 주기적으로 읽지 않은 메시지 개수 업데이트
+        function updateUnreadCount() {
+            fetch('/messages/unread-count')
+                .then(response => response.json())
+                .then(data => {
+                    const currentCount = parseInt(document.querySelector('.stat-number').textContent);
+                    if (data.unreadCount !== currentCount) {
+                        location.reload(); // 새 메시지가 있으면 페이지 리로드
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // 30초마다 확인
+        setInterval(updateUnreadCount, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title th:text="'검색 결과: ' + ${keyword}">검색</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title i {
+            color: #667eea;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        /* Enhanced Search Box */
+        .search-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            position: relative;
+        }
+
+        .search-form {
+            position: relative;
+        }
+
+        .search-input-wrapper {
+            display: flex;
+            gap: 15px;
+            position: relative;
+            align-items: stretch;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 25px 30px 25px 65px;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 20px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: #bbb;
+            font-weight: 400;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-size: 24px;
+        }
+
+        .search-button {
+            padding: 25px 45px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 700;
+            transition: all 0.3s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .search-button i {
+            font-size: 20px;
+        }
+
+        /* Advanced Search Toggle */
+        .advanced-toggle {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .toggle-btn i {
+            transition: transform 0.3s;
+        }
+
+        .toggle-btn.active i {
+            transform: rotate(180deg);
+        }
+
+        /* Advanced Filters */
+        .advanced-filters {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid #f0f0f0;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .advanced-filters.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .filter-section {
+            margin-bottom: 25px;
+        }
+
+        .filter-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-section-title i {
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-label i {
+            font-size: 13px;
+            color: #667eea;
+        }
+
+        .filter-input,
+        .filter-select {
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .filter-input:focus,
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 45px;
+        }
+
+        .range-inputs {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .range-separator {
+            color: #999;
+            font-weight: 600;
+        }
+
+        /* Quick Filters */
+        .quick-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .quick-filter-tag {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-filter-tag:hover,
+        .quick-filter-tag.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .quick-filter-tag i {
+            font-size: 13px;
+        }
+
+        /* Filter Actions */
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+            justify-content: flex-end;
+        }
+
+        .btn-apply {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 35px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-apply:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-reset {
+            background: white;
+            color: #666;
+            padding: 14px 35px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-reset:hover {
+            background: #f8f9fa;
+            border-color: #ccc;
+        }
+
+        /* Active Filters Display */
+        .active-filters {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .active-filters.show {
+            display: block;
+        }
+
+        .active-filters-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .active-filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .active-filter-tag {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .active-filter-tag i {
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .active-filter-tag i:hover {
+            color: #a71d2a;
+        }
+
+        /* Autocomplete Dropdown */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 160px;
+            background: white;
+            border: 3px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            max-height: 350px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            margin-top: -3px;
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-section {
+            padding: 18px 25px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .autocomplete-section:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .clear-history {
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .clear-history:hover {
+            text-decoration: underline;
+        }
+
+        .autocomplete-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 15px;
+        }
+
+        .autocomplete-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .autocomplete-item i {
+            color: #667eea;
+            font-size: 15px;
+        }
+
+        /* Keywords Section */
+        .keywords-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .keywords-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .keyword-group h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .keyword-group h3 i {
+            color: #667eea;
+            font-size: 20px;
+        }
+
+        .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .keyword-tag {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f0 100%);
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .keyword-tag:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Search Info */
+        .search-info {
+            background: white;
+            border-radius: 15px;
+            padding: 25px 35px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-keyword {
+            font-size: 22px;
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .result-count {
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .result-count strong {
+            color: #667eea;
+            font-size: 20px;
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 35px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            padding: 30px;
+            border-bottom: 2px solid #f0f0f0;
+            transition: all 0.3s;
+            border-radius: 12px;
+        }
+
+        .result-item:hover {
+            background: linear-gradient(to right, #f8f9fa 0%, transparent 100%);
+            transform: translateX(8px);
+            border-left: 4px solid #667eea;
+            padding-left: 26px;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .result-title a {
+            color: #333;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .result-title a:hover {
+            color: #667eea;
+        }
+
+        .result-content {
+            color: #666;
+            margin-bottom: 18px;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 25px;
+            font-size: 14px;
+            color: #999;
+            flex-wrap: wrap;
+        }
+
+        .result-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .result-meta-item i {
+            font-size: 13px;
+            color: #667eea;
+        }
+
+        .result-meta-item a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .result-meta-item a:hover {
+            text-decoration: underline;
+        }
+
+        mark {
+            background: linear-gradient(120deg, #fff3cd 0%, #fff3cd 100%);
+            background-repeat: no-repeat;
+            background-size: 100% 50%;
+            background-position: 0 85%;
+            padding: 2px 0;
+            font-weight: 700;
+            color: inherit;
+        }
+
+        /* No Results */
+        .no-results {
+            text-align: center;
+            padding: 100px 20px;
+        }
+
+        .no-results i {
+            font-size: 100px;
+            color: #e0e0e0;
+            margin-bottom: 25px;
+        }
+
+        .no-results h3 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .no-results p {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 35px;
+        }
+
+        .pagination a, .pagination span {
+            padding: 12px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #667eea;
+            background: white;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .pagination a:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .pagination .current {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .pagination .disabled {
+            color: #ccc;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+
+        .loading i {
+            font-size: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 10px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .search-box {
+                padding: 25px;
+            }
+
+            .search-input-wrapper {
+                flex-direction: column;
+            }
+
+            .search-input {
+                font-size: 16px;
+                padding: 20px 20px 20px 55px;
+            }
+
+            .search-button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .autocomplete-dropdown {
+                right: 0;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .keywords-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .result-item {
+                padding: 20px;
+            }
+
+            .result-item:hover {
+                transform: translateX(0);
+                padding-left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">
+                <i class="fas fa-search"></i>
+                <span>통합 검색</span>
+            </div>
+            <div class="header-actions">
+                <a sec:authorize="hasRole('ADMIN')" href="/admin" class="btn" style="background: #e74c3c; color: white;">
+                    <i class="fas fa-shield-alt"></i> 관리자
+                </a>
+                <a href="/board" class="btn btn-primary">
+                    <i class="fas fa-home"></i> 게시판
+                </a>
+                <a sec:authorize="isAuthenticated()" href="/mypage" class="btn btn-secondary">
+                    <i class="fas fa-user"></i> 마이페이지
+                </a>
+            </div>
+        </div>
+
+        <!-- Enhanced Search Box -->
+        <div class="search-box">
+            <form class="search-form" action="/search" method="get" id="searchForm">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text"
+                           id="searchInput"
+                           name="q"
+                           class="search-input"
+                           placeholder="무엇을 찾고 계신가요?"
+                           th:value="${keyword}"
+                           autocomplete="off"
+                           oninput="handleSearchInput()"
+                           onfocus="showAutocomplete()"
+                           autofocus>
+                    <button type="submit" class="search-button">
+                        <i class="fas fa-search"></i>
+                        <span>검색</span>
+                    </button>
+                </div>
+
+                <!-- Autocomplete Dropdown -->
+                <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
+
+                <!-- Advanced Search Toggle -->
+                <div class="advanced-toggle">
+                    <button type="button" class="toggle-btn" onclick="toggleAdvancedSearch()">
+                        <i class="fas fa-chevron-down"></i>
+                        <span>상세 검색 옵션</span>
+                    </button>
+                </div>
+
+                <!-- Advanced Filters -->
+                <div id="advancedFilters" class="advanced-filters">
+                    <!-- Basic Filters -->
+                    <div class="filter-section">
+                        <div class="filter-section-title">
+                            <i class="fas fa-sliders-h"></i>
+                            <span>기본 필터</span>
+                        </div>
+                        <div class="filter-grid">
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="fas fa-search"></i>
+                                    검색 범위
+                                </label>
+                                <select id="searchType" name="type" class="filter-select">
+                                    <option value="all" th:selected="${searchType == 'all'}">전체</option>
+                                    <option value="title" th:selected="${searchType == 'title'}">제목만</option>
+                                    <option value="content" th:selected="${searchType == 'content'}">내용만</option>
+                                    <option value="author" th:selected="${searchType == 'author'}">작성자만</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="fas fa-sort"></i>
+                                    정렬 기준
+                                </label>
+                                <select id="sortBy" name="sort" class="filter-select">
+                                    <option value="latest" th:selected="${sortBy == 'latest' || sortBy == null}">최신순</option>
+                                    <option value="views" th:selected="${sortBy == 'views'}">조회수 높은순</option>
+                                    <option value="likes" th:selected="${sortBy == 'likes'}">좋아요 많은순</option>
+                                    <option value="comments" th:selected="${sortBy == 'comments'}">댓글 많은순</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date Range Filter -->
+                    <div class="filter-section">
+                        <div class="filter-section-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>작성일 필터</span>
+                        </div>
+                        <div class="filter-grid">
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="fas fa-calendar-day"></i>
+                                    시작일
+                                </label>
+                                <input type="date" id="dateFrom" name="dateFrom" class="filter-input"
+                                       th:value="${dateFrom}">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="fas fa-calendar-check"></i>
+                                    종료일
+                                </label>
+                                <input type="date" id="dateTo" name="dateTo" class="filter-input"
+                                       th:value="${dateTo}">
+                            </div>
+                        </div>
+
+                        <!-- Quick Date Filters -->
+                        <div class="quick-filters">
+                            <button type="button" class="quick-filter-tag" onclick="setQuickDate('today')">
+                                <i class="fas fa-clock"></i>
+                                오늘
+                            </button>
+                            <button type="button" class="quick-filter-tag" onclick="setQuickDate('week')">
+                                <i class="fas fa-calendar-week"></i>
+                                최근 7일
+                            </button>
+                            <button type="button" class="quick-filter-tag" onclick="setQuickDate('month')">
+                                <i class="fas fa-calendar"></i>
+                                최근 30일
+                            </button>
+                            <button type="button" class="quick-filter-tag" onclick="setQuickDate('3months')">
+                                <i class="fas fa-calendar-alt"></i>
+                                최근 3개월
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Range Filters -->
+                    <div class="filter-section">
+                        <div class="filter-section-title">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>통계 필터</span>
+                        </div>
+                        <div class="filter-grid">
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="fas fa-eye"></i>
+                                    조회수 범위
+                                </label>
+                                <div class="range-inputs">
+                                    <input type="number" name="minViews" placeholder="최소" class="filter-input"
+                                           th:value="${minViews}" min="0">
+                                    <span class="range-separator">~</span>
+                                    <input type="number" name="maxViews" placeholder="최대" class="filter-input"
+                                           th:value="${maxViews}" min="0">
+                                </div>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="fas fa-heart"></i>
+                                    좋아요 범위
+                                </label>
+                                <div class="range-inputs">
+                                    <input type="number" name="minLikes" placeholder="최소" class="filter-input"
+                                           th:value="${minLikes}" min="0">
+                                    <span class="range-separator">~</span>
+                                    <input type="number" name="maxLikes" placeholder="최대" class="filter-input"
+                                           th:value="${maxLikes}" min="0">
+                                </div>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <i class="fas fa-comment"></i>
+                                    댓글수 범위
+                                </label>
+                                <div class="range-inputs">
+                                    <input type="number" name="minComments" placeholder="최소" class="filter-input"
+                                           th:value="${minComments}" min="0">
+                                    <span class="range-separator">~</span>
+                                    <input type="number" name="maxComments" placeholder="최대" class="filter-input"
+                                           th:value="${maxComments}" min="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Actions -->
+                    <div class="filter-actions">
+                        <button type="button" class="btn-reset" onclick="resetFilters()">
+                            <i class="fas fa-redo"></i> 필터 초기화
+                        </button>
+                        <button type="submit" class="btn-apply">
+                            <i class="fas fa-check"></i> 필터 적용
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Active Filters Display -->
+        <div id="activeFilters" class="active-filters">
+            <div class="active-filters-title">
+                <i class="fas fa-filter"></i> 적용된 필터
+            </div>
+            <div id="activeFilterTags" class="active-filter-tags"></div>
+        </div>
+
+        <!-- Popular & Recent Keywords -->
+        <div class="keywords-section" th:if="${keyword == null || keyword.isEmpty()}">
+            <div class="keywords-grid">
+                <div class="keyword-group">
+                    <h3><i class="fas fa-fire"></i> 인기 검색어</h3>
+                    <div id="popularKeywords" class="keyword-tags">
+                        <div class="loading"><i class="fas fa-spinner"></i></div>
+                    </div>
+                </div>
+                <div class="keyword-group" sec:authorize="isAuthenticated()">
+                    <h3><i class="fas fa-history"></i> 최근 검색어</h3>
+                    <div id="recentKeywords" class="keyword-tags">
+                        <div class="loading"><i class="fas fa-spinner"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Info -->
+        <div class="search-info" th:if="${keyword != null && !keyword.isEmpty()}">
+            <div>
+                <span class="search-keyword" th:text="'\"' + ${keyword} + '\"'">검색어</span>
+                <span class="result-count">에 대한 검색 결과 <strong th:text="${totalResults}">0</strong>개</span>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <div class="results-section" th:if="${searchResults != null && searchResults.getTotalElements() > 0}">
+            <div class="result-item" th:each="board : ${searchResults.content}">
+                <div class="result-title">
+                    <a th:href="@{/board/{id}(id=${board.id})}" th:text="${board.title}">제목</a>
+                </div>
+                <div class="result-content" th:text="${#strings.abbreviate(board.content, 200)}">내용...</div>
+                <div class="result-meta">
+                    <span class="result-meta-item">
+                        <i class="fas fa-user"></i>
+                        <a th:if="${board.userId != null}"
+                           th:href="@{/user/{id}(id=${board.userId})}"
+                           th:text="${board.nickname}">작성자</a>
+                        <span th:if="${board.userId == null}" th:text="${board.nickname}">작성자</span>
+                    </span>
+                    <span class="result-meta-item">
+                        <i class="fas fa-eye"></i>
+                        <span th:text="${board.viewCount}">0</span>
+                    </span>
+                    <span class="result-meta-item">
+                        <i class="fas fa-heart"></i>
+                        <span th:text="${board.likeCount}">0</span>
+                    </span>
+                    <span class="result-meta-item">
+                        <i class="fas fa-comment"></i>
+                        <span th:text="${board.commentCount}">0</span>
+                    </span>
+                    <span class="result-meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span th:text="${#temporals.format(board.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" th:if="${totalPages > 0}">
+                <a th:if="${currentPage > 0}"
+                   th:href="@{/search(q=${keyword}, type=${searchType}, sort=${sortBy}, page=${currentPage - 1})}"
+                   title="이전 페이지">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <span th:if="${currentPage == 0}" class="disabled">
+                    <i class="fas fa-chevron-left"></i>
+                </span>
+
+                <th:block th:with="startPage=${currentPage < 2 ? 0 : currentPage - 2},
+                                   endPage=${currentPage + 2 >= totalPages ? totalPages - 1 : currentPage + 2}">
+                    <a th:if="${startPage > 0}" th:href="@{/search(q=${keyword}, type=${searchType}, sort=${sortBy}, page=0)}">1</a>
+                    <span th:if="${startPage > 1}">...</span>
+
+                    <th:block th:each="i : ${#numbers.sequence(startPage, endPage)}">
+                        <span th:if="${i == currentPage}" class="current" th:text="${i + 1}">1</span>
+                        <a th:if="${i != currentPage}"
+                           th:href="@{/search(q=${keyword}, type=${searchType}, sort=${sortBy}, page=${i})}"
+                           th:text="${i + 1}">1</a>
+                    </th:block>
+
+                    <span th:if="${endPage < totalPages - 2}">...</span>
+                    <a th:if="${endPage < totalPages - 1}"
+                       th:href="@{/search(q=${keyword}, type=${searchType}, sort=${sortBy}, page=${totalPages - 1})}"
+                       th:text="${totalPages}">10</a>
+                </th:block>
+
+                <a th:if="${currentPage < totalPages - 1}"
+                   th:href="@{/search(q=${keyword}, type=${searchType}, sort=${sortBy}, page=${currentPage + 1})}"
+                   title="다음 페이지">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <span th:if="${currentPage == totalPages - 1}" class="disabled">
+                    <i class="fas fa-chevron-right"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- No Results -->
+        <div class="results-section" th:if="${keyword != null && !keyword.isEmpty() && (searchResults == null || searchResults.getTotalElements() == 0)}">
+            <div class="no-results">
+                <i class="fas fa-search-minus"></i>
+                <h3>검색 결과가 없습니다</h3>
+                <p>
+                    "<span th:text="${keyword}"></span>"에 대한 검색 결과를 찾을 수 없습니다.<br>
+                    검색어를 다시 확인하거나 다른 검색어로 시도해보세요.
+                </p>
+                <a href="/board" class="btn btn-primary">
+                    <i class="fas fa-home"></i> 게시판으로 돌아가기
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        let autocompleteTimeout;
+        let currentKeyword = /*[[${keyword}]]*/ '';
+
+        // Load popular keywords on page load
+        if (!currentKeyword) {
+            loadPopularKeywords();
+            loadRecentKeywords();
+        }
+
+        // Display active filters on load
+        displayActiveFilters();
+
+        // Toggle advanced search
+        function toggleAdvancedSearch() {
+            const filters = document.getElementById('advancedFilters');
+            const toggleBtn = document.querySelector('.toggle-btn');
+
+            filters.classList.toggle('show');
+            toggleBtn.classList.toggle('active');
+        }
+
+        // Set quick date ranges
+        function setQuickDate(range) {
+            const today = new Date();
+            const dateTo = today.toISOString().split('T')[0];
+            let dateFrom;
+
+            switch(range) {
+                case 'today':
+                    dateFrom = dateTo;
+                    break;
+                case 'week':
+                    const weekAgo = new Date(today.setDate(today.getDate() - 7));
+                    dateFrom = weekAgo.toISOString().split('T')[0];
+                    break;
+                case 'month':
+                    const monthAgo = new Date(today.setDate(today.getDate() - 30));
+                    dateFrom = monthAgo.toISOString().split('T')[0];
+                    break;
+                case '3months':
+                    const threeMonthsAgo = new Date(today.setMonth(today.getMonth() - 3));
+                    dateFrom = threeMonthsAgo.toISOString().split('T')[0];
+                    break;
+            }
+
+            document.getElementById('dateFrom').value = dateFrom;
+            document.getElementById('dateTo').value = dateTo;
+
+            // Highlight active button
+            document.querySelectorAll('.quick-filter-tag').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.quick-filter-tag').classList.add('active');
+        }
+
+        // Reset all filters
+        function resetFilters() {
+            const form = document.getElementById('searchForm');
+            form.querySelectorAll('select').forEach(select => {
+                if (select.id === 'searchType') select.value = 'all';
+                if (select.id === 'sortBy') select.value = 'latest';
+            });
+            form.querySelectorAll('input[type="date"]').forEach(input => input.value = '');
+            form.querySelectorAll('input[type="number"]').forEach(input => input.value = '');
+
+            document.querySelectorAll('.quick-filter-tag').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            displayActiveFilters();
+        }
+
+        // Display active filters
+        function displayActiveFilters() {
+            const activeFiltersDiv = document.getElementById('activeFilters');
+            const tagsContainer = document.getElementById('activeFilterTags');
+            const params = new URLSearchParams(window.location.search);
+
+            let tags = [];
+
+            // Search type
+            const searchType = params.get('type');
+            if (searchType && searchType !== 'all') {
+                const labels = {title: '제목', content: '내용', author: '작성자'};
+                tags.push(`검색범위: ${labels[searchType] || searchType}`);
+            }
+
+            // Sort
+            const sortBy = params.get('sort');
+            if (sortBy && sortBy !== 'latest') {
+                const labels = {views: '조회수순', likes: '좋아요순', comments: '댓글순'};
+                tags.push(`정렬: ${labels[sortBy] || sortBy}`);
+            }
+
+            // Date range
+            const dateFrom = params.get('dateFrom');
+            const dateTo = params.get('dateTo');
+            if (dateFrom || dateTo) {
+                tags.push(`작성일: ${dateFrom || '시작'} ~ ${dateTo || '종료'}`);
+            }
+
+            // Views range
+            const minViews = params.get('minViews');
+            const maxViews = params.get('maxViews');
+            if (minViews || maxViews) {
+                tags.push(`조회수: ${minViews || '0'} ~ ${maxViews || '∞'}`);
+            }
+
+            // Likes range
+            const minLikes = params.get('minLikes');
+            const maxLikes = params.get('maxLikes');
+            if (minLikes || maxLikes) {
+                tags.push(`좋아요: ${minLikes || '0'} ~ ${maxLikes || '∞'}`);
+            }
+
+            // Comments range
+            const minComments = params.get('minComments');
+            const maxComments = params.get('maxComments');
+            if (minComments || maxComments) {
+                tags.push(`댓글수: ${minComments || '0'} ~ ${maxComments || '∞'}`);
+            }
+
+            if (tags.length > 0) {
+                tagsContainer.innerHTML = tags.map(tag =>
+                    `<div class="active-filter-tag">
+                        <span>${tag}</span>
+                        <i class="fas fa-times" onclick="resetFilters()"></i>
+                    </div>`
+                ).join('');
+                activeFiltersDiv.classList.add('show');
+            } else {
+                activeFiltersDiv.classList.remove('show');
+            }
+        }
+
+        // Handle search input
+        function handleSearchInput() {
+            clearTimeout(autocompleteTimeout);
+            const keyword = document.getElementById('searchInput').value.trim();
+
+            if (keyword.length >= 2) {
+                autocompleteTimeout = setTimeout(() => {
+                    loadAutocompleteSuggestions(keyword);
+                }, 300);
+            } else {
+                showDefaultAutocomplete();
+            }
+        }
+
+        // Show autocomplete dropdown
+        function showAutocomplete() {
+            const dropdown = document.getElementById('autocompleteDropdown');
+            const keyword = document.getElementById('searchInput').value.trim();
+
+            if (keyword.length >= 2) {
+                loadAutocompleteSuggestions(keyword);
+            } else {
+                showDefaultAutocomplete();
+            }
+
+            dropdown.classList.add('show');
+        }
+
+        // Hide autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('autocompleteDropdown');
+            const searchInput = document.getElementById('searchInput');
+
+            if (!dropdown.contains(e.target) && e.target !== searchInput) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Show default autocomplete
+        function showDefaultAutocomplete() {
+            const dropdown = document.getElementById('autocompleteDropdown');
+            let html = '';
+
+            fetch('/api/search/history')
+                .then(response => {
+                    if (response.ok) return response.json();
+                    return { history: [] };
+                })
+                .then(data => {
+                    if (data.history && data.history.length > 0) {
+                        html += '<div class="autocomplete-section">';
+                        html += '<div class="autocomplete-title">';
+                        html += '<span><i class="fas fa-history"></i> 최근 검색어</span>';
+                        html += '<span class="clear-history" onclick="clearHistory()">전체 삭제</span>';
+                        html += '</div>';
+                        data.history.forEach(keyword => {
+                            html += `<div class="autocomplete-item" onclick="selectKeyword('${keyword}')">`;
+                            html += '<i class="fas fa-history"></i>';
+                            html += `<span>${keyword}</span>`;
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                    }
+                    return fetch('/api/search/popular?limit=5');
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.keywords && data.keywords.length > 0) {
+                        html += '<div class="autocomplete-section">';
+                        html += '<div class="autocomplete-title"><i class="fas fa-fire"></i> 인기 검색어</div>';
+                        data.keywords.forEach(keyword => {
+                            html += `<div class="autocomplete-item" onclick="selectKeyword('${keyword}')">`;
+                            html += '<i class="fas fa-fire"></i>';
+                            html += `<span>${keyword}</span>`;
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                    }
+                    dropdown.innerHTML = html || '<div class="autocomplete-section" style="text-align:center;color:#999;">검색 기록이 없습니다</div>';
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Load autocomplete suggestions
+        function loadAutocompleteSuggestions(keyword) {
+            const dropdown = document.getElementById('autocompleteDropdown');
+
+            fetch(`/api/search/suggestions?q=${encodeURIComponent(keyword)}`)
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    if (data.suggestions && data.suggestions.length > 0) {
+                        html += '<div class="autocomplete-section">';
+                        html += '<div class="autocomplete-title"><i class="fas fa-search"></i> 추천 검색어</div>';
+                        data.suggestions.forEach(suggestion => {
+                            html += `<div class="autocomplete-item" onclick="selectKeyword('${suggestion}')">`;
+                            html += '<i class="fas fa-search"></i>';
+                            html += `<span>${suggestion}</span>`;
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                    } else {
+                        html = '<div class="autocomplete-section" style="text-align:center;color:#999;">추천 검색어가 없습니다</div>';
+                    }
+                    dropdown.innerHTML = html;
+                    dropdown.classList.add('show');
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Select keyword
+        function selectKeyword(keyword) {
+            document.getElementById('searchInput').value = keyword;
+            document.getElementById('autocompleteDropdown').classList.remove('show');
+            document.getElementById('searchForm').submit();
+        }
+
+        // Clear history
+        function clearHistory() {
+            if (!confirm('검색 기록을 모두 삭제하시겠습니까?')) return;
+
+            const headers = {};
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+            fetch('/api/search/history', { method: 'DELETE', headers })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showDefaultAutocomplete();
+                        loadRecentKeywords();
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Load popular keywords
+        function loadPopularKeywords() {
+            fetch('/api/search/popular?limit=10')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('popularKeywords');
+                    if (data.keywords && data.keywords.length > 0) {
+                        let html = '';
+                        data.keywords.forEach(keyword => {
+                            html += `<a href="/search?q=${encodeURIComponent(keyword)}" class="keyword-tag">${keyword}</a>`;
+                        });
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = '<span style="color:#999;font-size:14px;">인기 검색어가 없습니다</span>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('popularKeywords').innerHTML = '<span style="color:#999;font-size:14px;">로드 실패</span>';
+                });
+        }
+
+        // Load recent keywords
+        function loadRecentKeywords() {
+            fetch('/api/search/history')
+                .then(response => {
+                    if (!response.ok) throw new Error('Not authenticated');
+                    return response.json();
+                })
+                .then(data => {
+                    const container = document.getElementById('recentKeywords');
+                    if (container && data.history && data.history.length > 0) {
+                        let html = '';
+                        data.history.slice(0, 10).forEach(keyword => {
+                            html += `<a href="/search?q=${encodeURIComponent(keyword)}" class="keyword-tag">${keyword}</a>`;
+                        });
+                        container.innerHTML = html;
+                    } else if (container) {
+                        container.innerHTML = '<span style="color:#999;font-size:14px;">최근 검색어가 없습니다</span>';
+                    }
+                })
+                .catch(error => {
+                    const container = document.getElementById('recentKeywords');
+                    if (container) {
+                        container.innerHTML = '<span style="color:#999;font-size:14px;">로그인이 필요합니다</span>';
+                    }
+                });
+        }
+    </script>
+</body>
+</html>

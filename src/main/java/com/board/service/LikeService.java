@@ -1,0 +1,117 @@
+package com.board.service;
+
+import com.board.entity.Board;
+import com.board.entity.Comment;
+import com.board.entity.Like;
+import com.board.entity.User;
+import com.board.enums.TargetType;
+import com.board.repository.BoardRepository;
+import com.board.repository.CommentRepository;
+import com.board.repository.LikeRepository;
+import com.board.util.AuthenticationUtils;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+public class LikeService {
+
+    private final LikeRepository likeRepository;
+    private final BoardRepository boardRepository;
+    private final CommentRepository commentRepository;
+    private final UserService userService;
+    private final NotificationService notificationService;
+
+    @Transactional
+    public Map<String, Object> toggleLike(TargetType targetType, Long targetId) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null) {
+            throw new RuntimeException("로그인이 필요합니다.");
+        }
+
+        Optional<Like> existingLike = likeRepository.findByUserIdAndTargetTypeAndTargetId(
+                currentUser.getId(), targetType, targetId);
+
+        boolean isLiked;
+        if (existingLike.isPresent()) {
+            // Unlike
+            likeRepository.delete(existingLike.get());
+            isLiked = false;
+        } else {
+            // Like
+            Like like = new Like();
+            like.setUserId(currentUser.getId());
+            like.setTargetType(targetType);
+            like.setTargetId(targetId);
+            likeRepository.save(like);
+            isLiked = true;
+        }
+
+        // Update count
+        long likeCount = likeRepository.countByTargetTypeAndTargetId(targetType, targetId);
+
+        if (targetType == TargetType.POST) {
+            Board board = boardRepository.findById(targetId)
+                    .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+            board.setLikeCount((int) likeCount);
+            boardRepository.save(board);
+
+            // Create notification for post like
+            if (isLiked && !board.getUserId().equals(currentUser.getId())) {
+                notificationService.createNotification(
+                    board.getUserId(),
+                    "LIKE",
+                    "새로운 좋아요",
+                    currentUser.getNickname() + "님이 회원님의 게시글을 좋아합니다: " +
+                        (board.getTitle().length() > 30 ? board.getTitle().substring(0, 30) + "..." : board.getTitle()),
+                    "POST",
+                    targetId
+                );
+            }
+        } else if (targetType == TargetType.COMMENT) {
+            Comment comment = commentRepository.findById(targetId)
+                    .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
+            comment.setLikeCount((int) likeCount);
+            commentRepository.save(comment);
+
+            // Create notification for comment like
+            if (isLiked && !comment.getUserId().equals(currentUser.getId())) {
+                notificationService.createNotification(
+                    comment.getUserId(),
+                    "LIKE",
+                    "새로운 좋아요",
+                    currentUser.getNickname() + "님이 회원님의 댓글을 좋아합니다: " +
+                        (comment.getContent().length() > 30 ? comment.getContent().substring(0, 30) + "..." : comment.getContent()),
+                    "COMMENT",
+                    targetId
+                );
+            }
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("isLiked", isLiked);
+        result.put("likeCount", likeCount);
+        return result;
+    }
+
+    public boolean isLiked(TargetType targetType, Long targetId, Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        return likeRepository.existsByUserIdAndTargetTypeAndTargetId(userId, targetType, targetId);
+    }
+
+    public long getLikeCount(TargetType targetType, Long targetId) {
+        return likeRepository.countByTargetTypeAndTargetId(targetType, targetId);
+    }
+
+    public List<Like> getLikedPostsByUserId(Long userId) {
+        return likeRepository.findByUserIdAndTargetTypeOrderByCreatedAtDesc(userId, TargetType.POST);
+    }
+}

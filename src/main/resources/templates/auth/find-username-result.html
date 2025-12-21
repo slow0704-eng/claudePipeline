@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아이디 찾기 결과 - 익명 커뮤니티</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .result-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease;
+            text-align: center;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            color: white;
+            animation: scaleIn 0.5s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .result-header h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .result-header p {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .username-display {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+
+        .username-label {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 10px;
+        }
+
+        .username-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            letter-spacing: 2px;
+            word-break: break-all;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102,126,234,0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+            box-shadow: none;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            color: #999;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .links {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            margin: 0 5px;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+            color: #5568d3;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .result-container {
+                padding: 30px 20px;
+            }
+
+            .result-header h1 {
+                font-size: 20px;
+            }
+
+            .username-value {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+
+        <div class="result-header">
+            <h1>아이디를 찾았습니다!</h1>
+            <p>고객님의 아이디 정보입니다</p>
+        </div>
+
+        <div class="username-display">
+            <div class="username-label">회원 아이디</div>
+            <div class="username-value" th:text="${foundUsername}">username123</div>
+        </div>
+
+        <a href="/auth/login" class="btn">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>로그인하기</span>
+        </a>
+
+        <button type="button" class="btn btn-secondary" onclick="location.href='/auth/find-password'">
+            <i class="fas fa-key"></i>
+            <span>비밀번호 찾기</span>
+        </button>
+
+        <div class="divider">또는</div>
+
+        <div class="links">
+            <a href="/board">
+                <i class="fas fa-home"></i> 게시판 둘러보기
+            </a>
+        </div>
+    </div>
+</body>
+</html>

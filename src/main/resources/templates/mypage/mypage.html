@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>마이페이지</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Profile Header */
+        .profile-header {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            animation: slideDown 0.5s ease;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .profile-username {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .action-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .action-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .action-btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            animation: fadeIn 0.5s ease 0.2s both;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .stat-card.highlight .stat-value {
+            color: #dc3545;
+        }
+
+        /* Posts Section */
+        .content-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        .post-list {
+            list-style: none;
+        }
+
+        .post-item {
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s;
+            border-radius: 10px;
+        }
+
+        .post-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .post-item:last-child {
+            border-bottom: none;
+        }
+
+        .post-title {
+            font-size: 18px;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 10px;
+            transition: color 0.3s;
+        }
+
+        .post-title:hover {
+            color: #667eea;
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: #999;
+            flex-wrap: wrap;
+        }
+
+        .post-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .post-meta-item i {
+            font-size: 12px;
+        }
+
+        .no-content {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .no-content i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .no-content p {
+            font-size: 16px;
+        }
+
+        /* Settings Section */
+        .settings-form {
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .form-divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 40px 0;
+        }
+
+        .settings-subsection {
+            margin-bottom: 40px;
+        }
+
+        .subsection-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subsection-title i {
+            color: #667eea;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert.show {
+            display: flex;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert i {
+            font-size: 18px;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .quick-action-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+
+        .quick-action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .quick-action-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .quick-action-content h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .quick-action-content p {
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* Loading State */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .btn-loading {
+            position: relative;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .profile-actions {
+                justify-content: center;
+            }
+
+            .tab-navigation {
+                justify-content: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-name {
+                font-size: 24px;
+            }
+
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar" th:text="${#strings.substring(user.nickname, 0, 1)}">U</div>
+            <div class="profile-info">
+                <div class="profile-name" th:text="${user.nickname}">사용자</div>
+                <div class="profile-username" th:text="'@' + ${user.username}">@username</div>
+                <div class="profile-actions">
+                    <a href="/board/new" class="action-btn action-btn-primary">
+                        <i class="fas fa-pen"></i> 글 작성
+                    </a>
+                    <a href="/board" class="action-btn action-btn-secondary">
+                        <i class="fas fa-home"></i> 홈으로
+                    </a>
+                    <a sec:authorize="hasRole('ADMIN')" href="/admin" class="action-btn" style="background: #e74c3c; color: white;">
+                        <i class="fas fa-shield-alt"></i> 관리자
+                    </a>
+                    <a href="/auth/logout" class="action-btn action-btn-secondary">
+                        <i class="fas fa-sign-out-alt"></i> 로그아웃
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">
+                <i class="fas fa-chart-line"></i> 대시보드
+            </button>
+            <button class="tab-btn" onclick="switchTab('posts')">
+                <i class="fas fa-file-alt"></i> 내 글
+            </button>
+            <button class="tab-btn" onclick="switchTab('settings')">
+                <i class="fas fa-cog"></i> 설정
+            </button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content active">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+                    <div class="stat-value" th:text="${postCount}">0</div>
+                    <div class="stat-label">작성한 글</div>
+                </div>
+
+                <a th:href="@{/board/drafts}" class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-save"></i></div>
+                    <div class="stat-value" th:text="${draftCount}">0</div>
+                    <div class="stat-label">임시저장</div>
+                </a>
+
+                <a th:href="@{/bookmarks}" class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-bookmark"></i></div>
+                    <div class="stat-value" th:text="${bookmarkCount}">0</div>
+                    <div class="stat-label">북마크</div>
+                </a>
+
+                <a th:href="@{/messages}" class="stat-card highlight">
+                    <div class="stat-icon"><i class="fas fa-envelope"></i></div>
+                    <div class="stat-value" th:text="${unreadMessageCount}">0</div>
+                    <div class="stat-label">읽지 않은 메시지</div>
+                </a>
+
+                <a th:href="@{/user/{id}/followers(id=${user.id})}" class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-value" th:text="${followerCount}">0</div>
+                    <div class="stat-label">팔로워</div>
+                </a>
+
+                <a th:href="@{/user/{id}/following(id=${user.id})}" class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-user-friends"></i></div>
+                    <div class="stat-value" th:text="${followingCount}">0</div>
+                    <div class="stat-label">팔로잉</div>
+                </a>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="/notifications" class="quick-action-card">
+                    <div class="quick-action-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="quick-action-content">
+                        <h3>알림 확인</h3>
+                        <p>새로운 활동을 확인하세요</p>
+                    </div>
+                </a>
+
+                <a href="/messages" class="quick-action-card">
+                    <div class="quick-action-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="quick-action-content">
+                        <h3>메시지</h3>
+                        <p>대화를 시작하세요</p>
+                    </div>
+                </a>
+
+                <a href="/board/drafts" class="quick-action-card">
+                    <div class="quick-action-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <i class="fas fa-drafting-compass"></i>
+                    </div>
+                    <div class="quick-action-content">
+                        <h3>임시저장</h3>
+                        <p>작성 중인 글 보기</p>
+                    </div>
+                </a>
+
+                <a href="/bookmarks" class="quick-action-card">
+                    <div class="quick-action-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="quick-action-content">
+                        <h3>북마크</h3>
+                        <p>저장한 글 보기</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Posts Tab -->
+        <div id="posts-tab" class="tab-content">
+            <div class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-file-alt"></i> 최근 작성한 글
+                    </h2>
+                </div>
+
+                <ul class="post-list" th:if="${myPosts != null and !myPosts.isEmpty()}">
+                    <li class="post-item" th:each="post : ${myPosts}">
+                        <a th:href="@{/board/{id}(id=${post.id})}" class="post-title" th:text="${post.title}">게시글 제목</a>
+                        <div class="post-meta">
+                            <span class="post-meta-item">
+                                <i class="far fa-calendar"></i>
+                                <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">작성일</span>
+                            </span>
+                            <span class="post-meta-item">
+                                <i class="far fa-eye"></i>
+                                <span th:text="${post.viewCount}">0</span>
+                            </span>
+                            <span class="post-meta-item">
+                                <i class="far fa-heart"></i>
+                                <span th:text="${post.likeCount}">0</span>
+                            </span>
+                            <span class="post-meta-item">
+                                <i class="far fa-comment"></i>
+                                <span th:text="${post.commentCount}">0</span>
+                            </span>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="no-content" th:if="${myPosts == null or myPosts.isEmpty()}">
+                    <i class="fas fa-inbox"></i>
+                    <p>작성한 글이 없습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings-tab" class="tab-content">
+            <div class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-user-cog"></i> 계정 설정
+                    </h2>
+                </div>
+
+                <div class="settings-form">
+                    <!-- Nickname Section -->
+                    <div class="settings-subsection">
+                        <div class="subsection-title">
+                            <i class="fas fa-id-card"></i> 닉네임 변경
+                        </div>
+
+                        <div id="nicknameAlert" class="alert"></div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="newNickname">새 닉네임</label>
+                            <input type="text" id="newNickname" class="form-input"
+                                   placeholder="새로운 닉네임을 입력하세요"
+                                   th:value="${user.nickname}">
+                        </div>
+
+                        <div class="form-actions">
+                            <button onclick="updateNickname()" class="action-btn action-btn-primary">
+                                <i class="fas fa-check"></i> 변경하기
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-divider"></div>
+
+                    <!-- Password Section -->
+                    <div class="settings-subsection">
+                        <div class="subsection-title">
+                            <i class="fas fa-lock"></i> 비밀번호 변경
+                        </div>
+
+                        <div id="passwordAlert" class="alert"></div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="currentPassword">현재 비밀번호</label>
+                            <input type="password" id="currentPassword" class="form-input"
+                                   placeholder="현재 비밀번호를 입력하세요">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="newPassword">새 비밀번호</label>
+                            <input type="password" id="newPassword" class="form-input"
+                                   placeholder="새 비밀번호 (최소 4자)">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="confirmPassword">새 비밀번호 확인</label>
+                            <input type="password" id="confirmPassword" class="form-input"
+                                   placeholder="새 비밀번호를 다시 입력하세요">
+                        </div>
+
+                        <div class="form-actions">
+                            <button onclick="updatePassword()" class="action-btn action-btn-primary">
+                                <i class="fas fa-check"></i> 변경하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CSRF Token
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Alert Functions
+        function showAlert(alertId, message, isSuccess) {
+            const alert = document.getElementById(alertId);
+            alert.innerHTML = `<i class="fas fa-${isSuccess ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            alert.className = 'alert ' + (isSuccess ? 'alert-success' : 'alert-error') + ' show';
+
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+
+        // Update Nickname
+        function updateNickname() {
+            const newNickname = document.getElementById('newNickname').value.trim();
+            const button = event.target;
+
+            if (!newNickname) {
+                showAlert('nicknameAlert', '닉네임을 입력해주세요.', false);
+                return;
+            }
+
+            button.classList.add('btn-loading');
+            button.disabled = true;
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('/mypage/update-nickname', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ nickname: newNickname })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('nicknameAlert', data.message, true);
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showAlert('nicknameAlert', data.message, false);
+                    button.classList.remove('btn-loading');
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('nicknameAlert', '닉네임 변경 중 오류가 발생했습니다.', false);
+                button.classList.remove('btn-loading');
+                button.disabled = false;
+            });
+        }
+
+        // Update Password
+        function updatePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const button = event.target;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showAlert('passwordAlert', '모든 항목을 입력해주세요.', false);
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showAlert('passwordAlert', '새 비밀번호가 일치하지 않습니다.', false);
+                return;
+            }
+
+            if (newPassword.length < 4) {
+                showAlert('passwordAlert', '비밀번호는 최소 4자 이상이어야 합니다.', false);
+                return;
+            }
+
+            button.classList.add('btn-loading');
+            button.disabled = true;
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('/mypage/update-password', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    currentPassword: currentPassword,
+                    newPassword: newPassword,
+                    confirmPassword: confirmPassword
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('passwordAlert', data.message, true);
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                } else {
+                    showAlert('passwordAlert', data.message, false);
+                }
+                button.classList.remove('btn-loading');
+                button.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('passwordAlert', '비밀번호 변경 중 오류가 발생했습니다.', false);
+                button.classList.remove('btn-loading');
+                button.disabled = false;
+            });
+        }
+
+        // Enter key support for inputs
+        document.getElementById('newNickname').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') updateNickname();
+        });
+
+        document.getElementById('confirmPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') updatePassword();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title th:text="${board.title}">게시글 보기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .meta {
+            color: #666;
+            font-size: 14px;
+        }
+        .meta span {
+            margin-right: 20px;
+        }
+        .content {
+            padding: 30px 0;
+            line-height: 1.8;
+            color: #333;
+            min-height: 300px;
+            border-bottom: 1px solid #ddd;
+        }
+        .like-section {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .like-button {
+            display: inline-block;
+            padding: 10px 30px;
+            border: 2px solid #007bff;
+            border-radius: 25px;
+            background-color: white;
+            color: #007bff;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .like-button:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        .like-button.liked {
+            background-color: #007bff;
+            color: white;
+        }
+        .like-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .bookmark-button {
+            display: inline-block;
+            padding: 10px 30px;
+            border: 2px solid #ffc107;
+            border-radius: 25px;
+            background-color: white;
+            color: #ffc107;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .bookmark-button:hover {
+            background-color: #ffc107;
+            color: white;
+        }
+        .bookmark-button.bookmarked {
+            background-color: #ffc107;
+            color: white;
+        }
+        .bookmark-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .message-button {
+            display: inline-block;
+            padding: 10px 30px;
+            border: 2px solid #28a745;
+            border-radius: 25px;
+            background-color: white;
+            color: #28a745;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .message-button:hover {
+            background-color: #28a745;
+            color: white;
+        }
+        .message-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .comments-section {
+            margin-top: 30px;
+        }
+        .comments-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .comment-form {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .comment-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            min-height: 100px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .comment-form button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .comment-form button:hover {
+            background-color: #0056b3;
+        }
+        .comment-list {
+            list-style: none;
+        }
+        .comment-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+        .comment-item.reply {
+            margin-left: 40px;
+            border-left: 3px solid #007bff;
+            padding-left: 15px;
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .comment-author {
+            font-weight: 600;
+            color: #333;
+        }
+        .comment-author a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .comment-author a:hover {
+            text-decoration: underline;
+        }
+        .comment-date {
+            font-size: 12px;
+            color: #999;
+        }
+        .comment-content {
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .attachments-section {
+            margin: 20px 0;
+            padding: 20px 0;
+            border-top: 1px solid #eee;
+        }
+        .attachments-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .image-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .image-item:hover {
+            transform: scale(1.05);
+        }
+        .image-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+            cursor: pointer;
+        }
+        .image-item .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            display: none;
+            transition: all 0.3s;
+        }
+        .image-item:hover .delete-btn {
+            display: block;
+        }
+        .image-item .delete-btn:hover {
+            background-color: #c82333;
+        }
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .lightbox.active {
+            display: flex;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        .lightbox .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+            white-space: pre-wrap;
+        }
+        .comment-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .comment-actions button {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .comment-actions button:hover {
+            background-color: #f8f9fa;
+        }
+        .comment-actions .like-btn {
+            border-color: #007bff;
+            color: #007bff;
+        }
+        .comment-actions .like-btn.liked {
+            background-color: #007bff;
+            color: white;
+        }
+        .reply-form {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            display: none;
+        }
+        .reply-form.active {
+            display: block;
+        }
+        .reply-form textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            min-height: 60px;
+            font-family: inherit;
+        }
+        .reply-form button {
+            margin-top: 5px;
+            margin-right: 5px;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .reply-form .submit-btn {
+            background-color: #007bff;
+            color: white;
+        }
+        .reply-form .cancel-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        .button-group {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .no-comments {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .login-required {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .login-required a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .login-required a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" th:attr="data-csrf-token=${_csrf.token}, data-csrf-header=${_csrf.headerName}, data-board-id=${board.id}">
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <h1 th:text="${board.title}">게시글 제목</h1>
+                    <div class="meta">
+                        <span><strong>작성자:</strong>
+                            <a th:if="${board.userId != null}" th:href="@{/user/{id}(id=${board.userId})}"
+                               style="color: #007bff; text-decoration: none;"
+                               th:text="${board.nickname != null ? board.nickname : board.author}">작성자</a>
+                            <span th:if="${board.userId == null}" th:text="${board.nickname != null ? board.nickname : board.author}">작성자</span>
+                        </span>
+                        <span><strong>작성일:</strong> <span th:text="${#temporals.format(board.createdAt, 'yyyy-MM-dd HH:mm:ss')}">2023-01-01</span></span>
+                        <span><strong>조회수:</strong> <span th:text="${board.viewCount}">0</span></span>
+                    </div>
+                </div>
+                <!-- 신고 버튼 (본인 글이 아닌 경우만) -->
+                <div th:if="${!isOwner}" sec:authorize="hasAnyRole('MEMBER', 'ADMIN')" style="margin-top: 10px;">
+                    <button onclick="openReportModal()" class="btn" style="background-color: #dc3545; padding: 8px 16px; font-size: 14px;">
+                        🚨 신고
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content" style="white-space: pre-wrap; word-wrap: break-word;">
+            <span th:text="${board.content}">게시글 내용</span>
+        </div>
+
+        <!-- 첨부 이미지 -->
+        <div class="attachments-section" th:if="${attachments != null and !attachments.isEmpty()}">
+            <h3>📷 첨부 이미지 (<span th:text="${attachments.size()}">0</span>)</h3>
+            <div class="image-gallery">
+                <div class="image-item" th:each="attachment : ${attachments}">
+                    <img th:src="@{'/uploads/' + ${attachment.storedFilePath}}"
+                         th:alt="${attachment.originalFileName}"
+                         onclick="openLightbox(this.src)">
+                    <button class="delete-btn"
+                            th:if="${isOwner}"
+                            th:onclick="'deleteAttachment(' + ${attachment.id} + ')'">
+                        ×
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lightbox for image viewing -->
+        <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+            <button class="close-btn" onclick="closeLightbox()">×</button>
+            <img id="lightbox-image" src="" alt="Full size image">
+        </div>
+
+        <!-- 신고 모달 -->
+        <div id="reportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%;">
+                <h2 style="margin-bottom: 20px;">게시글 신고</h2>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold;">신고 사유</label>
+                    <select id="reportReason" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="SPAM">스팸/도배</option>
+                        <option value="INAPPROPRIATE">부적절한 내용</option>
+                        <option value="COPYRIGHT">저작권 침해</option>
+                        <option value="COMMERCIAL">상업적 광고</option>
+                        <option value="OTHER">기타</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold;">상세 설명 (선택)</label>
+                    <textarea id="reportDescription" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; min-height: 100px;" placeholder="신고 사유를 상세히 설명해주세요"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="closeReportModal()" style="padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">취소</button>
+                    <button onclick="submitReport()" style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;">신고하기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 좋아요/북마크 섹션 (회원만) -->
+        <div class="like-section" sec:authorize="hasAnyRole('MEMBER', 'ADMIN')">
+            <button class="like-button" th:classappend="${isPostLiked} ? 'liked' : ''"
+                    onclick="togglePostLike()" id="postLikeBtn">
+                ❤ <span id="postLikeCount" th:text="${board.likeCount}">0</span>
+            </button>
+            <button class="bookmark-button" th:classappend="${isBookmarked} ? 'bookmarked' : ''"
+                    onclick="toggleBookmark()" id="bookmarkBtn">
+                ⭐ <span id="bookmarkCount" th:text="${bookmarkCount}">0</span>
+            </button>
+            <!-- 메시지 버튼 (작성자가 아닐 때만 표시) -->
+            <button class="message-button"
+                    th:if="${currentUser != null && board.userId != currentUser.id}"
+                    th:onclick="'sendMessageToAuthor(' + ${board.userId} + ')'"
+                    id="messageBtn">
+                💬 작성자에게 메시지 보내기
+            </button>
+        </div>
+
+        <!-- 댓글 섹션 (회원만 표시) -->
+        <div class="comments-section" sec:authorize="hasAnyRole('MEMBER', 'ADMIN')">
+            <h2>댓글 <span th:text="${#lists.size(comments)}">0</span>개</h2>
+
+            <!-- 댓글 작성 폼 -->
+            <div class="comment-form">
+                <textarea id="commentContent" placeholder="댓글을 입력하세요..."></textarea>
+                <button onclick="submitComment()">댓글 작성</button>
+            </div>
+
+            <!-- 댓글 목록 -->
+            <ul class="comment-list" id="commentList">
+                <li th:if="${#lists.isEmpty(comments)}" class="no-comments">
+                    첫 댓글을 작성해보세요!
+                </li>
+                <th:block th:each="comment : ${comments}">
+                    <li class="comment-item" th:id="'comment-' + ${comment.id}" th:attr="data-comment-id=${comment.id}">
+                        <div class="comment-header">
+                            <span class="comment-author">
+                                <a th:href="@{/user/{id}(id=${comment.userId})}" th:text="${comment.nickname}">작성자</a>
+                            </span>
+                            <span class="comment-date" th:text="${#temporals.format(comment.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</span>
+                        </div>
+                        <div class="comment-content" th:text="${comment.content}">댓글 내용</div>
+                        <div class="comment-actions">
+                            <button class="like-btn" th:attr="data-comment-id=${comment.id}"
+                                    onclick="toggleCommentLike(this)">
+                                ❤ <span class="like-count" th:text="${comment.likeCount}">0</span>
+                            </button>
+                            <button onclick="showReplyForm(this)" th:attr="data-comment-id=${comment.id}">답글</button>
+                            <button th:if="${currentUser != null && currentUser.id == comment.userId}"
+                                    onclick="deleteComment(this)" th:attr="data-comment-id=${comment.id}">삭제</button>
+                        </div>
+                        <div class="reply-form" th:id="'reply-form-' + ${comment.id}">
+                            <textarea placeholder="답글을 입력하세요..."></textarea>
+                            <button class="submit-btn" onclick="submitReply(this)" th:attr="data-comment-id=${comment.id}">답글 작성</button>
+                            <button class="cancel-btn" onclick="hideReplyForm(this)">취소</button>
+                        </div>
+
+                        <!-- 대댓글 표시 -->
+                        <th:block th:if="${!#lists.isEmpty(comment.replies)}">
+                            <ul style="list-style: none; padding: 0;">
+                                <li th:each="reply : ${comment.replies}" class="comment-item reply"
+                                    th:id="'comment-' + ${reply.id}" th:attr="data-comment-id=${reply.id}">
+                                    <div class="comment-header">
+                                        <span class="comment-author">
+                                            <a th:href="@{/user/{id}(id=${reply.userId})}" th:text="${reply.nickname}">작성자</a>
+                                        </span>
+                                        <span class="comment-date" th:text="${#temporals.format(reply.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</span>
+                                    </div>
+                                    <div class="comment-content" th:text="${reply.content}">답글 내용</div>
+                                    <div class="comment-actions">
+                                        <button class="like-btn" th:attr="data-comment-id=${reply.id}"
+                                                onclick="toggleCommentLike(this)">
+                                            ❤ <span class="like-count" th:text="${reply.likeCount}">0</span>
+                                        </button>
+                                        <button th:if="${currentUser != null && currentUser.id == reply.userId}"
+                                                onclick="deleteComment(this)" th:attr="data-comment-id=${reply.id}">삭제</button>
+                                    </div>
+                                </li>
+                            </ul>
+                        </th:block>
+                    </li>
+                </th:block>
+            </ul>
+        </div>
+
+        <!-- 비회원에게 댓글 안내 -->
+        <div class="comments-section" sec:authorize="isAnonymous()">
+            <h2>댓글</h2>
+            <div class="login-required">
+                <p>댓글을 보려면 <a href="/auth/login">로그인</a>이 필요합니다.</p>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <a href="/board" class="btn btn-primary">목록</a>
+            <a th:if="${isOwner}" th:href="@{/board/{id}/edit(id=${board.id})}" class="btn btn-warning">수정</a>
+            <form th:if="${isOwner}" th:action="@{/board/{id}/delete(id=${board.id})}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // container div에서 데이터 읽기 (즉시 실행)
+        const container = document.querySelector('.container');
+        const boardId = container ? container.getAttribute('data-board-id') : null;
+        const csrfToken = container ? container.getAttribute('data-csrf-token') : null;
+        const csrfHeader = container ? container.getAttribute('data-csrf-header') : null;
+
+        console.log('=== 페이지 로드 ===');
+        console.log('Board ID:', boardId);
+        console.log('CSRF Token:', csrfToken);
+        console.log('CSRF Header:', csrfHeader);
+        console.log('==================');
+
+        if (!csrfToken || !csrfHeader) {
+            console.error('CSRF 토큰을 찾을 수 없습니다!');
+            console.error('Container:', container);
+        }
+
+        // 게시글 좋아요 토글
+        function togglePostLike() {
+            if (!csrfToken || !csrfHeader) {
+                alert('페이지를 새로고침(Ctrl+Shift+R)해주세요.');
+                return;
+            }
+
+            const btn = document.getElementById('postLikeBtn');
+            btn.disabled = true;
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/likes/post/${boardId}`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    document.getElementById('postLikeCount').textContent = data.likeCount;
+                    if (data.isLiked) {
+                        btn.classList.add('liked');
+                    } else {
+                        btn.classList.remove('liked');
+                    }
+                } else {
+                    alert(data.message || '좋아요 처리에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다: ' + error.message + '\n브라우저 콘솔(F12)을 확인해주세요.');
+            })
+            .finally(() => {
+                btn.disabled = false;
+            });
+        }
+
+        // 북마크 토글
+        function toggleBookmark() {
+            if (!csrfToken || !csrfHeader) {
+                alert('페이지를 새로고침(Ctrl+Shift+R)해주세요.');
+                return;
+            }
+
+            const btn = document.getElementById('bookmarkBtn');
+            btn.disabled = true;
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/bookmarks/toggle/${boardId}`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('bookmarkCount').textContent = data.bookmarkCount;
+                    if (data.bookmarked) {
+                        btn.classList.add('bookmarked');
+                    } else {
+                        btn.classList.remove('bookmarked');
+                    }
+                } else {
+                    alert(data.message || '북마크 처리에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다: ' + error.message);
+            })
+            .finally(() => {
+                btn.disabled = false;
+            });
+        }
+
+        // 신고 모달 열기
+        function openReportModal() {
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+
+        // 신고 모달 닫기
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+            document.getElementById('reportReason').value = 'SPAM';
+            document.getElementById('reportDescription').value = '';
+        }
+
+        // 신고 제출
+        function submitReport() {
+            if (!csrfToken || !csrfHeader) {
+                alert('페이지를 새로고침(Ctrl+Shift+R)해주세요.');
+                return;
+            }
+
+            const reason = document.getElementById('reportReason').value;
+            const description = document.getElementById('reportDescription').value.trim();
+
+            const headers = {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            };
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            const params = new URLSearchParams();
+            params.append('targetType', 'POST');
+            params.append('targetId', boardId);
+            params.append('reason', reason);
+            if (description) {
+                params.append('description', description);
+            }
+
+            fetch('/reports/create', {
+                method: 'POST',
+                headers: headers,
+                body: params
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    closeReportModal();
+                } else {
+                    alert(data.message || '신고 처리에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다: ' + error.message);
+            });
+        }
+
+        // 댓글 작성
+        function submitComment() {
+            const content = document.getElementById('commentContent').value.trim();
+            if (!content) {
+                alert('댓글 내용을 입력하세요.');
+                return;
+            }
+
+            if (!csrfToken || !csrfHeader) {
+                alert('페이지를 새로고침(Ctrl+Shift+R)해주세요.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('boardId', boardId);
+            formData.append('content', content);
+
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('/comments', {
+                method: 'POST',
+                headers: headers,
+                body: formData
+            })
+            .then(response => {
+                console.log('Comment response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Comment response data:', data);
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || '댓글 작성에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다: ' + error.message + '\n브라우저 콘솔(F12)을 확인해주세요.');
+            });
+        }
+
+        // 답글 폼 표시
+        function showReplyForm(btn) {
+            const commentId = btn.getAttribute('data-comment-id');
+            const replyForm = document.getElementById('reply-form-' + commentId);
+            replyForm.classList.add('active');
+        }
+
+        // 답글 폼 숨기기
+        function hideReplyForm(btn) {
+            const replyForm = btn.closest('.reply-form');
+            replyForm.classList.remove('active');
+        }
+
+        // 답글 작성
+        function submitReply(btn) {
+            const parentCommentId = btn.getAttribute('data-comment-id');
+            const replyForm = document.getElementById('reply-form-' + parentCommentId);
+            const content = replyForm.querySelector('textarea').value.trim();
+
+            if (!content) {
+                alert('답글 내용을 입력하세요.');
+                return;
+            }
+
+            if (!csrfToken || !csrfHeader) {
+                alert('페이지를 새로고침(Ctrl+Shift+R)해주세요.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('boardId', boardId);
+            formData.append('content', content);
+            formData.append('parentCommentId', parentCommentId);
+
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('/comments', {
+                method: 'POST',
+                headers: headers,
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || '답글 작성에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            });
+        }
+
+        // 댓글 삭제
+        function deleteComment(btn) {
+            if (!confirm('댓글을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            if (!csrfToken || !csrfHeader) {
+                alert('페이지를 새로고침(Ctrl+Shift+R)해주세요.');
+                return;
+            }
+
+            const commentId = btn.getAttribute('data-comment-id');
+
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || '댓글 삭제에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            });
+        }
+
+        // 댓글 좋아요 토글
+        function toggleCommentLike(btn) {
+            if (!csrfToken || !csrfHeader) {
+                alert('페이지를 새로고침(Ctrl+Shift+R)해주세요.');
+                return;
+            }
+
+            const commentId = btn.getAttribute('data-comment-id');
+            btn.disabled = true;
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/likes/comment/${commentId}`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => {
+                console.log('Comment like response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Comment like response data:', data);
+                if (data.success) {
+                    btn.querySelector('.like-count').textContent = data.likeCount;
+                    if (data.isLiked) {
+                        btn.classList.add('liked');
+                    } else {
+                        btn.classList.remove('liked');
+                    }
+                } else {
+                    alert(data.message || '좋아요 처리에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다: ' + error.message + '\n브라우저 콘솔(F12)을 확인해주세요.');
+            })
+            .finally(() => {
+                btn.disabled = false;
+            });
+        }
+
+        // Lightbox functions
+        function openLightbox(imageSrc) {
+            document.getElementById('lightbox').classList.add('active');
+            document.getElementById('lightbox-image').src = imageSrc;
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
+        }
+
+        // Delete attachment
+        function deleteAttachment(attachmentId) {
+            if (!confirm('이 이미지를 삭제하시겠습니까?')) {
+                return;
+            }
+
+            if (!csrfToken || !csrfHeader) {
+                alert('페이지를 새로고침(Ctrl+Shift+R)해주세요.');
+                return;
+            }
+
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/board/attachment/${attachmentId}`, {
+                method: 'DELETE',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || '이미지 삭제에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            });
+        }
+
+        // ESC key to close lightbox
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+
+        // 작성자에게 메시지 보내기
+        function sendMessageToAuthor(authorId) {
+            if (!authorId) {
+                alert('작성자 정보를 찾을 수 없습니다.');
+                return;
+            }
+            // 대화 페이지로 이동
+            location.href = '/messages/conversation/' + authorId;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알림</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .notification-item {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background-color 0.3s;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-item.unread {
+            background-color: #e7f3ff;
+        }
+        .notification-content {
+            flex: 1;
+        }
+        .notification-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .notification-text {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .notification-time {
+            color: #999;
+            font-size: 12px;
+        }
+        .notification-actions {
+            display: flex;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .badge {
+            background-color: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .icon-comment {
+            background-color: #e3f2fd;
+            color: #2196f3;
+        }
+        .icon-reply {
+            background-color: #f3e5f5;
+            color: #9c27b0;
+        }
+        .icon-like {
+            background-color: #ffebee;
+            color: #f44336;
+        }
+        .notification-wrapper {
+            display: flex;
+            align-items: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <h1 style="margin: 0;">알림</h1>
+            <div class="nav-links">
+                <a sec:authorize="hasRole('ADMIN')" href="/admin" class="btn" style="background-color: #e74c3c;">⚙️ 관리자</a>
+                <a href="/board" class="btn btn-secondary">게시판</a>
+                <a href="/mypage" class="btn btn-secondary">마이페이지</a>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div>
+                <span>전체 <span th:text="${notifications.size()}">0</span>개</span>
+                <span th:if="${unreadCount > 0}" class="badge" th:text="'안읽음 ' + ${unreadCount}">안읽음 0</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="markAllAsRead()" class="btn btn-small">전체 읽음 처리</button>
+                <button onclick="deleteAll()" class="btn btn-small btn-secondary">전체 삭제</button>
+            </div>
+        </div>
+
+        <div th:if="${notifications.size() == 0}" class="no-data">
+            알림이 없습니다.
+        </div>
+
+        <div th:each="notification : ${notifications}">
+            <div class="notification-item"
+                 th:classappend="${!notification.isRead} ? 'unread' : ''"
+                 th:onclick="'handleNotificationClick(' + ${notification.id} + ', \'' + ${notification.referenceType} + '\', ' + ${notification.referenceId} + ')'"
+                 th:data-id="${notification.id}">
+                <div class="notification-wrapper">
+                    <div class="notification-icon"
+                         th:classappend="${notification.type == 'COMMENT'} ? 'icon-comment' :
+                                        (${notification.type == 'REPLY'} ? 'icon-reply' : 'icon-like')">
+                        <span th:if="${notification.type == 'COMMENT'}">💬</span>
+                        <span th:if="${notification.type == 'REPLY'}">↩️</span>
+                        <span th:if="${notification.type == 'LIKE'}">❤️</span>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title" th:text="${notification.title}">알림 제목</div>
+                        <div class="notification-text" th:text="${notification.content}">알림 내용</div>
+                        <div class="notification-time" th:text="${#temporals.format(notification.createdAt, 'yyyy-MM-dd HH:mm')}">2023-01-01</div>
+                    </div>
+                </div>
+                <div class="notification-actions" onclick="event.stopPropagation()">
+                    <button th:if="${!notification.isRead}"
+                            class="btn btn-small"
+                            th:onclick="'markAsRead(' + ${notification.id} + ')'">
+                        읽음
+                    </button>
+                    <button class="btn btn-small btn-secondary"
+                            th:onclick="'deleteNotification(' + ${notification.id} + ')'">
+                        삭제
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleNotificationClick(id, referenceType, referenceId) {
+            // Mark as read first
+            fetch(`/api/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).then(() => {
+                // Navigate to the target
+                if (referenceType === 'POST') {
+                    window.location.href = `/board/${referenceId}`;
+                } else if (referenceType === 'COMMENT') {
+                    // Get the board ID from the comment - for now, just reload
+                    window.location.reload();
+                }
+            });
+        }
+
+        function markAsRead(id) {
+            fetch(`/api/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).then(() => {
+                window.location.reload();
+            });
+        }
+
+        function markAllAsRead() {
+            if (confirm('모든 알림을 읽음으로 처리하시겠습니까?')) {
+                fetch('/api/notifications/read-all', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }).then(() => {
+                    window.location.reload();
+                });
+            }
+        }
+
+        function deleteNotification(id) {
+            if (confirm('이 알림을 삭제하시겠습니까?')) {
+                fetch(`/api/notifications/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }).then(() => {
+                    window.location.reload();
+                });
+            }
+        }
+
+        function deleteAll() {
+            if (confirm('모든 알림을 삭제하시겠습니까?')) {
+                fetch('/api/notifications', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }).then(() => {
+                    window.location.reload();
+                });
+            }
+        }
+    </script>
+</body>
+</html>
