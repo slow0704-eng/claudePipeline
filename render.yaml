@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: spring-board-app
+    env: java
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/*.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: MYSQL_URL
+        sync: false
