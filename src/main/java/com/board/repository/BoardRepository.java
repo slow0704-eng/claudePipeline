@@ -1,6 +1,7 @@
 package com.board.repository;
 
 import com.board.entity.Board;
+import com.board.enums.BoardStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -76,4 +77,52 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     List<Board> findByCreatedAtAfter(LocalDateTime dateTime);
+
+    // 대량 관리 기능을 위한 쿼리
+    // 상태별 게시글 조회
+    List<Board> findByStatusOrderByCreatedAtDesc(BoardStatus status);
+
+    Page<Board> findByStatusOrderByCreatedAtDesc(BoardStatus status, Pageable pageable);
+
+    // 카테고리별 게시글 조회
+    List<Board> findByCategoryIdOrderByCreatedAtDesc(Long categoryId);
+
+    Page<Board> findByCategoryIdOrderByCreatedAtDesc(Long categoryId, Pageable pageable);
+
+    // 상태와 카테고리로 게시글 조회
+    Page<Board> findByStatusAndCategoryIdOrderByCreatedAtDesc(BoardStatus status, Long categoryId, Pageable pageable);
+
+    // 공지사항 관리
+    // 고정된 게시글 조회 (고정 기간이 유효한 것만)
+    @Query("SELECT b FROM Board b WHERE b.isPinned = true AND (b.pinnedUntil IS NULL OR b.pinnedUntil > :now) ORDER BY b.createdAt DESC")
+    List<Board> findActivePinnedBoards(@Param("now") LocalDateTime now);
+
+    // 고정된 게시글 개수
+    @Query("SELECT COUNT(b) FROM Board b WHERE b.isPinned = true AND (b.pinnedUntil IS NULL OR b.pinnedUntil > :now)")
+    long countActivePinnedBoards(@Param("now") LocalDateTime now);
+
+    // 고정 기간이 만료된 게시글 조회
+    @Query("SELECT b FROM Board b WHERE b.isPinned = true AND b.pinnedUntil IS NOT NULL AND b.pinnedUntil <= :now")
+    List<Board> findExpiredPinnedBoards(@Param("now") LocalDateTime now);
+
+    // 복합 검색 (관리자용)
+    @Query("SELECT b FROM Board b WHERE " +
+           "(:status IS NULL OR b.status = :status) AND " +
+           "(:categoryId IS NULL OR b.categoryId = :categoryId) AND " +
+           "(:keyword IS NULL OR b.title LIKE %:keyword% OR b.content LIKE %:keyword% OR b.nickname LIKE %:keyword%) AND " +
+           "(:startDate IS NULL OR b.createdAt >= :startDate) AND " +
+           "(:endDate IS NULL OR b.createdAt <= :endDate) " +
+           "ORDER BY b.isPinned DESC, b.createdAt DESC")
+    Page<Board> searchBoardsWithFilters(
+        @Param("status") BoardStatus status,
+        @Param("categoryId") Long categoryId,
+        @Param("keyword") String keyword,
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate,
+        Pageable pageable
+    );
+
+    // 모든 게시글 조회 (관리자용 - 임시저장, 삭제된 것 포함)
+    @Query("SELECT b FROM Board b ORDER BY b.isPinned DESC, b.createdAt DESC")
+    Page<Board> findAllBoardsForAdmin(Pageable pageable);
 }

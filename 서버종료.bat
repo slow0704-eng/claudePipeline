@@ -1,13 +1,13 @@
 @echo off
 chcp 65001 > nul
 echo ========================================
-echo   Spring Boot 서버 재시작
+echo   Spring Boot 서버 종료
 echo ========================================
 echo.
 
 cd /d "%~dp0"
 
-echo [1/3] 기존 서버 프로세스 확인 중...
+echo 포트 8080을 사용하는 프로세스를 찾는 중...
 echo.
 
 REM 포트 8080을 사용하는 프로세스 찾기
@@ -19,26 +19,20 @@ goto :notfound
 
 :found
 echo ⚠️  포트 8080을 사용 중인 프로세스 발견 (PID: %PID%)
-echo 기존 서버를 종료합니다...
-taskkill /PID %PID% /F > nul 2>&1
+echo 서버를 종료합니다...
+taskkill /PID %PID% /F
 if %errorlevel% equ 0 (
-    echo ✓ 기존 서버가 종료되었습니다.
+    echo.
+    echo ✓ 서버가 정상적으로 종료되었습니다.
 ) else (
-    echo ⚠️  서버 종료 중 오류가 발생했지만 계속 진행합니다.
+    echo.
+    echo ✗ 서버 종료 중 오류가 발생했습니다.
 )
-timeout /t 2 /nobreak > nul
-echo.
-goto :start
+goto :end
 
 :notfound
 echo ✓ 실행 중인 서버가 없습니다.
-echo.
 
-:start
-echo [2/3] 새 서버를 시작합니다...
+:end
 echo.
-call mvnw.cmd spring-boot:run
-
-echo.
-echo [3/3] 서버가 종료되었습니다.
 pause

@@ -31,11 +31,31 @@ public class FileUploadService {
 
     private final AttachmentRepository attachmentRepository;
 
-    // 최대 파일 크기: 10MB
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
+    // 최대 파일 크기: 50MB
+    private static final long MAX_FILE_SIZE = 50 * 1024 * 1024;
 
-    // 허용되는 확장자
-    private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif");
+    // 허용되는 이미지 확장자
+    private static final List<String> IMAGE_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "bmp", "webp");
+
+    // 허용되는 문서 확장자
+    private static final List<String> DOCUMENT_EXTENSIONS = Arrays.asList("pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "hwp");
+
+    // 허용되는 압축 파일 확장자
+    private static final List<String> ARCHIVE_EXTENSIONS = Arrays.asList("zip", "rar", "7z", "tar", "gz");
+
+    // 허용되는 동영상 확장자
+    private static final List<String> VIDEO_EXTENSIONS = Arrays.asList("mp4", "avi", "mov", "wmv", "flv", "mkv", "webm");
+
+    // 모든 허용되는 확장자
+    private static final List<String> ALLOWED_EXTENSIONS;
+
+    static {
+        ALLOWED_EXTENSIONS = new java.util.ArrayList<>();
+        ALLOWED_EXTENSIONS.addAll(IMAGE_EXTENSIONS);
+        ALLOWED_EXTENSIONS.addAll(DOCUMENT_EXTENSIONS);
+        ALLOWED_EXTENSIONS.addAll(ARCHIVE_EXTENSIONS);
+        ALLOWED_EXTENSIONS.addAll(VIDEO_EXTENSIONS);
+    }
 
     // 최대 첨부파일 개수
     private static final int MAX_FILES_PER_BOARD = 5;
@@ -104,7 +124,7 @@ public class FileUploadService {
 
         // 파일 크기 검증
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new RuntimeException("파일 크기는 10MB를 초과할 수 없습니다.");
+            throw new RuntimeException("파일 크기는 50MB를 초과할 수 없습니다.");
         }
 
         // 파일 확장자 검증
@@ -115,7 +135,7 @@ public class FileUploadService {
 
         String extension = getFileExtension(originalFilename).toLowerCase();
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
-            throw new RuntimeException("허용되지 않는 파일 형식입니다. (jpg, jpeg, png, gif만 가능)");
+            throw new RuntimeException("허용되지 않는 파일 형식입니다. (이미지, 문서, 압축파일, 동영상 파일만 가능)");
         }
     }
 
@@ -144,7 +164,40 @@ public class FileUploadService {
      * 이미지 파일 여부 확인
      */
     private boolean isImageFile(String extension) {
-        return ALLOWED_EXTENSIONS.contains(extension.toLowerCase());
+        return IMAGE_EXTENSIONS.contains(extension.toLowerCase());
+    }
+
+    /**
+     * 문서 파일 여부 확인
+     */
+    public boolean isDocumentFile(String extension) {
+        return DOCUMENT_EXTENSIONS.contains(extension.toLowerCase());
+    }
+
+    /**
+     * 압축 파일 여부 확인
+     */
+    public boolean isArchiveFile(String extension) {
+        return ARCHIVE_EXTENSIONS.contains(extension.toLowerCase());
+    }
+
+    /**
+     * 동영상 파일 여부 확인
+     */
+    public boolean isVideoFile(String extension) {
+        return VIDEO_EXTENSIONS.contains(extension.toLowerCase());
+    }
+
+    /**
+     * 파일 타입 카테고리 반환
+     */
+    public String getFileCategory(String extension) {
+        extension = extension.toLowerCase();
+        if (IMAGE_EXTENSIONS.contains(extension)) return "image";
+        if (DOCUMENT_EXTENSIONS.contains(extension)) return "document";
+        if (ARCHIVE_EXTENSIONS.contains(extension)) return "archive";
+        if (VIDEO_EXTENSIONS.contains(extension)) return "video";
+        return "other";
     }
 
     /**

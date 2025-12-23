@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>메뉴 관리</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+        }
+        .sidebar h2 {
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+        }
+        .sidebar-menu {
+            list-style: none;
+        }
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: #34495e;
+        }
+        .main-content {
+            flex: 1;
+            padding: 30px;
+        }
+        .header {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            color: #333;
+            margin: 0;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-success {
+            background-color: #2ecc71;
+        }
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        .content-section {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .menu-tree {
+            margin-top: 20px;
+        }
+        .menu-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #fff;
+        }
+        .menu-item.level-0 {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .menu-item.level-1 {
+            margin-left: 30px;
+            background-color: #fdfdfd;
+        }
+        .menu-item.level-2 {
+            margin-left: 60px;
+        }
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .menu-info {
+            flex: 1;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .menu-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-active {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .badge-inactive {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .badge-level {
+            background-color: #3498db;
+            color: white;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="sidebar">
+            <h2>🛠️ 관리자 콘솔</h2>
+            <ul class="sidebar-menu">
+                <li><a href="/admin">📊 대시보드</a></li>
+                <li><a href="/admin/users">👥 사용자 관리</a></li>
+                <li><a href="/admin/boards">📝 게시글 관리</a></li>
+                <li><a href="/admin/categories">🏷️ 카테고리 관리</a></li>
+                <li><a href="/admin/banned-words">🚫 금지어 관리</a></li>
+                <li><a href="/admin/files">📁 파일 관리</a></li>
+                <li><a href="/admin/roles">🔑 역할 관리</a></li>
+                <li><a href="/admin/menus" class="active">📋 메뉴 관리</a></li>
+                <li><a href="/admin/role-permissions">🔐 권한 매핑</a></li>
+                <li><a href="/board">🏠 게시판으로</a></li>
+                <li><a href="/mypage">👤 마이페이지</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>메뉴 관리</h1>
+                <button class="btn btn-success" onclick="openCreateModal()">+ 새 메뉴 추가</button>
+            </div>
+
+            <div class="content-section">
+                <div class="menu-tree" id="menuTree">
+                    <!-- 메뉴 트리가 JavaScript로 렌더링됩니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 생성 모달 -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>새 메뉴 추가</h2>
+            </div>
+            <div class="form-group">
+                <label for="createName">메뉴명 *</label>
+                <input type="text" id="createName" required>
+            </div>
+            <div class="form-group">
+                <label for="createDescription">설명</label>
+                <textarea id="createDescription"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="createParentId">상위 메뉴</label>
+                <select id="createParentId">
+                    <option value="">없음 (최상위 메뉴)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="createUrl">URL</label>
+                <input type="text" id="createUrl" placeholder="/admin/example">
+            </div>
+            <div class="form-group">
+                <label for="createIcon">아이콘</label>
+                <input type="text" id="createIcon" placeholder="📋 또는 fa-list">
+            </div>
+            <div class="form-group">
+                <label for="createDisplayOrder">정렬 순서</label>
+                <input type="number" id="createDisplayOrder" value="0" min="0">
+            </div>
+            <div class="form-group">
+                <label for="createMenuType">메뉴 타입</label>
+                <select id="createMenuType">
+                    <option value="MENU" selected>메뉴</option>
+                    <option value="BUTTON">버튼</option>
+                    <option value="DIVIDER">구분선</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeCreateModal()">취소</button>
+                <button class="btn btn-success" onclick="createMenu()">생성</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 수정 모달 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>메뉴 수정</h2>
+            </div>
+            <input type="hidden" id="editId">
+            <div class="form-group">
+                <label for="editName">메뉴명 *</label>
+                <input type="text" id="editName" required>
+            </div>
+            <div class="form-group">
+                <label for="editDescription">설명</label>
+                <textarea id="editDescription"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editParentId">상위 메뉴</label>
+                <select id="editParentId">
+                    <option value="">없음 (최상위 메뉴)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editUrl">URL</label>
+                <input type="text" id="editUrl">
+            </div>
+            <div class="form-group">
+                <label for="editIcon">아이콘</label>
+                <input type="text" id="editIcon">
+            </div>
+            <div class="form-group">
+                <label for="editDisplayOrder">정렬 순서</label>
+                <input type="number" id="editDisplayOrder" min="0">
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeEditModal()">취소</button>
+                <button class="btn btn-success" onclick="updateMenu()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        let menuTreeData = /*[[${menuTree}]]*/ [];
+        let allMenus = [];
+
+        // 페이지 로드 시 메뉴 트리 렌더링
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMenus();
+        });
+
+        function loadMenus() {
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('/admin/api/menus', {
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    allMenus = data.menus;
+                    renderMenuTree();
+                    populateParentSelects();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function renderMenuTree() {
+            const treeContainer = document.getElementById('menuTree');
+            treeContainer.innerHTML = '';
+
+            // 메뉴를 레벨과 순서대로 정렬
+            const sortedMenus = allMenus.sort((a, b) => {
+                if (a.level !== b.level) return a.level - b.level;
+                return a.displayOrder - b.displayOrder;
+            });
+
+            sortedMenus.forEach(menu => {
+                const menuItem = createMenuItemElement(menu);
+                treeContainer.appendChild(menuItem);
+            });
+        }
+
+        function createMenuItemElement(menu) {
+            const div = document.createElement('div');
+            div.className = `menu-item level-${menu.level}`;
+
+            const indent = '　'.repeat(menu.level);
+
+            div.innerHTML = `
+                <div class="menu-header">
+                    <div class="menu-info">
+                        <span>${indent}${menu.icon || ''} ${menu.name}</span>
+                        <span class="badge badge-level">LV${menu.level}</span>
+                        <span class="badge ${menu.enabled ? 'badge-active' : 'badge-inactive'}">
+                            ${menu.enabled ? '활성' : '비활성'}
+                        </span>
+                        <small style="color: #666;">${menu.url || '-'}</small>
+                    </div>
+                    <div class="menu-actions">
+                        <button class="btn btn-sm" onclick="openEditModal(${menu.id}, '${escapeHtml(menu.name)}', '${escapeHtml(menu.description || '')}', ${menu.parentId || 'null'}, '${escapeHtml(menu.url || '')}', '${escapeHtml(menu.icon || '')}', ${menu.displayOrder}, ${menu.enabled})">
+                            수정
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="toggleMenuStatus(${menu.id})">
+                            ${menu.enabled ? '비활성화' : '활성화'}
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteMenu(${menu.id})">
+                            삭제
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return div;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        function populateParentSelects() {
+            const createSelect = document.getElementById('createParentId');
+            const editSelect = document.getElementById('editParentId');
+
+            createSelect.innerHTML = '<option value="">없음 (최상위 메뉴)</option>';
+            editSelect.innerHTML = '<option value="">없음 (최상위 메뉴)</option>';
+
+            allMenus.forEach(menu => {
+                const indent = '　'.repeat(menu.level);
+                const option = `<option value="${menu.id}">${indent}${menu.name}</option>`;
+                createSelect.innerHTML += option;
+                editSelect.innerHTML += option;
+            });
+        }
+
+        function openCreateModal() {
+            document.getElementById('createModal').classList.add('active');
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.remove('active');
+            document.getElementById('createName').value = '';
+            document.getElementById('createDescription').value = '';
+            document.getElementById('createParentId').value = '';
+            document.getElementById('createUrl').value = '';
+            document.getElementById('createIcon').value = '';
+            document.getElementById('createDisplayOrder').value = '0';
+            document.getElementById('createMenuType').value = 'MENU';
+        }
+
+        function openEditModal(id, name, description, parentId, url, icon, displayOrder, enabled) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editName').value = name;
+            document.getElementById('editDescription').value = description || '';
+            document.getElementById('editParentId').value = parentId || '';
+            document.getElementById('editUrl').value = url || '';
+            document.getElementById('editIcon').value = icon || '';
+            document.getElementById('editDisplayOrder').value = displayOrder;
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function createMenu() {
+            const name = document.getElementById('createName').value.trim();
+            const description = document.getElementById('createDescription').value.trim();
+            const parentId = document.getElementById('createParentId').value || null;
+            const url = document.getElementById('createUrl').value.trim();
+            const icon = document.getElementById('createIcon').value.trim();
+            const displayOrder = parseInt(document.getElementById('createDisplayOrder').value);
+            const menuType = document.getElementById('createMenuType').value;
+
+            if (!name) {
+                alert('메뉴명을 입력해주세요.');
+                return;
+            }
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('/admin/api/menus', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ name, description, parentId, url, icon, displayOrder, menuType })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    closeCreateModal();
+                    loadMenus();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        function updateMenu() {
+            const id = document.getElementById('editId').value;
+            const name = document.getElementById('editName').value.trim();
+            const description = document.getElementById('editDescription').value.trim();
+            const parentId = document.getElementById('editParentId').value || null;
+            const url = document.getElementById('editUrl').value.trim();
+            const icon = document.getElementById('editIcon').value.trim();
+            const displayOrder = parseInt(document.getElementById('editDisplayOrder').value);
+
+            if (!name) {
+                alert('메뉴명을 입력해주세요.');
+                return;
+            }
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/admin/api/menus/${id}`, {
+                method: 'PUT',
+                headers: headers,
+                body: JSON.stringify({ name, description, parentId, url, icon, displayOrder })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    closeEditModal();
+                    loadMenus();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        function toggleMenuStatus(menuId) {
+            if (!confirm('메뉴 상태를 변경하시겠습니까?')) {
+                return;
+            }
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/admin/api/menus/${menuId}/toggle-status`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    loadMenus();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        function deleteMenu(menuId) {
+            if (!confirm('정말 이 메뉴를 삭제하시겠습니까?\n\n⚠️ 주의: 하위 메뉴가 있는 경우 삭제할 수 없습니다.')) {
+                return;
+            }
+
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/admin/api/menus/${menuId}`, {
+                method: 'DELETE',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    loadMenus();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 모달 배경 클릭 시 닫기
+        document.getElementById('createModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCreateModal();
+            }
+        });
+
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>

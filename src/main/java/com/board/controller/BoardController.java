@@ -1,10 +1,14 @@
 package com.board.controller;
 
 import com.board.entity.Attachment;
+import com.board.entity.BannedWord;
 import com.board.entity.Board;
 import com.board.entity.Comment;
 import com.board.entity.User;
+import com.board.enums.BannedWordAction;
+import com.board.enums.BoardStatus;
 import com.board.enums.TargetType;
+import com.board.service.BannedWordService;
 import com.board.service.BoardService;
 import com.board.service.BookmarkService;
 import com.board.service.CommentService;
@@ -22,6 +26,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +43,7 @@ public class BoardController {
     private final LikeService likeService;
     private final FileUploadService fileUploadService;
     private final BookmarkService bookmarkService;
+    private final BannedWordService bannedWordService;
 
     @GetMapping
     public String list(
@@ -109,8 +115,27 @@ public class BoardController {
 
     @PostMapping
     public String create(@ModelAttribute Board board,
-                        @RequestParam(value = "files", required = false) List<MultipartFile> files) {
-        // 게시글 생성
+                        @RequestParam(value = "files", required = false) List<MultipartFile> files,
+                        RedirectAttributes redirectAttributes) {
+        // 금지어 검사
+        String combinedText = board.getTitle() + " " + board.getContent();
+        BannedWord bannedWord = bannedWordService.checkForBannedWords(combinedText);
+
+        if (bannedWord != null) {
+            if (bannedWord.getAction() == BannedWordAction.BLOCK) {
+                // 차단 조치: 게시글 작성 차단
+                redirectAttributes.addFlashAttribute("error",
+                    "금지어가 포함되어 있어 게시글을 작성할 수 없습니다: " + bannedWord.getWord());
+                return "redirect:/board/new";
+            } else if (bannedWord.getAction() == BannedWordAction.PENDING) {
+                // 승인 대기 조치: 게시글 상태를 PENDING으로 설정
+                board.setStatus(BoardStatus.PENDING);
+                redirectAttributes.addFlashAttribute("info",
+                    "게시글이 관리자 검토 대기 상태로 등록되었습니다.");
+            }
+        }
+
+        // 금지어가 없거나 승인 대기 상태로 게시글 생성
         Board savedBoard = boardService.createBoard(board);
 
         // 파일 업로드
@@ -132,13 +157,53 @@ public class BoardController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        model.addAttribute("board", boardService.getBoardById(id));
+        Board board = boardService.getBoardById(id);
+        List<Attachment> attachments = fileUploadService.getAttachmentsByBoardId(id);
+
+        model.addAttribute("board", board);
+        model.addAttribute("attachments", attachments);
         return "board/edit";
     }
 
     @PostMapping("/{id}")
-    public String update(@PathVariable Long id, @ModelAttribute Board board) {
+    public String update(@PathVariable Long id,
+                        @ModelAttribute Board board,
+                        @RequestParam(value = "files", required = false) List<MultipartFile> files,
+                        RedirectAttributes redirectAttributes) {
+        // 금지어 검사
+        String combinedText = board.getTitle() + " " + board.getContent();
+        BannedWord bannedWord = bannedWordService.checkForBannedWords(combinedText);
+
+        if (bannedWord != null) {
+            if (bannedWord.getAction() == BannedWordAction.BLOCK) {
+                // 차단 조치: 게시글 수정 차단
+                redirectAttributes.addFlashAttribute("error",
+                    "금지어가 포함되어 있어 게시글을 수정할 수 없습니다: " + bannedWord.getWord());
+                return "redirect:/board/" + id + "/edit";
+            } else if (bannedWord.getAction() == BannedWordAction.PENDING) {
+                // 승인 대기 조치: 게시글 상태를 PENDING으로 변경
+                Board existingBoard = boardService.getBoardById(id);
+                existingBoard.setStatus(BoardStatus.PENDING);
+                redirectAttributes.addFlashAttribute("info",
+                    "게시글이 관리자 검토 대기 상태로 변경되었습니다.");
+            }
+        }
+
         boardService.updateBoard(id, board);
+
+        // 새 파일 업로드
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    try {
+                        fileUploadService.uploadFile(file, id);
+                    } catch (Exception e) {
+                        System.err.println("File upload failed: " + e.getMessage());
+                    }
+                }
+            }
+        }
+
         return "redirect:/board/" + id;
     }
 

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>금지어 관리</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+        }
+        .sidebar h2 {
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+        }
+        .sidebar-menu {
+            list-style: none;
+        }
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: #34495e;
+        }
+        .main-content {
+            flex: 1;
+            padding: 30px;
+        }
+        .header {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            color: #333;
+        }
+        .content-section {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .btn {
+            padding: 6px 12px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .btn-success {
+            background-color: #2ecc71;
+        }
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-active {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .badge-inactive {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .badge-block {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .badge-pending {
+            background-color: #f39c12;
+            color: white;
+        }
+        .badge-regex {
+            background-color: #9b59b6;
+            color: white;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            color: #333;
+        }
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .form-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 5px;
+        }
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="sidebar">
+            <h2>관리자 콘솔</h2>
+            <ul class="sidebar-menu">
+                <li><a href="/admin">대시보드</a></li>
+                <li><a href="/admin/users">사용자 관리</a></li>
+                <li><a href="/admin/boards">게시글 관리</a></li>
+                <li><a href="/admin/categories">카테고리 관리</a></li>
+                <li><a href="/admin/banned-words" class="active">금지어 관리</a></li>
+                <li><a href="/admin/files">파일 관리</a></li>
+                <li><a href="/board">게시판으로</a></li>
+                <li><a href="/mypage">마이페이지</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>금지어 관리</h1>
+                <button class="btn btn-success" onclick="openCreateModal()">금지어 추가</button>
+            </div>
+
+            <div class="content-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>금지어</th>
+                            <th>설명</th>
+                            <th>유형</th>
+                            <th>조치</th>
+                            <th>상태</th>
+                            <th>등록일</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${bannedWords.isEmpty()}">
+                            <td colspan="8" style="text-align: center; padding: 30px; color: #999;">
+                                등록된 금지어가 없습니다.
+                            </td>
+                        </tr>
+                        <tr th:each="word : ${bannedWords}">
+                            <td th:text="${word.id}">1</td>
+                            <td>
+                                <strong th:text="${word.word}">금지어</strong>
+                                <span th:if="${word.isRegex}" class="badge badge-regex">정규식</span>
+                            </td>
+                            <td th:text="${word.description}">설명</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${word.isRegex} ? 'badge-regex' : 'badge-active'"
+                                      th:text="${word.isRegex} ? '정규식' : '일반'">일반</span>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${word.action?.name() == 'BLOCK'} ? 'badge-block' : 'badge-pending'"
+                                      th:text="${word.action?.displayName}">차단</span>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${word.enabled} ? 'badge-active' : 'badge-inactive'"
+                                      th:text="${word.enabled} ? '활성' : '비활성'">활성</span>
+                            </td>
+                            <td th:text="${#temporals.format(word.createdAt, 'yyyy-MM-dd')}">2023-01-01</td>
+                            <td>
+                                <button class="btn" th:onclick="'openEditModal(' + ${word.id} + ')'">수정</button>
+                                <button class="btn btn-warning"
+                                        th:onclick="'toggleStatus(' + ${word.id} + ')'">
+                                    <span th:text="${word.enabled} ? '비활성화' : '활성화'">토글</span>
+                                </button>
+                                <button class="btn btn-danger"
+                                        th:onclick="'deleteBannedWord(' + ${word.id} + ')'">삭제</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 금지어 추가/수정 모달 -->
+    <div id="bannedWordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">금지어 추가</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="bannedWordForm">
+                <input type="hidden" id="bannedWordId">
+                <div class="form-group">
+                    <label for="word">금지어 *</label>
+                    <input type="text" id="word" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">설명</label>
+                    <textarea id="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isRegex">
+                        정규식 사용
+                    </label>
+                    <small style="color: #999;">정규식을 사용하면 패턴 매칭이 가능합니다. 예: (광고|스팸)</small>
+                </div>
+                <div class="form-group">
+                    <label for="action">조치 *</label>
+                    <select id="action">
+                        <option value="BLOCK">차단 (게시글 작성 차단)</option>
+                        <option value="PENDING">승인대기 (관리자 검토)</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">취소</button>
+                    <button type="submit" class="btn btn-success">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const bannedWords = /*[[${bannedWords}]]*/ [];
+
+        // 모달 열기 (생성)
+        function openCreateModal() {
+            document.getElementById('modalTitle').textContent = '금지어 추가';
+            document.getElementById('bannedWordForm').reset();
+            document.getElementById('bannedWordId').value = '';
+            document.getElementById('bannedWordModal').style.display = 'block';
+        }
+
+        // 모달 열기 (수정)
+        function openEditModal(id) {
+            const word = bannedWords.find(w => w.id === id);
+            if (!word) return;
+
+            document.getElementById('modalTitle').textContent = '금지어 수정';
+            document.getElementById('bannedWordId').value = word.id;
+            document.getElementById('word').value = word.word;
+            document.getElementById('description').value = word.description || '';
+            document.getElementById('isRegex').checked = word.isRegex;
+            document.getElementById('action').value = word.action.name();
+            document.getElementById('bannedWordModal').style.display = 'block';
+        }
+
+        // 모달 닫기
+        function closeModal() {
+            document.getElementById('bannedWordModal').style.display = 'none';
+        }
+
+        // 폼 제출
+        document.getElementById('bannedWordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('bannedWordId').value;
+            const data = {
+                word: document.getElementById('word').value.trim(),
+                description: document.getElementById('description').value.trim(),
+                isRegex: document.getElementById('isRegex').checked,
+                action: document.getElementById('action').value
+            };
+
+            const url = id ? `/admin/banned-words/${id}` : '/admin/banned-words';
+            const method = id ? 'PUT' : 'POST';
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(url, {
+                method: method,
+                headers: headers,
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        });
+
+        // 금지어 활성화/비활성화 토글
+        function toggleStatus(id) {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/admin/banned-words/${id}/toggle-status`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 금지어 삭제
+        function deleteBannedWord(id) {
+            if (!confirm('정말로 이 금지어를 삭제하시겠습니까?')) {
+                return;
+            }
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/admin/banned-words/${id}`, {
+                method: 'DELETE',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 모달 외부 클릭 시 닫기
+        window.onclick = function(event) {
+            const modal = document.getElementById('bannedWordModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

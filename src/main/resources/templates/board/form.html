@@ -164,17 +164,22 @@
             </div>
 
             <div class="form-group">
-                <label>이미지 첨부 (최대 5개, 각 10MB 이하)</label>
+                <label>파일 첨부 (최대 5개, 각 50MB 이하)</label>
                 <div class="file-upload-area" onclick="document.getElementById('fileInput').click()">
                     <p>📁 클릭하여 파일 선택 또는 드래그 앤 드롭</p>
                     <input type="file"
                            id="fileInput"
                            name="files"
                            multiple
-                           accept="image/jpeg,image/jpg,image/png,image/gif"
+                           accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.hwp,.zip,.rar,.7z"
                            onchange="handleFileSelect(event)">
                 </div>
-                <p class="info-text">* jpg, jpeg, png, gif 파일만 업로드 가능합니다.</p>
+                <p class="info-text">
+                    * 이미지: jpg, jpeg, png, gif, bmp, webp<br>
+                    * 문서: pdf, doc, docx, xls, xlsx, ppt, pptx, txt, hwp<br>
+                    * 압축: zip, rar, 7z, tar, gz<br>
+                    * 동영상: mp4, avi, mov, wmv, flv, mkv, webm
+                </p>
                 <div id="fileList" class="file-list"></div>
             </div>
 
@@ -220,14 +225,23 @@
             }
 
             files.forEach(file => {
-                // 파일 크기 검증 (10MB)
-                if (file.size > 10 * 1024 * 1024) {
-                    alert(`${file.name}은(는) 10MB를 초과합니다.`);
+                // 파일 크기 검증 (50MB)
+                if (file.size > 50 * 1024 * 1024) {
+                    alert(`${file.name}은(는) 50MB를 초과합니다.`);
                     return;
                 }
 
                 // 파일 확장자 검증
-                const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+                const allowedExtensions = [
+                    // 이미지
+                    'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp',
+                    // 문서
+                    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'hwp',
+                    // 압축
+                    'zip', 'rar', '7z', 'tar', 'gz',
+                    // 동영상
+                    'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'
+                ];
                 const extension = file.name.split('.').pop().toLowerCase();
                 if (!allowedExtensions.includes(extension)) {
                     alert(`${file.name}은(는) 허용되지 않는 파일 형식입니다.`);

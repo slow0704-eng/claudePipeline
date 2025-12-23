@@ -151,6 +151,9 @@
                 <li><a href="/admin">📊 대시보드</a></li>
                 <li><a href="/admin/users" class="active">👥 사용자 관리</a></li>
                 <li><a href="/admin/boards">📝 게시글 관리</a></li>
+                <li><a href="/admin/categories">🏷️ 카테고리 관리</a></li>
+                <li><a href="/admin/banned-words">🚫 금지어 관리</a></li>
+                <li><a href="/admin/files">📁 파일 관리</a></li>
                 <li><a href="/board">🏠 게시판으로</a></li>
                 <li><a href="/mypage">👤 마이페이지</a></li>
             </ul>
@@ -168,6 +171,7 @@
                             <th>ID</th>
                             <th>아이디</th>
                             <th>닉네임</th>
+                            <th>이름</th>
                             <th>권한</th>
                             <th>상태</th>
                             <th>가입일</th>
@@ -179,9 +183,22 @@
                             <td th:text="${user.id}">1</td>
                             <td th:text="${user.username}">username</td>
                             <td>
-                                <a th:href="@{/user/{id}(id=${user.id})}"
-                                   style="color: #3498db; text-decoration: none;"
-                                   th:text="${user.nickname}">닉네임</a>
+                                <span th:id="'nickname-display-' + ${user.id}">
+                                    <a th:href="@{/user/{id}(id=${user.id})}"
+                                       style="color: #3498db; text-decoration: none;"
+                                       th:text="${user.nickname}">닉네임</a>
+                                </span>
+                                <input type="text"
+                                       th:id="'nickname-input-' + ${user.id}"
+                                       th:value="${user.nickname}"
+                                       style="display:none; padding: 4px; width: 120px;">
+                            </td>
+                            <td>
+                                <span th:id="'name-display-' + ${user.id}" th:text="${user.name}">이름</span>
+                                <input type="text"
+                                       th:id="'name-input-' + ${user.id}"
+                                       th:value="${user.name}"
+                                       style="display:none; padding: 4px; width: 100px;">
                             </td>
                             <td>
                                 <span class="badge"
@@ -195,6 +212,24 @@
                             </td>
                             <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}">2023-01-01</td>
                             <td>
+                                <button class="btn"
+                                        th:id="'edit-btn-' + ${user.id}"
+                                        th:onclick="'editUserInfo(' + ${user.id} + ')'">
+                                    수정
+                                </button>
+                                <button class="btn btn-success"
+                                        th:id="'save-btn-' + ${user.id}"
+                                        th:onclick="'saveUserInfo(' + ${user.id} + ')'"
+                                        style="display:none;">
+                                    저장
+                                </button>
+                                <button class="btn"
+                                        th:id="'cancel-btn-' + ${user.id}"
+                                        th:onclick="'cancelEdit(' + ${user.id} + ')'"
+                                        style="display:none;">
+                                    취소
+                                </button>
+                                <br style="margin: 4px 0;">
                                 <button th:if="${user.enabled}"
                                         class="btn btn-warning"
                                         th:onclick="'toggleUserEnabled(' + ${user.id} + ')'">
@@ -274,6 +309,71 @@
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify({ role: newRole })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        function editUserInfo(userId) {
+            // 입력 필드 표시
+            document.getElementById(`nickname-display-${userId}`).style.display = 'none';
+            document.getElementById(`nickname-input-${userId}`).style.display = 'inline-block';
+            document.getElementById(`name-display-${userId}`).style.display = 'none';
+            document.getElementById(`name-input-${userId}`).style.display = 'inline-block';
+
+            // 버튼 전환
+            document.getElementById(`edit-btn-${userId}`).style.display = 'none';
+            document.getElementById(`save-btn-${userId}`).style.display = 'inline-block';
+            document.getElementById(`cancel-btn-${userId}`).style.display = 'inline-block';
+        }
+
+        function cancelEdit(userId) {
+            // 입력 필드 숨기기
+            document.getElementById(`nickname-display-${userId}`).style.display = 'inline';
+            document.getElementById(`nickname-input-${userId}`).style.display = 'none';
+            document.getElementById(`name-display-${userId}`).style.display = 'inline';
+            document.getElementById(`name-input-${userId}`).style.display = 'none';
+
+            // 버튼 전환
+            document.getElementById(`edit-btn-${userId}`).style.display = 'inline-block';
+            document.getElementById(`save-btn-${userId}`).style.display = 'none';
+            document.getElementById(`cancel-btn-${userId}`).style.display = 'none';
+        }
+
+        function saveUserInfo(userId) {
+            const nickname = document.getElementById(`nickname-input-${userId}`).value.trim();
+            const name = document.getElementById(`name-input-${userId}`).value.trim();
+
+            if (!nickname) {
+                alert('닉네임은 필수입니다.');
+                return;
+            }
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/admin/users/${userId}/update-info`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    nickname: nickname,
+                    name: name
+                })
             })
             .then(response => response.json())
             .then(data => {

@@ -595,9 +595,12 @@
                     <a sec:authorize="hasRole('ADMIN')" href="/admin" class="action-btn" style="background: #e74c3c; color: white;">
                         <i class="fas fa-shield-alt"></i> 관리자
                     </a>
-                    <a href="/auth/logout" class="action-btn action-btn-secondary">
-                        <i class="fas fa-sign-out-alt"></i> 로그아웃
-                    </a>
+                    <form action="/auth/logout" method="post" style="display: inline;">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="action-btn action-btn-secondary" style="border: none; cursor: pointer; font-family: inherit; font-size: inherit;">
+                            <i class="fas fa-sign-out-alt"></i> 로그아웃
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

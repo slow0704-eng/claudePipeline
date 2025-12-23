@@ -69,6 +69,31 @@
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+        .filter-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .bulk-actions {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -107,18 +132,64 @@
         .btn-danger:hover {
             background-color: #c0392b;
         }
+        .btn-success {
+            background-color: #2ecc71;
+        }
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        .btn-secondary {
+            background-color: #95a5a6;
+        }
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+        .badge-public {
+            background-color: #2ecc71;
+        }
+        .badge-hidden {
+            background-color: #95a5a6;
+        }
+        .badge-deleted {
+            background-color: #e74c3c;
+        }
+        .badge-pending {
+            background-color: #f39c12;
+        }
+        .badge-pinned {
+            background-color: #9b59b6;
+        }
+        .badge-important {
+            background-color: #e67e22;
+        }
     </style>
 </head>
 <body>
     <div class="admin-container">
         <div class="sidebar">
-            <h2>🛠️ 관리자 콘솔</h2>
+            <h2>관리자 콘솔</h2>
             <ul class="sidebar-menu">
-                <li><a href="/admin">📊 대시보드</a></li>
-                <li><a href="/admin/users">👥 사용자 관리</a></li>
-                <li><a href="/admin/boards" class="active">📝 게시글 관리</a></li>
-                <li><a href="/board">🏠 게시판으로</a></li>
-                <li><a href="/mypage">👤 마이페이지</a></li>
+                <li><a href="/admin">대시보드</a></li>
+                <li><a href="/admin/users">사용자 관리</a></li>
+                <li><a href="/admin/boards" class="active">게시글 관리</a></li>
+                <li><a href="/admin/categories">카테고리 관리</a></li>
+                <li><a href="/admin/banned-words">금지어 관리</a></li>
+                <li><a href="/admin/files">파일 관리</a></li>
+                <li><a href="/board">게시판으로</a></li>
+                <li><a href="/mypage">마이페이지</a></li>
             </ul>
         </div>
 
@@ -128,10 +199,35 @@
             </div>
 
             <div class="content-section">
+                <!-- 필터 섹션 -->
+                <div class="filter-section">
+                    <div class="filter-group">
+                        <select id="statusFilter">
+                            <option value="">전체 상태</option>
+                            <option value="PUBLIC">공개</option>
+                            <option value="HIDDEN">숨김</option>
+                            <option value="DELETED">삭제</option>
+                            <option value="PENDING">승인대기</option>
+                        </select>
+                        <input type="text" id="keywordFilter" placeholder="제목/작성자 검색">
+                        <button class="btn" onclick="applyFilters()">검색</button>
+                        <button class="btn btn-secondary" onclick="resetFilters()">초기화</button>
+                    </div>
+                </div>
+
+                <!-- 대량 작업 버튼 -->
+                <div class="bulk-actions">
+                    <button class="btn btn-danger" onclick="bulkAction('delete')">선택 항목 삭제</button>
+                    <button class="btn btn-warning" onclick="bulkAction('hide')">선택 항목 숨김</button>
+                    <button class="btn btn-success" onclick="bulkAction('restore')">선택 항목 복구</button>
+                </div>
+
                 <table>
                     <thead>
                         <tr>
+                            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
                             <th>ID</th>
+                            <th>상태</th>
                             <th>제목</th>
                             <th>작성자</th>
                             <th>조회수</th>
@@ -143,12 +239,22 @@
                     </thead>
                     <tbody>
                         <tr th:if="${boards.isEmpty()}">
-                            <td colspan="8" style="text-align: center; padding: 30px; color: #999;">
+                            <td colspan="10" style="text-align: center; padding: 30px; color: #999;">
                                 게시글이 없습니다.
                             </td>
                         </tr>
                         <tr th:each="board : ${boards}">
+                            <td><input type="checkbox" class="board-checkbox" th:value="${board.id}"></td>
                             <td th:text="${board.id}">1</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${board.status?.name() == 'PUBLIC'} ? 'badge-public' :
+                                                      (${board.status?.name() == 'HIDDEN'} ? 'badge-hidden' :
+                                                      (${board.status?.name() == 'DELETED'} ? 'badge-deleted' : 'badge-pending'))"
+                                      th:text="${board.status?.displayName ?: '공개'}">공개</span>
+                                <span th:if="${board.isPinned}" class="badge badge-pinned">고정</span>
+                                <span th:if="${board.isImportant}" class="badge badge-important">중요</span>
+                            </td>
                             <td>
                                 <a th:href="@{/board/{id}(id=${board.id})}"
                                    style="color: #3498db; text-decoration: none;"
@@ -168,10 +274,9 @@
                             <td th:text="${#temporals.format(board.createdAt, 'yyyy-MM-dd HH:mm')}">2023-01-01</td>
                             <td>
                                 <a th:href="@{/board/{id}(id=${board.id})}" class="btn">보기</a>
-                                <button class="btn btn-danger"
-                                        th:onclick="'deleteBoard(' + ${board.id} + ')'">
-                                    삭제
-                                </button>
+                                <button th:if="${!board.isPinned}" class="btn btn-success" th:onclick="'pinBoard(' + ${board.id} + ')'">고정</button>
+                                <button th:if="${board.isPinned}" class="btn btn-warning" th:onclick="'unpinBoard(' + ${board.id} + ')'">고정해제</button>
+                                <button class="btn btn-danger" th:onclick="'deleteBoard(' + ${board.id} + ')'">삭제</button>
                             </td>
                         </tr>
                     </tbody>
@@ -184,6 +289,78 @@
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
+        // 전체 선택/해제
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.board-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        }
+
+        // 선택된 게시글 ID 목록
+        function getSelectedBoardIds() {
+            const checkboxes = document.querySelectorAll('.board-checkbox:checked');
+            return Array.from(checkboxes).map(cb => parseInt(cb.value));
+        }
+
+        // 대량 작업
+        function bulkAction(action) {
+            const boardIds = getSelectedBoardIds();
+            if (boardIds.length === 0) {
+                alert('게시글을 선택해주세요.');
+                return;
+            }
+
+            let actionUrl;
+            let confirmMsg;
+            switch(action) {
+                case 'delete':
+                    actionUrl = '/admin/boards/bulk-delete';
+                    confirmMsg = `선택한 ${boardIds.length}개의 게시글을 삭제하시겠습니까?`;
+                    break;
+                case 'hide':
+                    actionUrl = '/admin/boards/bulk-hide';
+                    confirmMsg = `선택한 ${boardIds.length}개의 게시글을 숨김 처리하시겠습니까?`;
+                    break;
+                case 'restore':
+                    actionUrl = '/admin/boards/bulk-restore';
+                    confirmMsg = `선택한 ${boardIds.length}개의 게시글을 복구하시겠습니까?`;
+                    break;
+                default:
+                    return;
+            }
+
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(actionUrl, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ boardIds: boardIds })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 게시글 삭제
         function deleteBoard(boardId) {
             if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
                 return;
@@ -213,6 +390,79 @@
                 console.error('Error:', error);
                 alert('처리 중 오류가 발생했습니다.');
             });
+        }
+
+        // 게시글 고정
+        function pinBoard(boardId) {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/admin/boards/${boardId}/pin`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 게시글 고정 해제
+        function unpinBoard(boardId) {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/admin/boards/${boardId}/unpin`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 필터 적용
+        function applyFilters() {
+            const status = document.getElementById('statusFilter').value;
+            const keyword = document.getElementById('keywordFilter').value;
+
+            const params = new URLSearchParams();
+            if (status) params.append('status', status);
+            if (keyword) params.append('keyword', keyword);
+
+            location.href = '/admin/boards' + (params.toString() ? '?' + params.toString() : '');
+        }
+
+        // 필터 초기화
+        function resetFilters() {
+            location.href = '/admin/boards';
         }
     </script>
 </body>

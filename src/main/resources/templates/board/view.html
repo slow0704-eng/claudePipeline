@@ -247,6 +247,85 @@
         .image-item .delete-btn:hover {
             background-color: #c82333;
         }
+        .file-list {
+            margin-top: 20px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        .file-item:hover {
+            background-color: #e9ecef;
+        }
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+        .file-icon.image { background-color: #e3f2fd; }
+        .file-icon.document { background-color: #fff3e0; }
+        .file-icon.archive { background-color: #f3e5f5; }
+        .file-icon.video { background-color: #ffe0b2; }
+        .file-info {
+            flex: 1;
+        }
+        .file-name {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .file-size {
+            font-size: 12px;
+            color: #666;
+        }
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .file-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .btn-download {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-download:hover {
+            background-color: #0056b3;
+        }
+        .btn-delete-file {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-delete-file:hover {
+            background-color: #c82333;
+        }
+        .video-container {
+            position: relative;
+            margin-bottom: 15px;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .video-container video {
+            width: 100%;
+            max-height: 500px;
+            display: block;
+        }
         .lightbox {
             display: none;
             position: fixed;
@@ -429,11 +508,13 @@
             <span th:text="${board.content}">게시글 내용</span>
         </div>
 
-        <!-- 첨부 이미지 -->
+        <!-- 첨부 파일 -->
         <div class="attachments-section" th:if="${attachments != null and !attachments.isEmpty()}">
-            <h3>📷 첨부 이미지 (<span th:text="${attachments.size()}">0</span>)</h3>
-            <div class="image-gallery">
-                <div class="image-item" th:each="attachment : ${attachments}">
+            <h3>📎 첨부 파일 (<span th:text="${attachments.size()}">0</span>)</h3>
+
+            <!-- 이미지 파일 -->
+            <div class="image-gallery" th:if="${#lists.size(attachments.?[fileType matches '(?i)(jpg|jpeg|png|gif|bmp|webp)'])} > 0">
+                <div class="image-item" th:each="attachment : ${attachments.?[fileType matches '(?i)(jpg|jpeg|png|gif|bmp|webp)']}">
                     <img th:src="@{'/uploads/' + ${attachment.storedFilePath}}"
                          th:alt="${attachment.originalFileName}"
                          onclick="openLightbox(this.src)">
@@ -442,6 +523,49 @@
                             th:onclick="'deleteAttachment(' + ${attachment.id} + ')'">
                         ×
                     </button>
+                </div>
+            </div>
+
+            <!-- 동영상 파일 -->
+            <div th:if="${#lists.size(attachments.?[fileType matches '(?i)(mp4|webm|mov)'])} > 0">
+                <div class="video-container" th:each="attachment : ${attachments.?[fileType matches '(?i)(mp4|webm|mov)']}">
+                    <video controls>
+                        <source th:src="@{'/uploads/' + ${attachment.storedFilePath}}"
+                                th:type="'video/' + ${attachment.fileType}">
+                        브라우저가 동영상을 지원하지 않습니다.
+                    </video>
+                    <div th:if="${isOwner}" style="padding: 10px; background-color: #f8f9fa;">
+                        <span th:text="${attachment.originalFileName}"></span>
+                        <button class="btn-delete-file"
+                                th:onclick="'deleteAttachment(' + ${attachment.id} + ')'"
+                                style="float: right;">
+                            삭제
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 기타 파일 (문서, 압축파일 등) -->
+            <div class="file-list" th:if="${#lists.size(attachments.?[!fileType matches '(?i)(jpg|jpeg|png|gif|bmp|webp|mp4|webm|mov)'])} > 0">
+                <div class="file-item" th:each="attachment : ${attachments.?[!fileType matches '(?i)(jpg|jpeg|png|gif|bmp|webp|mp4|webm|mov)']}">
+                    <div class="file-icon"
+                         th:classappend="${attachment.fileType matches '(?i)(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|hwp)'} ? 'document' : 'archive'">
+                        <span th:text="${attachment.fileType matches '(?i)(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|hwp)'} ? '📄' : '📦'">📄</span>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name" th:text="${attachment.originalFileName}">파일명</div>
+                        <div class="file-size" th:text="${#numbers.formatDecimal(attachment.fileSize / 1024.0, 1, 2)} + ' KB'">0 KB</div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="btn-download" th:onclick="'downloadFile(' + ${attachment.id} + ')'">
+                            다운로드
+                        </button>
+                        <button class="btn-delete-file"
+                                th:if="${isOwner}"
+                                th:onclick="'deleteAttachment(' + ${attachment.id} + ')'">
+                            삭제
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -957,7 +1081,7 @@
 
         // Delete attachment
         function deleteAttachment(attachmentId) {
-            if (!confirm('이 이미지를 삭제하시겠습니까?')) {
+            if (!confirm('이 파일을 삭제하시겠습니까?')) {
                 return;
             }
 
@@ -980,13 +1104,18 @@
                 if (data.success) {
                     location.reload();
                 } else {
-                    alert(data.message || '이미지 삭제에 실패했습니다.');
+                    alert(data.message || '파일 삭제에 실패했습니다.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('오류가 발생했습니다.');
             });
+        }
+
+        // Download file
+        function downloadFile(attachmentId) {
+            window.location.href = `/files/download/${attachmentId}`;
         }
 
         // ESC key to close lightbox
