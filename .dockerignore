@@ -1,0 +1,61 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Git
+.git/
+.gitignore
+
+# Environment files
+.env
+.env.local
+
+# Uploads (local development)
+uploads/
+
+# Documentation
+*.md
+!README.md
+
+# Database files
+*.db
+*.sqlite
+
+# Python (conversion scripts)
+*.py
+__pycache__/
+*.pyc
+
+# Batch files
+*.bat
+*.sh
+
+# Other
+.dockerignore
+Dockerfile
+render.yaml

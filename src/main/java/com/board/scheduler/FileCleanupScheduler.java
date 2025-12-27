@@ -88,7 +88,7 @@ public class FileCleanupScheduler {
             log.info("Total files: {}", stats.get("totalFiles"));
             log.info("Orphaned files: {}", stats.get("orphanedFiles"));
             log.info("Orphaned size: {}", stats.get("orphanedSizeFormatted"));
-            log.info("DB/Disk sync status: {}", syncStatus.get("isSynced") ? "SYNCED" : "NOT SYNCED");
+            log.info("DB/Disk sync status: {}", (boolean) syncStatus.get("isSynced") ? "SYNCED" : "NOT SYNCED");
             log.info("Disk usage: {}", syncStatus.get("diskUsageFormatted"));
 
             // 동기화 문제 경고
