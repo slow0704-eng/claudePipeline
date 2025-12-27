@@ -10,10 +10,26 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      - key: DATABASE_URL
+      - key: PGHOST
         fromDatabase:
           name: board-postgres
-          property: connectionString
+          property: host
+      - key: PGPORT
+        fromDatabase:
+          name: board-postgres
+          property: port
+      - key: PGDATABASE
+        fromDatabase:
+          name: board-postgres
+          property: database
+      - key: PGUSER
+        fromDatabase:
+          name: board-postgres
+          property: user
+      - key: PGPASSWORD
+        fromDatabase:
+          name: board-postgres
+          property: password
       - key: JAVA_TOOL_OPTIONS
         value: "-Xmx512m -Xms256m"
 

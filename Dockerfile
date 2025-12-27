@@ -26,10 +26,14 @@ EXPOSE 8080
 # Set JVM options for production
 ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
-# Run application with DATABASE_URL conversion
+# Run application
+# Render provides PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD
+# We convert these to Spring Boot format
 ENTRYPOINT ["sh", "-c", "\
-  if [ -n \"$DATABASE_URL\" ]; then \
-    export SPRING_DATASOURCE_URL=$(echo $DATABASE_URL | sed 's|^postgres://|jdbc:postgresql://|'); \
+  if [ -n \"$PGHOST\" ]; then \
+    export SPRING_DATASOURCE_URL=\"jdbc:postgresql://${PGHOST}:${PGPORT:-5432}/${PGDATABASE}\"; \
+    export SPRING_DATASOURCE_USERNAME=\"$PGUSER\"; \
+    export SPRING_DATASOURCE_PASSWORD=\"$PGPASSWORD\"; \
   fi; \
   java $JAVA_OPTS -Dspring.profiles.active=prod -jar app.jar \
 "]
