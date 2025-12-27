@@ -27,25 +27,20 @@ EXPOSE 8080
 ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
 # Run application
-# Render provides PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD
-# We convert these to Spring Boot format WITH SSL PARAMETERS
+# Priority: Use SPRING_DATASOURCE_URL if set, otherwise build from PG* variables
 ENTRYPOINT ["sh", "-c", "\
   echo '==> Checking database environment variables...'; \
-  echo 'PGHOST='$PGHOST; \
-  echo 'PGPORT='$PGPORT; \
-  echo 'PGDATABASE='$PGDATABASE; \
-  echo 'PGUSER='$PGUSER; \
-  echo 'SPRING_DATASOURCE_URL='$SPRING_DATASOURCE_URL; \
-  if [ -n \"$PGHOST\" ]; then \
+  if [ -n \"$SPRING_DATASOURCE_URL\" ]; then \
+    echo '==> Using pre-configured SPRING_DATASOURCE_URL (PRIORITY)'; \
+    echo 'URL (password hidden):'$(echo $SPRING_DATASOURCE_URL | sed 's/password=[^&]*/password=***/'); \
+  elif [ -n \"$PGHOST\" ]; then \
     export SPRING_DATASOURCE_URL=\"jdbc:postgresql://${PGHOST}:${PGPORT:-5432}/${PGDATABASE}?sslmode=require\"; \
     export SPRING_DATASOURCE_USERNAME=\"$PGUSER\"; \
     export SPRING_DATASOURCE_PASSWORD=\"$PGPASSWORD\"; \
-    echo '==> Built JDBC URL from PG variables'; \
-  elif [ -n \"$SPRING_DATASOURCE_URL\" ]; then \
-    echo '==> Using pre-configured SPRING_DATASOURCE_URL'; \
+    echo '==> Built JDBC URL from PG variables (FALLBACK)'; \
+    echo 'URL:'$(echo $SPRING_DATASOURCE_URL | sed 's/:[^:]*@/:***@/'); \
   else \
     echo '==> ERROR: No database configuration found!'; \
   fi; \
-  echo 'Final SPRING_DATASOURCE_URL (password hidden):'$(echo $SPRING_DATASOURCE_URL | sed 's/:[^:]*@/:***@/'); \
   java $JAVA_OPTS -Dspring.profiles.active=prod -jar app.jar \
 "]
