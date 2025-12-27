@@ -28,10 +28,10 @@ ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=7
 
 # Run application
 # Render provides PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD
-# We convert these to Spring Boot format
+# We convert these to Spring Boot format WITH SSL PARAMETERS
 ENTRYPOINT ["sh", "-c", "\
   if [ -n \"$PGHOST\" ]; then \
-    export SPRING_DATASOURCE_URL=\"jdbc:postgresql://${PGHOST}:${PGPORT:-5432}/${PGDATABASE}\"; \
+    export SPRING_DATASOURCE_URL=\"jdbc:postgresql://${PGHOST}:${PGPORT:-5432}/${PGDATABASE}?sslmode=require\"; \
     export SPRING_DATASOURCE_USERNAME=\"$PGUSER\"; \
     export SPRING_DATASOURCE_PASSWORD=\"$PGPASSWORD\"; \
   fi; \
