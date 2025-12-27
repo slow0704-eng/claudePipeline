@@ -1,20 +1,11 @@
 services:
-  # PostgreSQL Database
-  - type: pserv
-    name: board-postgres
-    env: docker
-    plan: free
-    region: singapore
-    ipAllowList: []
-
   # Web Service (Spring Boot Application)
   - type: web
     name: spring-board-app
-    env: java
+    env: docker
     region: singapore
     plan: free
-    buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/*.jar
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /
     envVars:
       - key: SPRING_PROFILES_ACTIVE
