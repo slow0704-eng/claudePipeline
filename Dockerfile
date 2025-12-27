@@ -26,5 +26,10 @@ EXPOSE 8080
 # Set JVM options for production
 ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
-# Run application
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=prod -jar app.jar"]
+# Run application with DATABASE_URL conversion
+ENTRYPOINT ["sh", "-c", "\
+  if [ -n \"$DATABASE_URL\" ]; then \
+    export SPRING_DATASOURCE_URL=$(echo $DATABASE_URL | sed 's|^postgres://|jdbc:postgresql://|'); \
+  fi; \
+  java $JAVA_OPTS -Dspring.profiles.active=prod -jar app.jar \
+"]
