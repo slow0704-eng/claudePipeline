@@ -44,13 +44,15 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     /**
      * 대화 상대 목록 조회 (최근 메시지 기준)
+     * PostgreSQL의 DISTINCT + ORDER BY 제약을 피하기 위해 서브쿼리 사용
      */
-    @Query("SELECT DISTINCT CASE " +
+    @Query("SELECT CASE " +
            "WHEN m.senderId = :userId THEN m.recipientId " +
            "ELSE m.senderId END " +
            "FROM Message m " +
            "WHERE m.senderId = :userId OR m.recipientId = :userId " +
-           "ORDER BY m.createdAt DESC")
+           "GROUP BY CASE WHEN m.senderId = :userId THEN m.recipientId ELSE m.senderId END " +
+           "ORDER BY MAX(m.createdAt) DESC")
     List<Long> findConversationPartners(@Param("userId") Long userId);
 
     /**
