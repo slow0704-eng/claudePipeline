@@ -44,6 +44,7 @@ public class BoardController {
     private final FileUploadService fileUploadService;
     private final BookmarkService bookmarkService;
     private final BannedWordService bannedWordService;
+    private final com.board.service.CategoryService categoryService;
 
     @GetMapping
     public String list(
@@ -64,11 +65,85 @@ public class BoardController {
         // Get paged boards
         Page<Board> boardPage = boardService.getAllBoards(pageable);
 
+        // Get categories for filter
+        model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("boardPage", boardPage);
         model.addAttribute("currentPage", page);
         model.addAttribute("pageSize", size);
         model.addAttribute("sortBy", sortBy);
         model.addAttribute("sortDir", sortDir);
+
+        return "board/list";
+    }
+
+    @GetMapping("/search")
+    public String search(
+            @RequestParam(required = false) String searchType,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Integer minViews,
+            @RequestParam(required = false) Integer maxViews,
+            @RequestParam(required = false) Integer minLikes,
+            @RequestParam(required = false) Integer maxLikes,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            Model model) {
+
+        // Create sort object
+        Sort sort = sortDir.equalsIgnoreCase("asc") ?
+                    Sort.by(sortBy).ascending() :
+                    Sort.by(sortBy).descending();
+
+        // Create pageable object
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Parse date strings to LocalDateTime
+        java.time.LocalDateTime startDateTime = null;
+        java.time.LocalDateTime endDateTime = null;
+
+        if (startDate != null && !startDate.isEmpty()) {
+            startDateTime = java.time.LocalDate.parse(startDate).atStartOfDay();
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            endDateTime = java.time.LocalDate.parse(endDate).atTime(23, 59, 59);
+        }
+
+        // Perform advanced search
+        Page<Board> boardPage = boardService.advancedSearch(
+                searchType,
+                keyword,
+                categoryId,
+                startDateTime,
+                endDateTime,
+                minViews,
+                maxViews,
+                minLikes,
+                maxLikes,
+                pageable
+        );
+
+        // Get categories for filter
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("boardPage", boardPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", size);
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("sortDir", sortDir);
+
+        // Pass search parameters back to view
+        model.addAttribute("searchType", searchType);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("categoryId", categoryId);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        model.addAttribute("minViews", minViews);
+        model.addAttribute("maxViews", maxViews);
+        model.addAttribute("minLikes", minLikes);
+        model.addAttribute("maxLikes", maxLikes);
 
         return "board/list";
     }

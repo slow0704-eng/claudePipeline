@@ -372,4 +372,90 @@ public class BoardService {
         board.setCategoryId(categoryId);
         return boardRepository.save(board);
     }
+
+    // =============== 사용자용 고급 검색 기능 ===============
+
+    /**
+     * 고급 검색 (사용자용) - 여러 필터 조건으로 검색
+     */
+    public Page<Board> advancedSearch(
+            String searchType,
+            String keyword,
+            Long categoryId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Integer minViews,
+            Integer maxViews,
+            Integer minLikes,
+            Integer maxLikes,
+            Pageable pageable
+    ) {
+        // searchType에 따라 검색 방식 변경
+        Page<Board> boards;
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            switch (searchType != null ? searchType : "all") {
+                case "title":
+                    boards = boardRepository.findByTitleContainingAndIsDraftFalse(keyword, pageable);
+                    break;
+                case "content":
+                    boards = boardRepository.findByContentContainingAndIsDraftFalse(keyword, pageable);
+                    break;
+                case "author":
+                    boards = boardRepository.findByNicknameContainingAndIsDraftFalse(keyword, pageable);
+                    break;
+                default: // "all"
+                    boards = boardRepository.searchByKeyword(keyword, pageable);
+                    break;
+            }
+        } else {
+            // 키워드 없이 다른 필터만 사용하는 경우
+            boards = boardRepository.findByIsDraftFalse(pageable);
+        }
+
+        // 추가 필터 적용 (메모리에서 필터링)
+        if (categoryId != null || startDate != null || endDate != null ||
+            minViews != null || maxViews != null || minLikes != null || maxLikes != null) {
+
+            // 필터링이 필요한 경우 다시 쿼리 (더 효율적인 방법)
+            return boardRepository.searchBoardsWithFilters(
+                null, // status - 공개된 게시글만
+                categoryId,
+                keyword,
+                startDate,
+                endDate,
+                pageable
+            ).map(board -> {
+                // 조회수 및 좋아요 수 필터링 (Repository 쿼리에 추가할 수도 있음)
+                boolean passFilter = true;
+
+                if (minViews != null && board.getViewCount() < minViews) {
+                    passFilter = false;
+                }
+                if (maxViews != null && board.getViewCount() > maxViews) {
+                    passFilter = false;
+                }
+                if (minLikes != null && board.getLikeCount() < minLikes) {
+                    passFilter = false;
+                }
+                if (maxLikes != null && board.getLikeCount() > maxLikes) {
+                    passFilter = false;
+                }
+
+                return passFilter ? board : null;
+            });
+        }
+
+        return boards;
+    }
+
+    /**
+     * 간단 검색 (키워드만)
+     */
+    public Page<Board> simpleSearch(String keyword, Pageable pageable) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return boardRepository.findByIsDraftFalse(pageable);
+        }
+        return boardRepository.searchByKeyword(keyword, pageable);
+    }
 }
