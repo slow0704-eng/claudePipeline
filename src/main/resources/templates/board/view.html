@@ -103,6 +103,29 @@
             cursor: not-allowed;
             opacity: 0.5;
         }
+        .share-button {
+            display: inline-block;
+            padding: 10px 30px;
+            border: 2px solid #17a2b8;
+            border-radius: 25px;
+            background-color: white;
+            color: #17a2b8;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .share-button:hover {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .share-button.shared {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .share-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
         .message-button {
             display: inline-block;
             padding: 10px 30px;
@@ -601,6 +624,35 @@
             </div>
         </div>
 
+        <!-- 공유 모달 -->
+        <div id="shareModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%;">
+                <h2 style="margin-bottom: 20px;">게시글 공유</h2>
+                <div style="margin-bottom: 20px;">
+                    <p style="margin-bottom: 15px; color: #666;">
+                        이 게시글을 당신의 타임라인에 공유하시겠습니까?
+                    </p>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; margin-bottom: 15px;">
+                        <strong th:text="${board.title}">게시글 제목</strong>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold;">
+                        <input type="checkbox" id="quoteShareCheck" onchange="toggleQuoteInput()">
+                        코멘트 추가 (인용 공유)
+                    </label>
+                    <textarea id="quoteContent"
+                              style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; min-height: 80px; display: none;"
+                              placeholder="공유하면서 코멘트를 추가하세요... (최대 500자)"
+                              maxlength="500"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="closeShareModal()" style="padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">취소</button>
+                    <button onclick="submitShare()" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">🔄 공유하기</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 좋아요/북마크 섹션 (회원만) -->
         <div class="like-section" sec:authorize="hasAnyRole('MEMBER', 'ADMIN')">
             <button class="like-button" th:classappend="${isPostLiked} ? 'liked' : ''"
@@ -610,6 +662,9 @@
             <button class="bookmark-button" th:classappend="${isBookmarked} ? 'bookmarked' : ''"
                     onclick="toggleBookmark()" id="bookmarkBtn">
                 ⭐ <span id="bookmarkCount" th:text="${bookmarkCount}">0</span>
+            </button>
+            <button class="share-button" onclick="openShareModal()" id="shareBtn">
+                🔄 <span id="shareCount">0</span>
             </button>
             <!-- 메시지 버튼 (작성자가 아닐 때만 표시) -->
             <button class="message-button"
@@ -1123,6 +1178,89 @@
             if (e.key === 'Escape') {
                 closeLightbox();
             }
+        });
+
+        // 공유 모달 열기
+        function openShareModal() {
+            document.getElementById('shareModal').style.display = 'flex';
+        }
+
+        // 공유 모달 닫기
+        function closeShareModal() {
+            document.getElementById('shareModal').style.display = 'none';
+            document.getElementById('quoteShareCheck').checked = false;
+            document.getElementById('quoteContent').value = '';
+            document.getElementById('quoteContent').style.display = 'none';
+        }
+
+        // 인용 공유 입력창 토글
+        function toggleQuoteInput() {
+            const checkbox = document.getElementById('quoteShareCheck');
+            const textarea = document.getElementById('quoteContent');
+            textarea.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        // 공유 제출
+        function submitShare() {
+            if (!csrfToken || !csrfHeader) {
+                alert('페이지를 새로고침(Ctrl+Shift+R)해주세요.');
+                return;
+            }
+
+            const quoteContent = document.getElementById('quoteShareCheck').checked
+                ? document.getElementById('quoteContent').value.trim()
+                : '';
+
+            const boardId = [[${board.id}]];
+
+            fetch(`/api/shares/toggle/${boardId}?quoteContent=${encodeURIComponent(quoteContent)}`, {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.isShared !== undefined) {
+                    // 공유 수 업데이트
+                    document.getElementById('shareCount').textContent = data.shareCount || 0;
+
+                    // 공유 버튼 상태 업데이트
+                    const shareBtn = document.getElementById('shareBtn');
+                    if (data.isShared) {
+                        shareBtn.classList.add('shared');
+                        alert('게시글을 공유했습니다!');
+                    } else {
+                        shareBtn.classList.remove('shared');
+                        alert('공유를 취소했습니다.');
+                    }
+
+                    closeShareModal();
+                } else {
+                    alert(data.message || '공유 처리에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Share error:', error);
+                alert('공유 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 페이지 로드 시 공유 정보 불러오기
+        window.addEventListener('DOMContentLoaded', function() {
+            const boardId = [[${board.id}]];
+
+            fetch(`/api/shares/info/${boardId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('shareCount').textContent = data.shareCount || 0;
+                    if (data.isShared) {
+                        document.getElementById('shareBtn').classList.add('shared');
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to load share info:', error);
+                });
         });
 
         // 작성자에게 메시지 보내기

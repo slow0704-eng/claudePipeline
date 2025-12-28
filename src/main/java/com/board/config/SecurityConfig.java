@@ -25,10 +25,12 @@ public class SecurityConfig {
                 // API endpoints - public API
                 .requestMatchers("/api/search/**").permitAll()
                 .requestMatchers("/api/notifications/**").permitAll()
+                .requestMatchers("/api/shares/info/**", "/api/shares/users/**").permitAll()
 
                 // Member only - must come before public /board patterns
                 .requestMatchers("/board/new", "/board/*/edit").hasAnyRole("MEMBER", "ADMIN")
                 .requestMatchers("/comments/**", "/likes/**", "/reports/**").hasAnyRole("MEMBER", "ADMIN")
+                .requestMatchers("/api/shares/**").hasAnyRole("MEMBER", "ADMIN")
                 .requestMatchers("/mypage/**").hasAnyRole("MEMBER", "ADMIN")
 
                 // Admin only
