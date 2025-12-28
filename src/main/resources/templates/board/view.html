@@ -539,6 +539,15 @@
             <span th:text="${board.content}">게시글 내용</span>
         </div>
 
+        <!-- 해시태그 -->
+        <div class="hashtags-section" th:if="${hashtags != null and !hashtags.isEmpty()}" style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <span th:each="tag : ${hashtags}" class="hashtag-tag" style="display: inline-block; padding: 6px 12px; background-color: #e7f3ff; color: #007bff; border-radius: 15px; font-size: 13px; cursor: pointer; transition: all 0.2s; border: 1px solid #b3d9ff;">
+                    <span th:text="'#' + ${tag.name}">#태그</span>
+                </span>
+            </div>
+        </div>
+
         <!-- 첨부 파일 -->
         <div class="attachments-section" th:if="${attachments != null and !attachments.isEmpty()}">
             <h3>📎 첨부 파일 (<span th:text="${attachments.size()}">0</span>)</h3>

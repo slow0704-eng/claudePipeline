@@ -23,6 +23,7 @@ public class BoardService {
     private final UserService userService;
     private final FileUploadService fileUploadService;
     private final BookmarkRepository bookmarkRepository;
+    private final HashtagService hashtagService;
 
     public Page<Board> getAllBoards(Pageable pageable) {
         // 임시저장 게시글 제외하고 조회
@@ -47,6 +48,7 @@ public class BoardService {
         return getBoardById(id);
     }
 
+    @Transactional
     public Board createBoard(Board board) {
         User currentUser = AuthenticationUtils.getCurrentUser(userService);
         if (currentUser != null) {
@@ -64,9 +66,18 @@ public class BoardService {
         if (board.getCommentCount() == null) {
             board.setCommentCount(0);
         }
-        return boardRepository.save(board);
+        Board savedBoard = boardRepository.save(board);
+
+        // 해시태그 자동 추출 및 저장 (임시저장이 아닌 경우에만)
+        if (!Boolean.TRUE.equals(board.getIsDraft())) {
+            String contentWithTitle = board.getTitle() + " " + board.getContent();
+            hashtagService.updateBoardHashtags(savedBoard.getId(), contentWithTitle);
+        }
+
+        return savedBoard;
     }
 
+    @Transactional
     public Board updateBoard(Long id, Board boardDetails) {
         Board board = getBoardById(id);
 
@@ -78,7 +89,15 @@ public class BoardService {
 
         board.setTitle(boardDetails.getTitle());
         board.setContent(boardDetails.getContent());
-        return boardRepository.save(board);
+        Board updatedBoard = boardRepository.save(board);
+
+        // 해시태그 업데이트 (임시저장이 아닌 경우에만)
+        if (!Boolean.TRUE.equals(board.getIsDraft())) {
+            String contentWithTitle = board.getTitle() + " " + board.getContent();
+            hashtagService.updateBoardHashtags(updatedBoard.getId(), contentWithTitle);
+        }
+
+        return updatedBoard;
     }
 
     @Transactional
@@ -96,6 +115,9 @@ public class BoardService {
 
         // 북마크 삭제
         bookmarkRepository.deleteByBoardId(id);
+
+        // 해시태그 관계 삭제
+        hashtagService.removeAllHashtagsFromBoard(id);
 
         boardRepository.delete(board);
     }

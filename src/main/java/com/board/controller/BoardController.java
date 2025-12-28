@@ -45,6 +45,7 @@ public class BoardController {
     private final BookmarkService bookmarkService;
     private final BannedWordService bannedWordService;
     private final com.board.service.CategoryService categoryService;
+    private final com.board.service.HashtagService hashtagService;
 
     @GetMapping
     public String list(
@@ -170,6 +171,9 @@ public class BoardController {
         // Get bookmark count
         long bookmarkCount = bookmarkService.getBookmarkCount(id);
 
+        // Get hashtags
+        List<com.board.entity.Hashtag> hashtags = hashtagService.getBoardHashtags(id);
+
         model.addAttribute("board", board);
         model.addAttribute("isOwner", currentUser != null && boardService.isOwner(board, currentUser));
         model.addAttribute("comments", comments);
@@ -178,6 +182,7 @@ public class BoardController {
         model.addAttribute("isBookmarked", isBookmarked);
         model.addAttribute("bookmarkCount", bookmarkCount);
         model.addAttribute("currentUser", currentUser);
+        model.addAttribute("hashtags", hashtags);
 
         return "board/view";
     }

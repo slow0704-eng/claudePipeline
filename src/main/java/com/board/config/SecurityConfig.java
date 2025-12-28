@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/shares/statistics/**").permitAll()
                 .requestMatchers("/api/shares/ranking/**").permitAll()
                 .requestMatchers("/api/shares/recent-external").permitAll()
+                .requestMatchers("/api/hashtags/**").permitAll()
 
                 // Member only - must come before public /board patterns
                 .requestMatchers("/board/new", "/board/*/edit").hasAnyRole("MEMBER", "ADMIN")

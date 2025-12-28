@@ -146,6 +146,65 @@
             font-size: 12px;
             color: #666;
         }
+        /* 해시태그 스타일 */
+        .popular-hashtags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .hashtag-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #e7f3ff;
+            color: #007bff;
+            border-radius: 15px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #b3d9ff;
+        }
+        .hashtag-badge:hover {
+            background-color: #007bff;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .hashtag-badge .count {
+            font-size: 11px;
+            color: #6c757d;
+            margin-left: 4px;
+        }
+        .hashtag-badge:hover .count {
+            color: #e0e0e0;
+        }
+        .hashtag-autocomplete {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .hashtag-autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .hashtag-autocomplete-item:hover {
+            background-color: #f8f9fa;
+        }
+        .hashtag-autocomplete-item .tag-name {
+            font-weight: 600;
+            color: #007bff;
+        }
+        .hashtag-autocomplete-item .tag-count {
+            font-size: 12px;
+            color: #6c757d;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -161,6 +220,17 @@
             <div class="form-group">
                 <label for="content">내용</label>
                 <textarea id="content" name="content" required></textarea>
+                <div class="hashtag-info">
+                    <p style="font-size: 12px; color: #666; margin-top: 8px;">
+                        💡 #키워드 형식으로 해시태그를 작성하세요 (예: #자바 #스프링 #개발)
+                    </p>
+                </div>
+            </div>
+
+            <!-- 인기 해시태그 추천 -->
+            <div class="form-group hashtag-suggestions">
+                <label>🔥 인기 해시태그</label>
+                <div id="popularHashtags" class="popular-hashtags"></div>
             </div>
 
             <div class="form-group">
@@ -318,6 +388,60 @@
             fileInput.files = dataTransfer.files;
 
             handleFileSelect({ target: fileInput });
+        });
+
+        // ========== 해시태그 기능 ==========
+
+        // 인기 해시태그 로드
+        function loadPopularHashtags() {
+            fetch('/api/hashtags/popular?limit=10')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('popularHashtags');
+                    container.innerHTML = '';
+
+                    if (data.hashtags && data.hashtags.length > 0) {
+                        data.hashtags.forEach(tag => {
+                            const badge = document.createElement('span');
+                            badge.className = 'hashtag-badge';
+                            badge.innerHTML = `#${tag.name} <span class="count">${tag.useCount}</span>`;
+                            badge.onclick = () => insertHashtag(tag.name);
+                            container.appendChild(badge);
+                        });
+                    } else {
+                        container.innerHTML = '<p style="font-size: 12px; color: #999;">아직 등록된 해시태그가 없습니다.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to load popular hashtags:', error);
+                });
+        }
+
+        // 해시태그 삽입
+        function insertHashtag(tagName) {
+            const textarea = document.getElementById('content');
+            const currentText = textarea.value;
+            const hashtag = `#${tagName} `;
+
+            // 이미 존재하는 해시태그인지 확인
+            if (currentText.includes(`#${tagName}`)) {
+                alert('이미 추가된 해시태그입니다.');
+                return;
+            }
+
+            // 커서 위치에 삽입
+            const cursorPos = textarea.selectionStart;
+            const textBefore = currentText.substring(0, cursorPos);
+            const textAfter = currentText.substring(cursorPos);
+
+            textarea.value = textBefore + hashtag + textAfter;
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd = cursorPos + hashtag.length;
+        }
+
+        // 페이지 로드 시 인기 해시태그 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPopularHashtags();
         });
     </script>
 </body>
