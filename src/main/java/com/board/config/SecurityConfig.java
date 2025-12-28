@@ -22,6 +22,9 @@ public class SecurityConfig {
                 .requestMatchers("/auth/login", "/auth/register").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
 
+                // API endpoints - public search API
+                .requestMatchers("/api/search/**").permitAll()
+
                 // Member only - must come before public /board patterns
                 .requestMatchers("/board/new", "/board/*/edit").hasAnyRole("MEMBER", "ADMIN")
                 .requestMatchers("/comments/**", "/likes/**", "/reports/**").hasAnyRole("MEMBER", "ADMIN")
