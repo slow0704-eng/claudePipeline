@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>팔로우한 해시태그 피드</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <style>
+        .feed-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .feed-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .followed-hashtags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .hashtag-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .hashtag-badge:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .board-list {
+            display: grid;
+            gap: 20px;
+        }
+        .board-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .board-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .board-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            text-decoration: none;
+            display: block;
+        }
+        .board-title:hover {
+            color: #667eea;
+        }
+        .board-meta {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .no-content {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .no-content h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .no-content p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .btn-explore {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .btn-explore:hover {
+            background-color: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 피드 헤더 -->
+        <div class="feed-header">
+            <div class="feed-title">📌 팔로우한 해시태그 피드</div>
+            <p style="opacity: 0.9;">내가 팔로우한 해시태그의 최신 게시글</p>
+
+            <!-- 팔로우한 해시태그 목록 -->
+            <div class="followed-hashtags" th:if="${!followedHashtags.isEmpty()}">
+                <a th:each="tag : ${followedHashtags}"
+                   th:href="@{/hashtag/{name}(name=${tag.name})}"
+                   class="hashtag-badge"
+                   th:text="'#' + ${tag.name}">#태그</a>
+            </div>
+        </div>
+
+        <!-- 게시글 목록 -->
+        <div th:if="${!followedHashtags.isEmpty()}" class="board-list">
+            <div th:if="${boards.isEmpty()}" class="no-content">
+                <h3>아직 게시글이 없습니다</h3>
+                <p>팔로우한 해시태그의 게시글이 여기에 표시됩니다.</p>
+            </div>
+
+            <div th:each="board : ${boards}" class="board-item">
+                <a th:href="@{/board/{id}(id=${board.id})}"
+                   class="board-title"
+                   th:text="${board.title}">게시글 제목</a>
+
+                <div class="board-meta">
+                    <span th:text="'작성자: ' + ${board.nickname}">작성자</span> ·
+                    <span th:text="${#temporals.format(board.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</span> ·
+                    <span th:text="'조회 ' + ${board.viewCount}">조회수</span> ·
+                    <span th:text="'좋아요 ' + ${board.likeCount}">좋아요</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 팔로우한 해시태그가 없을 때 -->
+        <div th:if="${followedHashtags.isEmpty()}" class="no-content">
+            <h3>팔로우한 해시태그가 없습니다</h3>
+            <p>관심있는 해시태그를 팔로우하고 맞춤 피드를 만들어보세요!</p>
+            <a th:href="@{/board}" class="btn-explore">해시태그 탐색하기</a>
+        </div>
+
+        <!-- 하단 버튼 -->
+        <div style="margin-top: 30px; text-align: center;">
+            <a th:href="@{/board}"
+               style="padding: 12px 24px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">
+                게시판으로 돌아가기
+            </a>
+        </div>
+    </div>
+</body>
+</html>

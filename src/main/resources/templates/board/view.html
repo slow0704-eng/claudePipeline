@@ -542,9 +542,12 @@
         <!-- 해시태그 -->
         <div class="hashtags-section" th:if="${hashtags != null and !hashtags.isEmpty()}" style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
             <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                <span th:each="tag : ${hashtags}" class="hashtag-tag" style="display: inline-block; padding: 6px 12px; background-color: #e7f3ff; color: #007bff; border-radius: 15px; font-size: 13px; cursor: pointer; transition: all 0.2s; border: 1px solid #b3d9ff;">
+                <a th:each="tag : ${hashtags}"
+                   th:href="@{/hashtag/{name}(name=${tag.name})}"
+                   class="hashtag-tag"
+                   style="display: inline-block; padding: 6px 12px; background-color: #e7f3ff; color: #007bff; border-radius: 15px; font-size: 13px; cursor: pointer; transition: all 0.2s; border: 1px solid #b3d9ff; text-decoration: none;">
                     <span th:text="'#' + ${tag.name}">#태그</span>
-                </span>
+                </a>
             </div>
         </div>
 

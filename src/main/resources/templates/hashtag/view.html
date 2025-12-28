@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'#' + ${hashtag.name} + ' - 해시태그'">해시태그</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <style>
+        .hashtag-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .hashtag-title {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .hashtag-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .follow-button {
+            padding: 12px 30px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        .follow-button:hover {
+            background: white;
+            color: #667eea;
+        }
+        .follow-button.following {
+            background: white;
+            color: #667eea;
+        }
+        .board-list {
+            display: grid;
+            gap: 20px;
+        }
+        .board-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .board-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .board-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            text-decoration: none;
+        }
+        .board-title:hover {
+            color: #667eea;
+        }
+        .board-meta {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .no-posts {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 해시태그 헤더 -->
+        <div class="hashtag-header">
+            <div class="hashtag-title" th:text="'#' + ${hashtag.name}">#태그</div>
+
+            <div class="hashtag-stats">
+                <div class="stat-item">
+                    <div class="stat-number" th:text="${hashtag.postCount}">0</div>
+                    <div class="stat-label">게시물</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" th:text="${hashtag.followerCount}">0</div>
+                    <div class="stat-label">팔로워</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" th:text="${hashtag.useCount}">0</div>
+                    <div class="stat-label">총 사용</div>
+                </div>
+            </div>
+
+            <!-- 팔로우 버튼 (로그인 사용자만) -->
+            <div sec:authorize="hasAnyRole('MEMBER', 'ADMIN')">
+                <button class="follow-button"
+                        th:classappend="${hashtag.isFollowing} ? 'following' : ''"
+                        id="followBtn"
+                        onclick="toggleFollow()">
+                    <span id="followText" th:text="${hashtag.isFollowing} ? '팔로잉' : '팔로우'">팔로우</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 게시글 목록 -->
+        <div class="board-list">
+            <div th:if="${boards.isEmpty()}" class="no-posts">
+                <h3>아직 게시글이 없습니다.</h3>
+                <p>이 해시태그를 사용하는 첫 번째 게시글을 작성해보세요!</p>
+            </div>
+
+            <div th:each="board : ${boards}" class="board-item">
+                <a th:href="@{/board/{id}(id=${board.id})}" class="board-title" th:text="${board.title}">게시글 제목</a>
+                <div class="board-meta">
+                    <span th:text="'작성자: ' + ${board.nickname}">작성자</span> ·
+                    <span th:text="${#temporals.format(board.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</span> ·
+                    <span th:text="'조회 ' + ${board.viewCount}">조회수</span> ·
+                    <span th:text="'좋아요 ' + ${board.likeCount}">좋아요</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <a th:href="@{/board}" style="padding: 12px 24px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">
+                게시판으로 돌아가기
+            </a>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const hashtagName = /*[[${hashtag.name}]]*/ '';
+        const csrfToken = /*[[${_csrf.token}]]*/ '';
+        const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+
+        function toggleFollow() {
+            const params = new URLSearchParams();
+            params.append('name', hashtagName);
+
+            fetch('/api/hashtags/follow', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                },
+                body: params
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.isFollowing !== undefined) {
+                    const btn = document.getElementById('followBtn');
+                    const text = document.getElementById('followText');
+
+                    if (data.isFollowing) {
+                        btn.classList.add('following');
+                        text.textContent = '팔로잉';
+                    } else {
+                        btn.classList.remove('following');
+                        text.textContent = '팔로우';
+                    }
+
+                    // 팔로워 수 업데이트
+                    const followerStat = document.querySelector('.stat-item:nth-child(2) .stat-number');
+                    followerStat.textContent = data.followerCount;
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Follow error:', error);
+                alert('오류가 발생했습니다.');
+            });
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

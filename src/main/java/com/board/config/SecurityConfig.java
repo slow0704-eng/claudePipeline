@@ -43,6 +43,7 @@ public class SecurityConfig {
 
                 // Public access (GUEST) - /board/{id} must come after /board/new
                 .requestMatchers("/", "/board", "/board/{id}", "/board/search").permitAll()
+                .requestMatchers("/hashtag/{name}").permitAll()
 
                 .anyRequest().authenticated()
             )

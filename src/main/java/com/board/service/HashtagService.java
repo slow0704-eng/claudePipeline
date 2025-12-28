@@ -20,6 +20,7 @@ public class HashtagService {
 
     private final HashtagRepository hashtagRepository;
     private final BoardHashtagRepository boardHashtagRepository;
+    private final com.board.repository.UserHashtagFollowRepository userHashtagFollowRepository;
 
     // 해시태그 패턴: #으로 시작하고 영문, 한글, 숫자, 밑줄 허용
     private static final Pattern HASHTAG_PATTERN = Pattern.compile("#([가-힣a-zA-Z0-9_]+)");
@@ -244,5 +245,116 @@ public class HashtagService {
         }
 
         return stats;
+    }
+
+    // ========== 해시태그 팔로우 기능 ==========
+
+    /**
+     * 해시태그 팔로우/언팔로우 토글
+     */
+    @Transactional
+    public Map<String, Object> toggleHashtagFollow(Long userId, String tagName) {
+        String normalizedName = tagName.toLowerCase().trim().replace("#", "");
+        Optional<Hashtag> hashtagOpt = hashtagRepository.findByName(normalizedName);
+
+        if (hashtagOpt.isEmpty()) {
+            throw new RuntimeException("존재하지 않는 해시태그입니다.");
+        }
+
+        Hashtag hashtag = hashtagOpt.get();
+        boolean isFollowing;
+
+        Optional<com.board.entity.UserHashtagFollow> existing =
+                userHashtagFollowRepository.findByUserIdAndHashtagId(userId, hashtag.getId());
+
+        if (existing.isPresent()) {
+            // 언팔로우
+            userHashtagFollowRepository.delete(existing.get());
+            isFollowing = false;
+        } else {
+            // 팔로우
+            com.board.entity.UserHashtagFollow follow = new com.board.entity.UserHashtagFollow();
+            follow.setUserId(userId);
+            follow.setHashtagId(hashtag.getId());
+            userHashtagFollowRepository.save(follow);
+            isFollowing = true;
+        }
+
+        long followerCount = userHashtagFollowRepository.countByHashtagId(hashtag.getId());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("isFollowing", isFollowing);
+        result.put("followerCount", followerCount);
+        result.put("hashtagName", hashtag.getName());
+
+        return result;
+    }
+
+    /**
+     * 사용자가 해시태그를 팔로우하는지 확인
+     */
+    public boolean isFollowingHashtag(Long userId, Long hashtagId) {
+        if (userId == null || hashtagId == null) {
+            return false;
+        }
+        return userHashtagFollowRepository.existsByUserIdAndHashtagId(userId, hashtagId);
+    }
+
+    /**
+     * 사용자가 팔로우한 해시태그 목록
+     */
+    public List<Hashtag> getFollowedHashtags(Long userId) {
+        List<Long> hashtagIds = userHashtagFollowRepository.findHashtagIdsByUserId(userId);
+        return hashtagIds.stream()
+                .map(id -> hashtagRepository.findById(id).orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 팔로우한 해시태그의 게시글 ID 목록
+     */
+    public List<Long> getBoardIdsByFollowedHashtags(Long userId) {
+        List<Long> hashtagIds = userHashtagFollowRepository.findHashtagIdsByUserId(userId);
+        Set<Long> boardIds = new HashSet<>();
+
+        for (Long hashtagId : hashtagIds) {
+            List<Long> ids = boardHashtagRepository.findBoardIdsByHashtagId(hashtagId);
+            boardIds.addAll(ids);
+        }
+
+        return new ArrayList<>(boardIds);
+    }
+
+    /**
+     * 해시태그 팔로워 수 조회
+     */
+    public long getFollowerCount(Long hashtagId) {
+        return userHashtagFollowRepository.countByHashtagId(hashtagId);
+    }
+
+    /**
+     * 해시태그 상세 정보 (통계 + 팔로우 정보 포함)
+     */
+    public Map<String, Object> getHashtagDetails(String tagName, Long currentUserId) {
+        String normalizedName = tagName.toLowerCase().trim().replace("#", "");
+        Optional<Hashtag> hashtagOpt = hashtagRepository.findByName(normalizedName);
+
+        Map<String, Object> details = new HashMap<>();
+
+        if (hashtagOpt.isPresent()) {
+            Hashtag hashtag = hashtagOpt.get();
+
+            details.put("id", hashtag.getId());
+            details.put("name", hashtag.getName());
+            details.put("useCount", hashtag.getUseCount());
+            details.put("createdAt", hashtag.getCreatedAt());
+            details.put("lastUsedAt", hashtag.getLastUsedAt());
+            details.put("postCount", boardHashtagRepository.countByHashtagId(hashtag.getId()));
+            details.put("followerCount", getFollowerCount(hashtag.getId()));
+            details.put("isFollowing", currentUserId != null && isFollowingHashtag(currentUserId, hashtag.getId()));
+        }
+
+        return details;
     }
 }
