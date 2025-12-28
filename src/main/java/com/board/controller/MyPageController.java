@@ -8,8 +8,11 @@ import com.board.service.FollowService;
 import com.board.service.MessageService;
 import com.board.service.UserService;
 import com.board.util.AuthenticationUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -131,6 +134,60 @@ public class MyPageController {
 
             userService.updatePassword(currentUser.getId(), currentPassword, newPassword);
             return ResponseEntity.ok(Map.of("success", true, "message", "비밀번호가 변경되었습니다."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * 회원 탈퇴 페이지
+     */
+    @GetMapping("/delete-account")
+    public String deleteAccountPage(Model model) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null) {
+            return "redirect:/auth/login";
+        }
+
+        model.addAttribute("user", currentUser);
+        return "mypage/delete-account";
+    }
+
+    /**
+     * 회원 탈퇴 처리
+     */
+    @PostMapping("/delete-account")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteAccount(
+            @RequestBody Map<String, String> request,
+            HttpServletRequest httpRequest) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+        }
+
+        try {
+            String password = request.get("password");
+            String reason = request.get("reason");
+
+            if (password == null || password.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "비밀번호를 입력해주세요."));
+            }
+
+            // 회원 탈퇴 처리
+            userService.deleteUser(currentUser.getId(), password, reason);
+
+            // 세션 무효화 및 로그아웃
+            SecurityContextHolder.clearContext();
+            HttpSession session = httpRequest.getSession(false);
+            if (session != null) {
+                session.invalidate();
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다."
+            ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }

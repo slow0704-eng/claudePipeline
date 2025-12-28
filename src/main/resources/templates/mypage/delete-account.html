@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원 탈퇴</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+
+        .delete-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .delete-header {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .delete-header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .delete-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .delete-content {
+            padding: 40px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+
+        .warning-box h3 {
+            color: #856404;
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .warning-box ul {
+            color: #856404;
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .warning-box li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .danger-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+
+        .danger-box p {
+            color: #721c24;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group label .required {
+            color: #ff4444;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #ff4444;
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            margin: 25px 0;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-group span {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #545b62;
+        }
+
+        .btn-delete {
+            background: #ff4444;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #cc0000;
+        }
+
+        .btn-delete:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .reason-options {
+            margin-bottom: 15px;
+        }
+
+        .reason-option {
+            display: block;
+            margin: 10px 0;
+        }
+
+        .reason-option input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        .user-info {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+        }
+
+        .user-info p {
+            margin: 8px 0;
+            color: #666;
+        }
+
+        .user-info strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="delete-container">
+        <!-- 헤더 -->
+        <div class="delete-header">
+            <h1>⚠️ 회원 탈퇴</h1>
+            <p>정말 탈퇴하시겠습니까?</p>
+        </div>
+
+        <!-- 내용 -->
+        <div class="delete-content">
+            <!-- 알림 메시지 -->
+            <div id="alertMessage" class="alert"></div>
+
+            <!-- 사용자 정보 -->
+            <div class="user-info">
+                <p><strong>아이디:</strong> <span th:text="${user.username}">username</span></p>
+                <p><strong>닉네임:</strong> <span th:text="${user.nickname}">nickname</span></p>
+                <p><strong>이메일:</strong> <span th:text="${user.email}">email</span></p>
+            </div>
+
+            <!-- 주의사항 -->
+            <div class="warning-box">
+                <h3>⚠️ 탈퇴 전 꼭 확인하세요!</h3>
+                <ul>
+                    <li>탈퇴 시 계정 정보가 비활성화되며, 같은 아이디로 재가입이 불가능합니다.</li>
+                    <li>작성하신 게시글과 댓글은 삭제되지 않으며, 닉네임으로 남아있습니다.</li>
+                    <li>북마크, 좋아요 등의 활동 기록은 모두 삭제됩니다.</li>
+                    <li>탈퇴 후에는 계정을 복구할 수 없습니다.</li>
+                </ul>
+            </div>
+
+            <!-- 위험 경고 -->
+            <div class="danger-box">
+                <p>⛔ 이 작업은 되돌릴 수 없습니다!</p>
+            </div>
+
+            <!-- 탈퇴 폼 -->
+            <form id="deleteForm">
+                <!-- 탈퇴 사유 -->
+                <div class="form-group">
+                    <label>탈퇴 사유 (선택)</label>
+                    <div class="reason-options">
+                        <label class="reason-option">
+                            <input type="radio" name="reasonOption" value="자주 사용하지 않음">
+                            자주 사용하지 않음
+                        </label>
+                        <label class="reason-option">
+                            <input type="radio" name="reasonOption" value="원하는 콘텐츠가 없음">
+                            원하는 콘텐츠가 없음
+                        </label>
+                        <label class="reason-option">
+                            <input type="radio" name="reasonOption" value="개인정보 보호">
+                            개인정보 보호
+                        </label>
+                        <label class="reason-option">
+                            <input type="radio" name="reasonOption" value="서비스 불만">
+                            서비스 불만
+                        </label>
+                        <label class="reason-option">
+                            <input type="radio" name="reasonOption" value="기타">
+                            기타 (직접 입력)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 상세 사유 -->
+                <div class="form-group">
+                    <label>상세 사유 (선택)</label>
+                    <textarea class="form-control" id="reasonDetail" placeholder="탈퇴 사유를 자세히 입력해주시면 서비스 개선에 도움이 됩니다."></textarea>
+                </div>
+
+                <!-- 비밀번호 확인 -->
+                <div class="form-group">
+                    <label>
+                        비밀번호 확인 <span class="required">*</span>
+                    </label>
+                    <input type="password" class="form-control" id="password" placeholder="현재 비밀번호를 입력하세요" required>
+                </div>
+
+                <!-- 동의 체크박스 -->
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="agreeDelete" required>
+                        <span>위 내용을 모두 확인했으며, 탈퇴에 동의합니다.</span>
+                    </label>
+                </div>
+
+                <!-- 버튼 -->
+                <div class="button-group">
+                    <button type="button" class="btn btn-cancel" onclick="location.href='/mypage'">취소</button>
+                    <button type="submit" class="btn btn-delete" id="deleteBtn" disabled>탈퇴하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 동의 체크박스에 따라 탈퇴 버튼 활성화/비활성화
+        document.getElementById('agreeDelete').addEventListener('change', function() {
+            document.getElementById('deleteBtn').disabled = !this.checked;
+        });
+
+        // 탈퇴 폼 제출
+        document.getElementById('deleteForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const password = document.getElementById('password').value.trim();
+            if (!password) {
+                showAlert('비밀번호를 입력해주세요.', 'danger');
+                return;
+            }
+
+            if (!document.getElementById('agreeDelete').checked) {
+                showAlert('탈퇴에 동의해주세요.', 'danger');
+                return;
+            }
+
+            // 최종 확인
+            if (!confirm('정말로 탈퇴하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+                return;
+            }
+
+            // 탈퇴 사유 수집
+            const selectedReason = document.querySelector('input[name="reasonOption"]:checked');
+            const reasonDetail = document.getElementById('reasonDetail').value.trim();
+            let reason = '';
+
+            if (selectedReason) {
+                reason = selectedReason.value;
+                if (selectedReason.value === '기타' && reasonDetail) {
+                    reason = reasonDetail;
+                } else if (reasonDetail) {
+                    reason += ': ' + reasonDetail;
+                }
+            } else if (reasonDetail) {
+                reason = reasonDetail;
+            }
+
+            // 버튼 비활성화
+            const deleteBtn = document.getElementById('deleteBtn');
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = '처리 중...';
+
+            try {
+                const response = await fetch('/mypage/delete-account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        password: password,
+                        reason: reason
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = '/board';
+                    }, 2000);
+                } else {
+                    showAlert(result.message, 'danger');
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = '탈퇴하기';
+                }
+            } catch (error) {
+                showAlert('오류가 발생했습니다. 다시 시도해주세요.', 'danger');
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = '탈퇴하기';
+            }
+        });
+
+        // 알림 메시지 표시
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alertMessage');
+            alertDiv.className = 'alert alert-' + type;
+            alertDiv.textContent = message;
+            alertDiv.style.display = 'block';
+
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

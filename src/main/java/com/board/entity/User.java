@@ -41,4 +41,16 @@ public class User {
 
     @Column(nullable = false)
     private boolean enabled = true;
+
+    /**
+     * 탈퇴 시간
+     */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    /**
+     * 탈퇴 사유
+     */
+    @Column(name = "delete_reason", length = 500)
+    private String deleteReason;
 }

@@ -8,6 +8,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -111,6 +113,58 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    /**
+     * 회원 탈퇴
+     * - 비밀번호 확인 후 계정 비활성화
+     * - 실제 데이터는 삭제하지 않고 enabled = false로 설정 (법적 보관 기간 등)
+     */
+    @Transactional
+    public void deleteUser(Long userId, String password, String reason) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 이미 탈퇴한 사용자인지 확인
+        if (!user.isEnabled()) {
+            throw new RuntimeException("이미 탈퇴한 계정입니다.");
+        }
+
+        // 비밀번호 확인
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+        }
+
+        // 계정 비활성화
+        user.setEnabled(false);
+        user.setDeletedAt(LocalDateTime.now());
+        user.setDeleteReason(reason);
+
+        userRepository.save(user);
+    }
+
+    /**
+     * 탈퇴한 회원인지 확인
+     */
+    public boolean isDeleted(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        return !user.isEnabled() && user.getDeletedAt() != null;
+    }
+
+    /**
+     * 탈퇴한 회원 복구 (관리자용)
+     */
+    @Transactional
+    public void restoreUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        user.setEnabled(true);
+        user.setDeletedAt(null);
+        user.setDeleteReason(null);
+
         userRepository.save(user);
     }
 }
