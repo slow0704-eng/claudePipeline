@@ -1400,7 +1400,12 @@
 
         function loadPopularKeywords() {
             fetch('/api/search/popular?limit=5')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('API not available');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     const container = document.getElementById('popularKeywords');
                     container.innerHTML = '';
@@ -1421,8 +1426,11 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading popular keywords:', error);
-                    document.getElementById('popularKeywords').innerHTML = '<span style="color: #999; font-size: 12px;">로딩 실패</span>';
+                    // 조용히 실패 - 에러 메시지 표시 안함
+                    const container = document.getElementById('popularKeywords');
+                    if (container) {
+                        container.innerHTML = '';
+                    }
                 });
         }
 
