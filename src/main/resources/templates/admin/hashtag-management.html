@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>해시태그 관리 - 관리자</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tab:hover:not(.active) {
+            border-color: #667eea;
+        }
+
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .table th {
+            background: #f9f9f9;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-banned {
+            background: #ff4444;
+            color: white;
+        }
+
+        .badge-active {
+            background: #00C851;
+            color: white;
+        }
+
+        .badge-merged {
+            background: #ffbb33;
+            color: white;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #cc0000;
+        }
+
+        .btn-success {
+            background: #00C851;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #007E33;
+        }
+
+        .btn-warning {
+            background: #ffbb33;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #FF8800;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background: #545b62;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 헤더 -->
+        <div class="page-header">
+            <h1>🏷️ 해시태그 관리</h1>
+            <p>금지, 병합, 설명 관리</p>
+        </div>
+
+        <!-- 뒤로가기 -->
+        <a th:href="@{/admin/dashboard}" class="back-button">← 관리자 대시보드</a>
+
+        <!-- 통계 카드 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalHashtags">-</div>
+                <div class="stat-label">전체 해시태그</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeHashtags">-</div>
+                <div class="stat-label">활성 해시태그</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="bannedHashtags">-</div>
+                <div class="stat-label">금지된 해시태그</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="mergedHashtags">-</div>
+                <div class="stat-label">병합된 해시태그</div>
+            </div>
+        </div>
+
+        <!-- 탭 -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('active')">활성 해시태그</button>
+            <button class="tab" onclick="showTab('banned')">금지된 해시태그</button>
+            <button class="tab" onclick="showTab('merged')">병합된 해시태그</button>
+        </div>
+
+        <!-- 활성 해시태그 섹션 -->
+        <div id="activeSection" class="section">
+            <div class="section-header">활성 해시태그</div>
+            <div id="activeContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    데이터를 불러오는 중...
+                </div>
+            </div>
+        </div>
+
+        <!-- 금지된 해시태그 섹션 -->
+        <div id="bannedSection" class="section" style="display: none;">
+            <div class="section-header">금지된 해시태그</div>
+            <div id="bannedContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    데이터를 불러오는 중...
+                </div>
+            </div>
+        </div>
+
+        <!-- 병합된 해시태그 섹션 -->
+        <div id="mergedSection" class="section" style="display: none;">
+            <div class="section-header">병합된 해시태그</div>
+            <div id="mergedContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    데이터를 불러오는 중...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 설명 수정 모달 -->
+    <div id="descriptionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">해시태그 설명 수정</div>
+            <div class="form-group">
+                <label>해시태그 이름</label>
+                <input type="text" id="descHashtagName" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label>설명</label>
+                <textarea id="descHashtagDesc" class="form-control" placeholder="해시태그에 대한 설명을 입력하세요"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDescriptionModal()">취소</button>
+                <button class="btn btn-primary" onclick="saveDescription()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 병합 모달 -->
+    <div id="mergeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">해시태그 병합</div>
+            <div class="form-group">
+                <label>원본 해시태그 (병합될 해시태그)</label>
+                <input type="text" id="mergeSourceName" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label>대상 해시태그 (병합할 해시태그)</label>
+                <input type="text" id="mergeTargetName" class="form-control" placeholder="예: javascript">
+            </div>
+            <div class="alert alert-danger">
+                <strong>주의:</strong> 병합 후에는 원본 해시태그가 대상 해시태그로 자동 변환됩니다. 이 작업은 되돌릴 수 없습니다.
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeMergeModal()">취소</button>
+                <button class="btn btn-warning" onclick="executeMerge()">병합 실행</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let activeHashtags = [];
+        let bannedHashtags = [];
+        let mergedHashtags = [];
+
+        // 페이지 로드 시
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllData();
+        });
+
+        // 모든 데이터 로드
+        async function loadAllData() {
+            await Promise.all([
+                loadActiveHashtags(),
+                loadBannedHashtags(),
+                loadMergedHashtags()
+            ]);
+            updateStats();
+        }
+
+        // 통계 업데이트
+        function updateStats() {
+            document.getElementById('activeHashtags').textContent = activeHashtags.length;
+            document.getElementById('bannedHashtags').textContent = bannedHashtags.length;
+            document.getElementById('mergedHashtags').textContent = mergedHashtags.length;
+            document.getElementById('totalHashtags').textContent = activeHashtags.length + bannedHashtags.length;
+        }
+
+        // 활성 해시태그 로드
+        async function loadActiveHashtags() {
+            try {
+                const response = await fetch('/api/hashtags/admin/active');
+                const data = await response.json();
+                activeHashtags = data.hashtags;
+                renderActiveHashtags();
+            } catch (error) {
+                console.error('Failed to load active hashtags:', error);
+                document.getElementById('activeContent').innerHTML = '<div class="no-data">데이터를 불러올 수 없습니다</div>';
+            }
+        }
+
+        // 금지된 해시태그 로드
+        async function loadBannedHashtags() {
+            try {
+                const response = await fetch('/api/hashtags/admin/banned');
+                const data = await response.json();
+                bannedHashtags = data.hashtags;
+                renderBannedHashtags();
+            } catch (error) {
+                console.error('Failed to load banned hashtags:', error);
+                document.getElementById('bannedContent').innerHTML = '<div class="no-data">데이터를 불러올 수 없습니다</div>';
+            }
+        }
+
+        // 병합된 해시태그 로드
+        async function loadMergedHashtags() {
+            try {
+                const response = await fetch('/api/hashtags/admin/merged');
+                const data = await response.json();
+                mergedHashtags = data.hashtags;
+                renderMergedHashtags();
+            } catch (error) {
+                console.error('Failed to load merged hashtags:', error);
+                document.getElementById('mergedContent').innerHTML = '<div class="no-data">데이터를 불러올 수 없습니다</div>';
+            }
+        }
+
+        // 활성 해시태그 렌더링
+        function renderActiveHashtags() {
+            if (activeHashtags.length === 0) {
+                document.getElementById('activeContent').innerHTML = '<div class="no-data">활성 해시태그가 없습니다</div>';
+                return;
+            }
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>설명</th>
+                            <th>게시글 수</th>
+                            <th>팔로워</th>
+                            <th>사용 횟수</th>
+                            <th>마지막 사용</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            activeHashtags.forEach(tag => {
+                html += `
+                    <tr>
+                        <td><strong>#${tag.name}</strong></td>
+                        <td>${tag.description || '<span style="color: #999;">설명 없음</span>'}</td>
+                        <td>${tag.postCount}</td>
+                        <td>${tag.followerCount}</td>
+                        <td>${tag.useCount}</td>
+                        <td>${formatDateTime(tag.lastUsedAt)}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="openDescriptionModal('${tag.name}', '${tag.description || ''}')">설명</button>
+                            <button class="btn btn-warning btn-sm" onclick="openMergeModal('${tag.name}')">병합</button>
+                            <button class="btn btn-danger btn-sm" onclick="banHashtag('${tag.name}')">금지</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('activeContent').innerHTML = html;
+        }
+
+        // 금지된 해시태그 렌더링
+        function renderBannedHashtags() {
+            if (bannedHashtags.length === 0) {
+                document.getElementById('bannedContent').innerHTML = '<div class="no-data">금지된 해시태그가 없습니다</div>';
+                return;
+            }
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>설명</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            bannedHashtags.forEach(tag => {
+                html += `
+                    <tr>
+                        <td><strong>#${tag.name}</strong> <span class="badge badge-banned">금지됨</span></td>
+                        <td>${tag.description || '<span style="color: #999;">설명 없음</span>'}</td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="unbanHashtag('${tag.name}')">금지 해제</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('bannedContent').innerHTML = html;
+        }
+
+        // 병합된 해시태그 렌더링
+        function renderMergedHashtags() {
+            if (mergedHashtags.length === 0) {
+                document.getElementById('mergedContent').innerHTML = '<div class="no-data">병합된 해시태그가 없습니다</div>';
+                return;
+            }
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>원본</th>
+                            <th>대상</th>
+                            <th>병합 시간</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            mergedHashtags.forEach(tag => {
+                html += `
+                    <tr>
+                        <td><strong>#${tag.name}</strong> <span class="badge badge-merged">병합됨</span></td>
+                        <td><strong>#${tag.mergedIntoName}</strong></td>
+                        <td>${formatDateTime(tag.mergedAt)}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('mergedContent').innerHTML = html;
+        }
+
+        // 탭 전환
+        function showTab(tabName) {
+            // 탭 버튼 활성화
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 섹션 표시/숨김
+            document.getElementById('activeSection').style.display = tabName === 'active' ? 'block' : 'none';
+            document.getElementById('bannedSection').style.display = tabName === 'banned' ? 'block' : 'none';
+            document.getElementById('mergedSection').style.display = tabName === 'merged' ? 'block' : 'none';
+        }
+
+        // 설명 모달 열기
+        function openDescriptionModal(name, description) {
+            document.getElementById('descHashtagName').value = name;
+            document.getElementById('descHashtagDesc').value = description;
+            document.getElementById('descriptionModal').classList.add('show');
+        }
+
+        // 설명 모달 닫기
+        function closeDescriptionModal() {
+            document.getElementById('descriptionModal').classList.remove('show');
+        }
+
+        // 설명 저장
+        async function saveDescription() {
+            const name = document.getElementById('descHashtagName').value;
+            const description = document.getElementById('descHashtagDesc').value;
+
+            try {
+                const response = await fetch('/api/hashtags/admin/description', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `name=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}`
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('설명이 저장되었습니다.');
+                    closeDescriptionModal();
+                    await loadActiveHashtags();
+                    updateStats();
+                } else {
+                    alert('저장 실패: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 병합 모달 열기
+        function openMergeModal(name) {
+            document.getElementById('mergeSourceName').value = name;
+            document.getElementById('mergeTargetName').value = '';
+            document.getElementById('mergeModal').classList.add('show');
+        }
+
+        // 병합 모달 닫기
+        function closeMergeModal() {
+            document.getElementById('mergeModal').classList.remove('show');
+        }
+
+        // 병합 실행
+        async function executeMerge() {
+            const source = document.getElementById('mergeSourceName').value;
+            const target = document.getElementById('mergeTargetName').value.trim();
+
+            if (!target) {
+                alert('대상 해시태그를 입력하세요.');
+                return;
+            }
+
+            if (!confirm(`정말로 #${source}를 #${target}로 병합하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/hashtags/admin/merge', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `source=${encodeURIComponent(source)}&target=${encodeURIComponent(target)}`
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    closeMergeModal();
+                    await loadAllData();
+                } else {
+                    alert('병합 실패: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 해시태그 금지
+        async function banHashtag(name) {
+            if (!confirm(`#${name}을(를) 금지하시겠습니까?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/hashtags/admin/ban', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `name=${encodeURIComponent(name)}&banned=true`
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('해시태그가 금지되었습니다.');
+                    await loadAllData();
+                } else {
+                    alert('실패: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 해시태그 금지 해제
+        async function unbanHashtag(name) {
+            if (!confirm(`#${name}의 금지를 해제하시겠습니까?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/hashtags/admin/ban', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `name=${encodeURIComponent(name)}&banned=false`
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('금지가 해제되었습니다.');
+                    await loadAllData();
+                } else {
+                    alert('실패: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 날짜 포맷팅
+        function formatDateTime(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('ko-KR');
+        }
+    </script>
+</body>
+</html>

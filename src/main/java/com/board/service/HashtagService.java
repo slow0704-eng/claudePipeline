@@ -57,8 +57,11 @@ public class HashtagService {
         // 새로운 해시태그 추출
         Set<String> hashtags = extractHashtags(content);
 
+        // 금지된 해시태그 필터링 및 병합된 해시태그 자동 대체
+        Set<String> validHashtags = filterAndReplaceHashtags(hashtags);
+
         // 해시태그 저장 및 게시글과 연결
-        for (String tagName : hashtags) {
+        for (String tagName : validHashtags) {
             Hashtag hashtag = findOrCreateHashtag(tagName);
             linkBoardToHashtag(boardId, hashtag.getId());
         }
@@ -518,5 +521,224 @@ public class HashtagService {
                 })
                 .sorted((a, b) -> ((Long) b.get("postCount")).compareTo((Long) a.get("postCount")))
                 .collect(Collectors.toList());
+    }
+
+    // ========== 해시태그 관리 기능 (관리자용) ==========
+
+    /**
+     * 금지 해시태그 설정/해제
+     */
+    @Transactional
+    public Map<String, Object> toggleBanHashtag(String name, boolean banned) {
+        Hashtag hashtag = hashtagRepository.findByName(name.toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("해시태그를 찾을 수 없습니다."));
+
+        hashtag.setIsBanned(banned);
+        hashtagRepository.save(hashtag);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("name", hashtag.getName());
+        result.put("isBanned", hashtag.getIsBanned());
+
+        return result;
+    }
+
+    /**
+     * 해시태그 설명 수정
+     */
+    @Transactional
+    public Map<String, Object> updateHashtagDescription(String name, String description) {
+        Hashtag hashtag = hashtagRepository.findByName(name.toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("해시태그를 찾을 수 없습니다."));
+
+        hashtag.setDescription(description);
+        hashtagRepository.save(hashtag);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("name", hashtag.getName());
+        result.put("description", hashtag.getDescription());
+
+        return result;
+    }
+
+    /**
+     * 해시태그 병합 (sourceHashtag → targetHashtag)
+     * 예: #JS → #JavaScript
+     */
+    @Transactional
+    public Map<String, Object> mergeHashtags(String sourceName, String targetName) {
+        Hashtag source = hashtagRepository.findByName(sourceName.toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("원본 해시태그를 찾을 수 없습니다."));
+
+        Hashtag target = hashtagRepository.findByName(targetName.toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("대상 해시태그를 찾을 수 없습니다."));
+
+        if (source.getId().equals(target.getId())) {
+            throw new IllegalArgumentException("같은 해시태그는 병합할 수 없습니다.");
+        }
+
+        // 원본 해시태그를 사용하는 모든 게시글 관계를 대상 해시태그로 변경
+        List<BoardHashtag> sourceBoardHashtags = boardHashtagRepository.findByHashtagId(source.getId());
+
+        for (BoardHashtag bh : sourceBoardHashtags) {
+            // 대상 해시태그로 이미 연결되어 있는지 확인
+            if (!boardHashtagRepository.existsByBoardIdAndHashtagId(bh.getBoardId(), target.getId())) {
+                // 대상 해시태그와 연결
+                BoardHashtag newLink = new BoardHashtag();
+                newLink.setBoardId(bh.getBoardId());
+                newLink.setHashtagId(target.getId());
+                boardHashtagRepository.save(newLink);
+            }
+            // 원본 연결 삭제
+            boardHashtagRepository.delete(bh);
+        }
+
+        // 원본 사용 횟수를 대상에 합산
+        target.setUseCount(target.getUseCount() + source.getUseCount());
+        if (source.getLastUsedAt() != null &&
+            (target.getLastUsedAt() == null || source.getLastUsedAt().isAfter(target.getLastUsedAt()))) {
+            target.setLastUsedAt(source.getLastUsedAt());
+        }
+        hashtagRepository.save(target);
+
+        // 원본 해시태그를 병합 상태로 표시
+        source.setMergedIntoId(target.getId());
+        source.setMergedAt(LocalDateTime.now());
+        source.setUseCount(0L);
+        hashtagRepository.save(source);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("sourceName", source.getName());
+        result.put("targetName", target.getName());
+        result.put("message", source.getName() + " → " + target.getName() + " 병합 완료");
+
+        return result;
+    }
+
+    /**
+     * 금지된 해시태그 목록 조회
+     */
+    public List<Map<String, Object>> getBannedHashtags() {
+        List<Hashtag> banned = hashtagRepository.findBannedHashtags();
+
+        return banned.stream()
+                .map(h -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", h.getId());
+                    map.put("name", h.getName());
+                    map.put("description", h.getDescription());
+                    map.put("useCount", h.getUseCount());
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 병합된 해시태그 목록 조회
+     */
+    public List<Map<String, Object>> getMergedHashtags() {
+        List<Hashtag> merged = hashtagRepository.findMergedHashtags();
+
+        return merged.stream()
+                .map(h -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", h.getId());
+                    map.put("name", h.getName());
+                    map.put("mergedIntoId", h.getMergedIntoId());
+
+                    // 병합된 대상 해시태그 이름 조회
+                    if (h.getMergedIntoId() != null) {
+                        hashtagRepository.findById(h.getMergedIntoId())
+                                .ifPresent(target -> map.put("mergedIntoName", target.getName()));
+                    }
+
+                    map.put("mergedAt", h.getMergedAt());
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 활성 해시태그 목록 조회 (병합되지 않고 금지되지 않은 것)
+     */
+    public List<Map<String, Object>> getActiveHashtagsForManagement() {
+        List<Hashtag> active = hashtagRepository.findActiveHashtags();
+
+        return active.stream()
+                .map(h -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", h.getId());
+                    map.put("name", h.getName());
+                    map.put("description", h.getDescription());
+                    map.put("useCount", h.getUseCount());
+                    map.put("postCount", boardHashtagRepository.countByHashtagId(h.getId()));
+                    map.put("followerCount", getFollowerCount(h.getId()));
+                    map.put("isBanned", h.getIsBanned());
+                    map.put("lastUsedAt", h.getLastUsedAt());
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 해시태그 검증 (금지 또는 병합된 해시태그 체크)
+     */
+    public boolean isHashtagValid(String name) {
+        Optional<Hashtag> hashtag = hashtagRepository.findByName(name.toLowerCase());
+
+        if (hashtag.isEmpty()) {
+            return true; // 새로운 해시태그는 허용
+        }
+
+        Hashtag h = hashtag.get();
+
+        // 금지된 해시태그는 허용하지 않음
+        if (Boolean.TRUE.equals(h.getIsBanned())) {
+            return false;
+        }
+
+        // 병합된 해시태그는 허용하지 않음
+        if (h.getMergedIntoId() != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 금지 또는 병합된 해시태그를 필터링하고 대체 해시태그 제공
+     */
+    public Set<String> filterAndReplaceHashtags(Set<String> hashtags) {
+        Set<String> validHashtags = new HashSet<>();
+
+        for (String tagName : hashtags) {
+            Optional<Hashtag> hashtagOpt = hashtagRepository.findByName(tagName.toLowerCase());
+
+            if (hashtagOpt.isEmpty()) {
+                // 새로운 해시태그는 그대로 사용
+                validHashtags.add(tagName);
+                continue;
+            }
+
+            Hashtag hashtag = hashtagOpt.get();
+
+            // 금지된 해시태그는 제외
+            if (Boolean.TRUE.equals(hashtag.getIsBanned())) {
+                continue;
+            }
+
+            // 병합된 해시태그는 대상 해시태그로 대체
+            if (hashtag.getMergedIntoId() != null) {
+                hashtagRepository.findById(hashtag.getMergedIntoId())
+                        .ifPresent(target -> validHashtags.add(target.getName()));
+            } else {
+                validHashtags.add(tagName);
+            }
+        }
+
+        return validHashtags;
     }
 }

@@ -68,4 +68,28 @@ public interface HashtagRepository extends JpaRepository<Hashtag, Long> {
      */
     @Query("SELECT h FROM Hashtag h ORDER BY h.useCount DESC")
     List<Hashtag> findTopHashtags();
+
+    /**
+     * 금지된 해시태그 조회
+     */
+    @Query("SELECT h FROM Hashtag h WHERE h.isBanned = true ORDER BY h.name")
+    List<Hashtag> findBannedHashtags();
+
+    /**
+     * 병합된 해시태그 조회
+     */
+    @Query("SELECT h FROM Hashtag h WHERE h.mergedIntoId IS NOT NULL ORDER BY h.mergedAt DESC")
+    List<Hashtag> findMergedHashtags();
+
+    /**
+     * 병합되지 않고 금지되지 않은 활성 해시태그만 조회
+     */
+    @Query("SELECT h FROM Hashtag h WHERE h.isBanned = false AND h.mergedIntoId IS NULL ORDER BY h.useCount DESC")
+    List<Hashtag> findActiveHashtags();
+
+    /**
+     * 특정 해시태그로 병합된 해시태그 목록
+     */
+    @Query("SELECT h FROM Hashtag h WHERE h.mergedIntoId = :hashtagId")
+    List<Hashtag> findMergedIntoHashtag(@Param("hashtagId") Long hashtagId);
 }

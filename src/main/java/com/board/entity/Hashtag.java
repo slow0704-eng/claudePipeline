@@ -49,6 +49,31 @@ public class Hashtag {
     private LocalDateTime lastUsedAt;
 
     /**
+     * 해시태그 설명
+     */
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    /**
+     * 금지 해시태그 여부 (관리자가 설정)
+     */
+    @Column(name = "is_banned", nullable = false)
+    private Boolean isBanned = false;
+
+    /**
+     * 병합된 해시태그 ID
+     * 예: #JS → #JavaScript로 병합 시, JS의 mergedIntoId = JavaScript의 ID
+     */
+    @Column(name = "merged_into_id")
+    private Long mergedIntoId;
+
+    /**
+     * 병합 시간
+     */
+    @Column(name = "merged_at")
+    private LocalDateTime mergedAt;
+
+    /**
      * 사용 횟수 증가
      */
     public void incrementUseCount() {

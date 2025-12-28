@@ -394,4 +394,151 @@ public class HashtagController {
 
         return "hashtag/analytics";
     }
+
+    // ========== 해시태그 관리 기능 (관리자용) ==========
+
+    /**
+     * 금지 해시태그 설정/해제 API
+     * POST /api/hashtags/admin/ban
+     */
+    @PostMapping("/api/hashtags/admin/ban")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> banHashtag(
+            @RequestParam String name,
+            @RequestParam boolean banned) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
+            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+        }
+
+        try {
+            Map<String, Object> result = hashtagService.toggleBanHashtag(name, banned);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * 해시태그 설명 수정 API
+     * POST /api/hashtags/admin/description
+     */
+    @PostMapping("/api/hashtags/admin/description")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateDescription(
+            @RequestParam String name,
+            @RequestParam String description) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
+            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+        }
+
+        try {
+            Map<String, Object> result = hashtagService.updateHashtagDescription(name, description);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * 해시태그 병합 API
+     * POST /api/hashtags/admin/merge
+     */
+    @PostMapping("/api/hashtags/admin/merge")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> mergeHashtags(
+            @RequestParam String source,
+            @RequestParam String target) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
+            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+        }
+
+        try {
+            Map<String, Object> result = hashtagService.mergeHashtags(source, target);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * 금지된 해시태그 목록 조회 API
+     * GET /api/hashtags/admin/banned
+     */
+    @GetMapping("/api/hashtags/admin/banned")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getBannedHashtags() {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
+            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+        }
+
+        List<Map<String, Object>> banned = hashtagService.getBannedHashtags();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("hashtags", banned);
+        response.put("count", banned.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 병합된 해시태그 목록 조회 API
+     * GET /api/hashtags/admin/merged
+     */
+    @GetMapping("/api/hashtags/admin/merged")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getMergedHashtags() {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
+            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+        }
+
+        List<Map<String, Object>> merged = hashtagService.getMergedHashtags();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("hashtags", merged);
+        response.put("count", merged.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 활성 해시태그 목록 조회 API (관리용)
+     * GET /api/hashtags/admin/active
+     */
+    @GetMapping("/api/hashtags/admin/active")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getActiveHashtags() {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
+            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+        }
+
+        List<Map<String, Object>> active = hashtagService.getActiveHashtagsForManagement();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("hashtags", active);
+        response.put("count", active.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 해시태그 관리 페이지 (관리자용)
+     * GET /admin/hashtags
+     */
+    @GetMapping("/admin/hashtags")
+    public String hashtagManagementPage(Model model) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
+            return "redirect:/board";
+        }
+
+        model.addAttribute("currentUser", currentUser);
+
+        return "admin/hashtag-management";
+    }
 }
