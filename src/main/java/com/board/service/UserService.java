@@ -118,8 +118,8 @@ public class UserService {
 
     /**
      * 회원 탈퇴
-     * - 비밀번호 확인 후 계정 비활성화
-     * - 실제 데이터는 삭제하지 않고 enabled = false로 설정 (법적 보관 기간 등)
+     * - 개인정보보호법 준수: 식별 가능한 개인정보 즉시 삭제/익명화
+     * - 통계용 비식별 정보만 유지 (id, role, createdAt, deletedAt, deleteReason)
      */
     @Transactional
     public void deleteUser(Long userId, String password, String reason) {
@@ -136,10 +136,21 @@ public class UserService {
             throw new RuntimeException("비밀번호가 일치하지 않습니다.");
         }
 
-        // 계정 비활성화
+        // 개인정보 익명화 처리 (개인정보보호법 준수)
+        LocalDateTime now = LocalDateTime.now();
+        String anonymousId = "deleted_user_" + userId + "_" + System.currentTimeMillis();
+
+        // 식별 가능한 개인정보 삭제/익명화
+        user.setUsername(anonymousId);  // 아이디 익명화
+        user.setPassword("");  // 비밀번호 삭제
+        user.setNickname("탈퇴한사용자");  // 닉네임 익명화 (게시글에 표시)
+        user.setEmail(null);  // 이메일 삭제
+        user.setName(null);  // 이름 삭제
+
+        // 계정 비활성화 및 탈퇴 정보 기록 (통계용 비식별 정보)
         user.setEnabled(false);
-        user.setDeletedAt(LocalDateTime.now());
-        user.setDeleteReason(reason);
+        user.setDeletedAt(now);
+        user.setDeleteReason(reason);  // 서비스 개선용
 
         userRepository.save(user);
     }
@@ -154,17 +165,19 @@ public class UserService {
     }
 
     /**
-     * 탈퇴한 회원 복구 (관리자용)
+     * 탈퇴한 회원 복구 - 개인정보보호법으로 인해 불가능
+     *
+     * 개인정보가 이미 삭제/익명화되었으므로 복구할 수 없습니다.
+     * 탈퇴 시 아이디, 비밀번호, 이메일, 이름이 즉시 삭제되어 복원 불가능합니다.
+     *
+     * @deprecated 개인정보보호법 준수를 위해 탈퇴한 회원은 복구할 수 없습니다.
      */
+    @Deprecated
     @Transactional
     public void restoreUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-
-        user.setEnabled(true);
-        user.setDeletedAt(null);
-        user.setDeleteReason(null);
-
-        userRepository.save(user);
+        throw new UnsupportedOperationException(
+            "개인정보보호법에 따라 탈퇴한 회원은 복구할 수 없습니다. " +
+            "개인정보가 이미 삭제되었습니다."
+        );
     }
 }
