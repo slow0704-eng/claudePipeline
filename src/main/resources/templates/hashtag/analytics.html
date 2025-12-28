@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>해시태그 분석</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .analytics-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .page-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .page-header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card .icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #e0e0e0;
+        }
+
+        .trending-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .trending-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .trending-item:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+        }
+
+        .trending-rank {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 20px;
+            min-width: 40px;
+        }
+
+        .trending-info {
+            flex: 1;
+        }
+
+        .trending-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .trending-stats {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .trending-badge {
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .wordcloud-container {
+            min-height: 400px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .wordcloud-tag {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .wordcloud-tag:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .related-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .related-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .related-item:hover {
+            background: #f0f0f0;
+        }
+
+        .related-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .related-frequency {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 16px;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="analytics-container">
+        <!-- 헤더 -->
+        <div class="page-header">
+            <h1>📊 해시태그 분석</h1>
+            <p>해시태그 트렌드와 통계를 한눈에 확인하세요</p>
+        </div>
+
+        <!-- 뒤로가기 버튼 -->
+        <a th:href="@{/board}" class="back-button">← 게시판으로 돌아가기</a>
+
+        <!-- 전체 통계 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon">🏷️</div>
+                <div class="value" th:text="${overallStats.totalHashtags}">0</div>
+                <div class="label">Total Hashtags</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">📝</div>
+                <div class="value" th:text="${overallStats.totalUsage}">0</div>
+                <div class="label">Total Usage</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🔥</div>
+                <div class="value" id="activeTodayCount">-</div>
+                <div class="label">Active Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">⚡</div>
+                <div class="value" id="activeWeekCount">-</div>
+                <div class="label">Active This Week</div>
+            </div>
+        </div>
+
+        <!-- 트렌딩 해시태그 -->
+        <div class="section">
+            <div class="section-header">📈 트렌딩 해시태그</div>
+            <div class="tabs">
+                <button class="tab active" onclick="showTrending('1hour')">최근 1시간</button>
+                <button class="tab" onclick="showTrending('1day')">최근 24시간</button>
+                <button class="tab" onclick="showTrending('7days')">최근 7일</button>
+                <button class="tab" onclick="showTrending('30days')">최근 30일</button>
+            </div>
+            <div id="trendingContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    데이터를 불러오는 중...
+                </div>
+            </div>
+        </div>
+
+        <!-- 해시태그별 게시글 수 차트 -->
+        <div class="section">
+            <div class="section-header">📊 인기 해시태그 차트</div>
+            <div class="chart-container">
+                <canvas id="postCountChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 워드클라우드 -->
+        <div class="section">
+            <div class="section-header">☁️ 해시태그 워드클라우드</div>
+            <div id="wordcloudContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    워드클라우드를 생성하는 중...
+                </div>
+            </div>
+        </div>
+
+        <!-- 관련 해시태그 검색 -->
+        <div class="section">
+            <div class="section-header">🔍 관련 해시태그 검색</div>
+            <div class="search-box">
+                <input type="text"
+                       class="search-input"
+                       id="relatedSearchInput"
+                       placeholder="해시태그 이름을 입력하세요 (예: javascript)">
+            </div>
+            <div id="relatedContent">
+                <div class="no-data">해시태그를 검색하면 관련된 태그를 볼 수 있습니다</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let trendingData = {};
+        let postCountChart = null;
+
+        // 페이지 로드 시 데이터 가져오기
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOverallStats();
+            loadTrendingData();
+            loadPostCountChart();
+            loadWordCloud();
+            setupRelatedSearch();
+        });
+
+        // 전체 통계 로드
+        async function loadOverallStats() {
+            try {
+                const response = await fetch('/api/hashtags/analytics/overview');
+                const data = await response.json();
+                const stats = data.statistics;
+
+                document.getElementById('activeTodayCount').textContent = stats.activeToday || 0;
+                document.getElementById('activeWeekCount').textContent = stats.activeThisWeek || 0;
+            } catch (error) {
+                console.error('Failed to load overall stats:', error);
+            }
+        }
+
+        // 트렌딩 데이터 로드
+        async function loadTrendingData() {
+            try {
+                const response = await fetch('/api/hashtags/analytics/trending');
+                const data = await response.json();
+                trendingData = data.trends;
+                showTrending('1hour');
+            } catch (error) {
+                console.error('Failed to load trending data:', error);
+                document.getElementById('trendingContent').innerHTML =
+                    '<div class="no-data">트렌딩 데이터를 불러올 수 없습니다</div>';
+            }
+        }
+
+        // 트렌딩 표시
+        function showTrending(period) {
+            // 탭 활성화
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const trends = trendingData[period] || [];
+            const container = document.getElementById('trendingContent');
+
+            if (trends.length === 0) {
+                container.innerHTML = '<div class="no-data">이 기간 동안 사용된 해시태그가 없습니다</div>';
+                return;
+            }
+
+            let html = '<div class="trending-list">';
+            trends.forEach((hashtag, index) => {
+                html += `
+                    <div class="trending-item">
+                        <div class="trending-rank">${index + 1}</div>
+                        <div class="trending-info">
+                            <div class="trending-name">
+                                <a href="/hashtag/${hashtag.name}" style="text-decoration: none; color: inherit;">
+                                    #${hashtag.name}
+                                </a>
+                            </div>
+                            <div class="trending-stats">
+                                사용 횟수: ${hashtag.useCount} ·
+                                마지막 사용: ${formatDateTime(hashtag.lastUsedAt)}
+                            </div>
+                        </div>
+                        <div class="trending-badge">${hashtag.useCount}회</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // 게시글 수 차트 로드
+        async function loadPostCountChart() {
+            try {
+                const response = await fetch('/api/hashtags/analytics/post-counts?limit=20');
+                const data = await response.json();
+                const stats = data.data;
+
+                if (!stats || stats.length === 0) {
+                    document.querySelector('#postCountChart').parentElement.innerHTML =
+                        '<div class="no-data">차트 데이터가 없습니다</div>';
+                    return;
+                }
+
+                const ctx = document.getElementById('postCountChart').getContext('2d');
+                postCountChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: stats.map(item => '#' + item.name),
+                        datasets: [{
+                            label: '게시글 수',
+                            data: stats.map(item => item.postCount),
+                            backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + context.parsed.y + '개';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to load post count chart:', error);
+            }
+        }
+
+        // 워드클라우드 로드
+        async function loadWordCloud() {
+            try {
+                const response = await fetch('/api/hashtags/analytics/wordcloud?limit=50');
+                const data = await response.json();
+                const words = data.data;
+
+                if (!words || words.length === 0) {
+                    document.getElementById('wordcloudContent').innerHTML =
+                        '<div class="no-data">워드클라우드 데이터가 없습니다</div>';
+                    return;
+                }
+
+                // 빈도수 기반으로 폰트 크기 계산
+                const maxFrequency = Math.max(...words.map(w => w.frequency));
+                const minSize = 12;
+                const maxSize = 36;
+
+                let html = '<div class="wordcloud-container">';
+                words.forEach(word => {
+                    const size = minSize + (word.frequency / maxFrequency) * (maxSize - minSize);
+                    html += `
+                        <a href="/hashtag/${word.name}"
+                           class="wordcloud-tag"
+                           style="font-size: ${size}px;">
+                            #${word.name} (${word.frequency})
+                        </a>
+                    `;
+                });
+                html += '</div>';
+
+                document.getElementById('wordcloudContent').innerHTML = html;
+            } catch (error) {
+                console.error('Failed to load word cloud:', error);
+                document.getElementById('wordcloudContent').innerHTML =
+                    '<div class="no-data">워드클라우드를 불러올 수 없습니다</div>';
+            }
+        }
+
+        // 관련 해시태그 검색 설정
+        function setupRelatedSearch() {
+            const searchInput = document.getElementById('relatedSearchInput');
+            let timeout = null;
+
+            searchInput.addEventListener('input', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    const query = this.value.trim().toLowerCase();
+                    if (query.length > 0) {
+                        searchRelatedHashtags(query);
+                    } else {
+                        document.getElementById('relatedContent').innerHTML =
+                            '<div class="no-data">해시태그를 검색하면 관련된 태그를 볼 수 있습니다</div>';
+                    }
+                }, 500);
+            });
+        }
+
+        // 관련 해시태그 검색
+        async function searchRelatedHashtags(name) {
+            try {
+                document.getElementById('relatedContent').innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        검색 중...
+                    </div>
+                `;
+
+                const response = await fetch(`/api/hashtags/analytics/related?name=${encodeURIComponent(name)}&limit=15`);
+
+                if (!response.ok) {
+                    throw new Error('Hashtag not found');
+                }
+
+                const data = await response.json();
+                const related = data.relatedHashtags;
+
+                if (!related || related.length === 0) {
+                    document.getElementById('relatedContent').innerHTML =
+                        `<div class="no-data">"${name}" 해시태그와 관련된 태그가 없습니다</div>`;
+                    return;
+                }
+
+                let html = '<div class="related-list">';
+                related.forEach(tag => {
+                    html += `
+                        <div class="related-item">
+                            <a href="/hashtag/${tag.name}" style="text-decoration: none;">
+                                <div class="related-name">#${tag.name}</div>
+                            </a>
+                            <div class="related-frequency">
+                                함께 사용됨: ${tag.coOccurrence}회 · 총 사용: ${tag.useCount}회
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                document.getElementById('relatedContent').innerHTML = html;
+            } catch (error) {
+                console.error('Failed to search related hashtags:', error);
+                document.getElementById('relatedContent').innerHTML =
+                    `<div class="no-data">"${name}" 해시태그를 찾을 수 없습니다</div>`;
+            }
+        }
+
+        // 날짜 포맷팅
+        function formatDateTime(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return '방금 전';
+            if (minutes < 60) return minutes + '분 전';
+            if (hours < 24) return hours + '시간 전';
+            if (days < 7) return days + '일 전';
+
+            return date.toLocaleDateString('ko-KR');
+        }
+    </script>
+</body>
+</html>

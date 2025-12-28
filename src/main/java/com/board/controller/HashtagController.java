@@ -278,4 +278,120 @@ public class HashtagController {
 
         return ResponseEntity.ok(response);
     }
+
+    // ========== 해시태그 분석 기능 ==========
+
+    /**
+     * 시간대별 트렌딩 해시태그 조회 API
+     * GET /api/hashtags/analytics/trending
+     * @return 1시간, 1일, 7일, 30일 트렌딩 해시태그
+     */
+    @GetMapping("/api/hashtags/analytics/trending")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getTrendingByPeriod() {
+        Map<String, List<Map<String, Object>>> trends = hashtagService.getTrendingByPeriod();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("trends", trends);
+        response.put("periods", List.of("1hour", "1day", "7days", "30days"));
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 관련 해시태그 추천 API (co-occurrence 기반)
+     * GET /api/hashtags/analytics/related?name=javascript&limit=10
+     * @param name 기준 해시태그 이름
+     * @param limit 조회할 관련 해시태그 수
+     * @return 함께 사용된 해시태그 목록 (빈도순)
+     */
+    @GetMapping("/api/hashtags/analytics/related")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getRelatedHashtags(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "10") int limit) {
+        try {
+            List<Map<String, Object>> relatedHashtags = hashtagService.getRelatedHashtags(name, limit);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("hashtag", name);
+            response.put("relatedHashtags", relatedHashtags);
+            response.put("count", relatedHashtags.size());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * 워드클라우드 데이터 조회 API
+     * GET /api/hashtags/analytics/wordcloud?limit=50
+     * @param limit 조회할 해시태그 수
+     * @return 해시태그별 빈도 데이터
+     */
+    @GetMapping("/api/hashtags/analytics/wordcloud")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getWordCloudData(
+            @RequestParam(defaultValue = "50") int limit) {
+        List<Map<String, Object>> wordCloudData = hashtagService.getWordCloudData(limit);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", wordCloudData);
+        response.put("count", wordCloudData.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 전체 해시태그 통계 조회 API
+     * GET /api/hashtags/analytics/overview
+     * @return 전체 해시태그 통계 (총 개수, 총 사용 횟수, 인기 해시태그 등)
+     */
+    @GetMapping("/api/hashtags/analytics/overview")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getOverallStatistics() {
+        Map<String, Object> statistics = hashtagService.getOverallStatistics();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("statistics", statistics);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 해시태그별 게시글 수 통계 API (차트용)
+     * GET /api/hashtags/analytics/post-counts?limit=20
+     * @param limit 조회할 해시태그 수
+     * @return 해시태그별 게시글 수 데이터
+     */
+    @GetMapping("/api/hashtags/analytics/post-counts")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getPostCountStats(
+            @RequestParam(defaultValue = "20") int limit) {
+        List<Map<String, Object>> postCountStats = hashtagService.getHashtagPostCountStats(limit);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", postCountStats);
+        response.put("count", postCountStats.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 해시태그 분석 페이지
+     * GET /hashtag/analytics
+     */
+    @GetMapping("/hashtag/analytics")
+    public String analyticsPage(Model model) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+
+        // 기본 통계 데이터 로드
+        Map<String, Object> overallStats = hashtagService.getOverallStatistics();
+
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("overallStats", overallStats);
+
+        return "hashtag/analytics";
+    }
 }

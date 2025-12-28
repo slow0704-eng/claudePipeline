@@ -56,4 +56,16 @@ public interface HashtagRepository extends JpaRepository<Hashtag, Long> {
      */
     @Query("SELECT h FROM Hashtag h WHERE h.useCount >= :minCount ORDER BY h.useCount DESC")
     List<Hashtag> findPopularHashtags(@Param("minCount") Long minCount);
+
+    /**
+     * 전체 해시태그 통계
+     */
+    @Query("SELECT COUNT(h), SUM(h.useCount) FROM Hashtag h")
+    List<Object[]> getTotalStatistics();
+
+    /**
+     * 가장 인기있는 해시태그 Top N
+     */
+    @Query("SELECT h FROM Hashtag h ORDER BY h.useCount DESC")
+    List<Hashtag> findTopHashtags();
 }

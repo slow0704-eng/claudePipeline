@@ -357,4 +357,166 @@ public class HashtagService {
 
         return details;
     }
+
+    // ========== 해시태그 분석 기능 ==========
+
+    /**
+     * 기간별 트렌딩 해시태그
+     */
+    public Map<String, List<Map<String, Object>>> getTrendingByPeriod() {
+        Map<String, List<Map<String, Object>>> trends = new HashMap<>();
+
+        // 1시간
+        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+        trends.put("1hour", convertToTrendList(hashtagRepository.findTrendingHashtags(oneHourAgo), 10));
+
+        // 24시간
+        LocalDateTime oneDayAgo = LocalDateTime.now().minusHours(24);
+        trends.put("1day", convertToTrendList(hashtagRepository.findTrendingHashtags(oneDayAgo), 10));
+
+        // 7일
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        trends.put("7days", convertToTrendList(hashtagRepository.findTrendingHashtags(oneWeekAgo), 10));
+
+        // 30일
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusDays(30);
+        trends.put("30days", convertToTrendList(hashtagRepository.findTrendingHashtags(oneMonthAgo), 10));
+
+        return trends;
+    }
+
+    private List<Map<String, Object>> convertToTrendList(List<Hashtag> hashtags, int limit) {
+        return hashtags.stream()
+                .limit(limit)
+                .map(h -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", h.getId());
+                    map.put("name", h.getName());
+                    map.put("useCount", h.getUseCount());
+                    map.put("lastUsedAt", h.getLastUsedAt());
+                    map.put("postCount", boardHashtagRepository.countByHashtagId(h.getId()));
+                    map.put("followerCount", getFollowerCount(h.getId()));
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 관련 해시태그 추천 (함께 사용된 해시태그)
+     */
+    public List<Map<String, Object>> getRelatedHashtags(String tagName, int limit) {
+        String normalizedName = tagName.toLowerCase().trim().replace("#", "");
+        Optional<Hashtag> hashtagOpt = hashtagRepository.findByName(normalizedName);
+
+        if (hashtagOpt.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Long hashtagId = hashtagOpt.get().getId();
+        List<Object[]> relatedIds = boardHashtagRepository.findRelatedHashtagIds(hashtagId);
+
+        return relatedIds.stream()
+                .limit(limit)
+                .map(result -> {
+                    Long relatedId = (Long) result[0];
+                    Long frequency = (Long) result[1];
+
+                    Map<String, Object> map = new HashMap<>();
+                    hashtagRepository.findById(relatedId).ifPresent(h -> {
+                        map.put("id", h.getId());
+                        map.put("name", h.getName());
+                        map.put("useCount", h.getUseCount());
+                        map.put("coOccurrence", frequency); // 함께 사용된 횟수
+                        map.put("postCount", boardHashtagRepository.countByHashtagId(h.getId()));
+                    });
+                    return map;
+                })
+                .filter(map -> !map.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 워드클라우드 데이터
+     */
+    public List<Map<String, Object>> getWordCloudData(int limit) {
+        List<Object[]> frequencies = boardHashtagRepository.findAllHashtagFrequencies();
+
+        return frequencies.stream()
+                .limit(limit)
+                .map(result -> {
+                    Long id = (Long) result[0];
+                    String name = (String) result[1];
+                    Long frequency = (Long) result[2];
+
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", id);
+                    map.put("name", name);
+                    map.put("value", frequency); // 워드클라우드 크기 결정
+                    map.put("frequency", frequency);
+
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 전체 해시태그 통계
+     */
+    public Map<String, Object> getOverallStatistics() {
+        Map<String, Object> stats = new HashMap<>();
+
+        // 전체 통계
+        List<Object[]> totalStats = hashtagRepository.getTotalStatistics();
+        if (!totalStats.isEmpty() && totalStats.get(0) != null) {
+            Object[] data = totalStats.get(0);
+            stats.put("totalHashtags", data[0] != null ? data[0] : 0L);
+            stats.put("totalUsage", data[1] != null ? data[1] : 0L);
+        } else {
+            stats.put("totalHashtags", 0L);
+            stats.put("totalUsage", 0L);
+        }
+
+        // 상위 해시태그
+        List<Hashtag> topHashtags = hashtagRepository.findTopHashtags();
+        stats.put("topHashtags", topHashtags.stream()
+                .limit(20)
+                .map(h -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("name", h.getName());
+                    map.put("useCount", h.getUseCount());
+                    map.put("postCount", boardHashtagRepository.countByHashtagId(h.getId()));
+                    map.put("followerCount", getFollowerCount(h.getId()));
+                    return map;
+                })
+                .collect(Collectors.toList()));
+
+        // 활동도 분석
+        LocalDateTime now = LocalDateTime.now();
+        long activeToday = hashtagRepository.findTrendingHashtags(now.minusDays(1)).size();
+        long activeThisWeek = hashtagRepository.findTrendingHashtags(now.minusDays(7)).size();
+
+        stats.put("activeToday", activeToday);
+        stats.put("activeThisWeek", activeThisWeek);
+
+        return stats;
+    }
+
+    /**
+     * 해시태그별 게시글 수 통계 (차트용)
+     */
+    public List<Map<String, Object>> getHashtagPostCountStats(int limit) {
+        List<Hashtag> hashtags = hashtagRepository.findTop20ByOrderByUseCountDesc();
+
+        return hashtags.stream()
+                .limit(limit)
+                .map(h -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("name", h.getName());
+                    map.put("postCount", boardHashtagRepository.countByHashtagId(h.getId()));
+                    map.put("useCount", h.getUseCount());
+                    return map;
+                })
+                .sorted((a, b) -> ((Long) b.get("postCount")).compareTo((Long) a.get("postCount")))
+                .collect(Collectors.toList());
+    }
 }
