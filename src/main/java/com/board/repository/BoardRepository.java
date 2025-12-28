@@ -71,6 +71,11 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     @Query("UPDATE Board b SET b.viewCount = b.viewCount + 1 WHERE b.id = :id")
     void incrementViewCount(@Param("id") Long id);
 
+    // 좋아요 수 직접 업데이트 (다른 필드에 영향 없음)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Board b SET b.likeCount = :likeCount WHERE b.id = :id")
+    void updateLikeCount(@Param("id") Long id, @Param("likeCount") int likeCount);
+
     // 통계용 쿼리 메서드
     long countByCreatedAtAfter(LocalDateTime dateTime);
 

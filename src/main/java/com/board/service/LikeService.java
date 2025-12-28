@@ -53,14 +53,16 @@ public class LikeService {
             isLiked = true;
         }
 
-        // Update count
+        // Update count - 좋아요 수만 직접 업데이트 (다른 필드에 영향 없음)
         long likeCount = likeRepository.countByTargetTypeAndTargetId(targetType, targetId);
 
         if (targetType == TargetType.POST) {
+            // 좋아요 수만 업데이트 (다른 필드 보존)
+            boardRepository.updateLikeCount(targetId, (int) likeCount);
+
+            // 알림을 위해 게시글 정보 조회
             Board board = boardRepository.findById(targetId)
                     .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
-            board.setLikeCount((int) likeCount);
-            boardRepository.save(board);
 
             // Create notification for post like
             if (isLiked && !board.getUserId().equals(currentUser.getId())) {
@@ -75,10 +77,12 @@ public class LikeService {
                 );
             }
         } else if (targetType == TargetType.COMMENT) {
+            // 좋아요 수만 업데이트 (다른 필드 보존)
+            commentRepository.updateLikeCount(targetId, (int) likeCount);
+
+            // 알림을 위해 댓글 정보 조회
             Comment comment = commentRepository.findById(targetId)
                     .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
-            comment.setLikeCount((int) likeCount);
-            commentRepository.save(comment);
 
             // Create notification for comment like
             if (isLiked && !comment.getUserId().equals(currentUser.getId())) {
