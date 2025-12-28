@@ -714,7 +714,55 @@
                     </div>
                 </div>
 
-                <div style="text-align: right;">
+                <!-- 공유 통계 섹션 -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e9ecef;">
+                    <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">📊 공유 통계</h3>
+                    <div id="shareStatistics" style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+                            <div style="padding: 10px; background: white; border-radius: 5px; text-align: center;">
+                                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">타임라인 공유</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #007bff;" id="stat-internal">0</div>
+                            </div>
+                            <div style="padding: 10px; background: white; border-radius: 5px; text-align: center;">
+                                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">외부 공유</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #28a745;" id="stat-external">0</div>
+                            </div>
+                        </div>
+                        <div style="padding: 10px; background: white; border-radius: 5px; text-align: center; margin-bottom: 12px;">
+                            <div style="font-size: 12px; color: #666; margin-bottom: 5px;">전체 공유</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #6f42c1;" id="stat-total">0</div>
+                        </div>
+                        <div style="font-size: 13px; color: #495057; font-weight: 600; margin-bottom: 8px;">플랫폼별 공유</div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 12px;">
+                            <div style="padding: 8px; background: white; border-radius: 4px; text-align: center;">
+                                <div style="color: #1DA1F2; font-weight: 600; margin-bottom: 3px;">Twitter</div>
+                                <div id="stat-twitter">0</div>
+                            </div>
+                            <div style="padding: 8px; background: white; border-radius: 4px; text-align: center;">
+                                <div style="color: #1877F2; font-weight: 600; margin-bottom: 3px;">Facebook</div>
+                                <div id="stat-facebook">0</div>
+                            </div>
+                            <div style="padding: 8px; background: white; border-radius: 4px; text-align: center;">
+                                <div style="color: #0A66C2; font-weight: 600; margin-bottom: 3px;">LinkedIn</div>
+                                <div id="stat-linkedin">0</div>
+                            </div>
+                            <div style="padding: 8px; background: white; border-radius: 4px; text-align: center;">
+                                <div style="color: #FEE500; font-weight: 600; margin-bottom: 3px;">Kakao</div>
+                                <div id="stat-kakao">0</div>
+                            </div>
+                            <div style="padding: 8px; background: white; border-radius: 4px; text-align: center;">
+                                <div style="color: #28a745; font-weight: 600; margin-bottom: 3px;">링크복사</div>
+                                <div id="stat-linkcopy">0</div>
+                            </div>
+                            <div style="padding: 8px; background: white; border-radius: 4px; text-align: center;">
+                                <div style="color: #6c757d; font-weight: 600; margin-bottom: 3px;">QR코드</div>
+                                <div id="stat-qrcode">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: right; margin-top: 15px;">
                     <button onclick="closeShareModal()" style="padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">닫기</button>
                 </div>
             </div>
@@ -1250,6 +1298,32 @@
         // 공유 모달 열기
         function openShareModal() {
             document.getElementById('shareModal').style.display = 'flex';
+            loadShareStatistics();
+        }
+
+        // 공유 통계 로드
+        function loadShareStatistics() {
+            const boardId = [[${board.id}]];
+
+            fetch(`/api/shares/statistics/${boardId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // 전체 통계 업데이트
+                    document.getElementById('stat-internal').textContent = data.internalShares || 0;
+                    document.getElementById('stat-external').textContent = data.totalExternalShares || 0;
+                    document.getElementById('stat-total').textContent = data.totalShares || 0;
+
+                    // 플랫폼별 통계 업데이트
+                    document.getElementById('stat-twitter').textContent = data.twitterShares || 0;
+                    document.getElementById('stat-facebook').textContent = data.facebookShares || 0;
+                    document.getElementById('stat-linkedin').textContent = data.linkedinShares || 0;
+                    document.getElementById('stat-kakao').textContent = data.kakaoShares || 0;
+                    document.getElementById('stat-linkcopy').textContent = data.linkCopyShares || 0;
+                    document.getElementById('stat-qrcode').textContent = data.qrCodeShares || 0;
+                })
+                .catch(error => {
+                    console.error('Failed to load share statistics:', error);
+                });
         }
 
         // 공유 모달 닫기
@@ -1302,6 +1376,9 @@
                         alert('공유를 취소했습니다.');
                     }
 
+                    // 통계 새로고침
+                    loadShareStatistics();
+
                     closeShareModal();
                 } else {
                     alert(data.message || '공유 처리에 실패했습니다.');
@@ -1332,6 +1409,34 @@
 
         // ========== 외부 공유 기능 ==========
 
+        // 외부 공유 추적 헬퍼 함수
+        function trackExternalShare(platform) {
+            const boardId = [[${board.id}]];
+            const params = new URLSearchParams();
+            params.append('boardId', boardId);
+            params.append('platform', platform);
+
+            fetch('/api/shares/track-external', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                },
+                body: params
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`${platform} 공유가 추적되었습니다.`);
+                    // 통계 새로고침
+                    setTimeout(() => loadShareStatistics(), 500);
+                }
+            })
+            .catch(error => {
+                console.error('External share tracking error:', error);
+            });
+        }
+
         // Twitter/X 공유
         function shareToTwitter() {
             const boardId = [[${board.id}]];
@@ -1339,6 +1444,10 @@
             const url = `https://spring-board-app.onrender.com/board/${boardId}`;
             const text = encodeURIComponent(title);
             const shareUrl = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`;
+
+            // 공유 추적
+            trackExternalShare('TWITTER');
+
             window.open(shareUrl, '_blank', 'width=550,height=450');
         }
 
@@ -1347,6 +1456,10 @@
             const boardId = [[${board.id}]];
             const url = `https://spring-board-app.onrender.com/board/${boardId}`;
             const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+
+            // 공유 추적
+            trackExternalShare('FACEBOOK');
+
             window.open(shareUrl, '_blank', 'width=550,height=450');
         }
 
@@ -1355,6 +1468,10 @@
             const boardId = [[${board.id}]];
             const url = `https://spring-board-app.onrender.com/board/${boardId}`;
             const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+
+            // 공유 추적
+            trackExternalShare('LINKEDIN');
+
             window.open(shareUrl, '_blank', 'width=550,height=450');
         }
 
@@ -1363,6 +1480,9 @@
             const boardId = [[${board.id}]];
             const title = [[${board.title}]];
             const url = `https://spring-board-app.onrender.com/board/${boardId}`;
+
+            // 공유 추적
+            trackExternalShare('KAKAO');
 
             // Kakao SDK 초기화 (앱 키는 환경에 맞게 변경 필요)
             if (!Kakao.isInitialized()) {
@@ -1407,10 +1527,17 @@
 
             try {
                 document.execCommand('copy');
+
+                // 공유 추적
+                trackExternalShare('LINK_COPY');
+
                 alert('링크가 클립보드에 복사되었습니다! ✅');
             } catch (err) {
                 // Clipboard API 사용 (최신 브라우저)
                 navigator.clipboard.writeText(shareUrlInput.value).then(() => {
+                    // 공유 추적
+                    trackExternalShare('LINK_COPY');
+
                     alert('링크가 클립보드에 복사되었습니다! ✅');
                 }).catch(err => {
                     console.error('Failed to copy:', err);
@@ -1451,6 +1578,9 @@
                 });
 
                 container.style.display = 'block';
+
+                // 공유 추적
+                trackExternalShare('QR_CODE');
             } catch (error) {
                 console.error('QR Code generation error:', error);
                 alert('QR 코드 생성에 실패했습니다.');
