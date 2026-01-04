@@ -4,13 +4,17 @@ import com.board.enums.ReportReason;
 import com.board.enums.ReportStatus;
 import com.board.enums.ReportTargetType;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id")
+@ToString
 @Table(name = "reports",
        uniqueConstraints = @UniqueConstraint(name = "uk_report",
                                              columnNames = {"reporter_id", "target_type", "target_id"}),

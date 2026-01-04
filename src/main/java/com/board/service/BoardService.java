@@ -3,6 +3,9 @@ package com.board.service;
 import com.board.entity.Board;
 import com.board.entity.User;
 import com.board.enums.BoardStatus;
+import com.board.exception.BusinessException;
+import com.board.exception.ErrorCode;
+import com.board.exception.ValidationException;
 import com.board.repository.BoardRepository;
 import com.board.repository.BookmarkRepository;
 import com.board.util.AuthenticationUtils;
@@ -25,19 +28,37 @@ public class BoardService {
     private final BookmarkRepository bookmarkRepository;
     private final HashtagService hashtagService;
 
+    @Transactional(readOnly = true)
     public Page<Board> getAllBoards(Pageable pageable) {
         // 임시저장 게시글 제외하고 조회
         return boardRepository.findByIsDraftFalse(pageable);
     }
 
+    @Transactional(readOnly = true)
     public List<Board> getAllBoards() {
-        // 임시저장 게시글 제외하고 조회
-        return boardRepository.findAllPublishedOrderByCreatedAtDesc();
+        // 임시저장 게시글 제외하고 조회 + User Fetch Join (N+1 방지)
+        return boardRepository.findAllPublishedWithUser();
     }
 
+    /**
+     * 게시글 조회 + User Fetch Join (N+1 문제 방지)
+     * - 기본 조회 메서드에 Fetch Join 적용
+     * - User 정보가 필요한 대부분의 경우에 사용
+     */
+    @Transactional(readOnly = true)
     public Board getBoardById(Long id) {
-        return boardRepository.findById(id)
+        return boardRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+    }
+
+    /**
+     * @deprecated Use getBoardById() instead
+     * getBoardById()가 이미 User Fetch Join을 포함합니다
+     */
+    @Deprecated
+    @Transactional(readOnly = true)
+    public Board getBoardByIdWithUser(Long id) {
+        return getBoardById(id);
     }
 
     @Transactional
@@ -84,7 +105,7 @@ public class BoardService {
         // Check ownership
         User currentUser = AuthenticationUtils.getCurrentUser(userService);
         if (currentUser != null && !isOwner(board, currentUser)) {
-            throw new RuntimeException("자신의 글만 수정할 수 있습니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_BOARD_ACCESS, "자신의 글만 수정할 수 있습니다.");
         }
 
         board.setTitle(boardDetails.getTitle());
@@ -107,7 +128,7 @@ public class BoardService {
         // Check ownership
         User currentUser = AuthenticationUtils.getCurrentUser(userService);
         if (currentUser != null && !isOwner(board, currentUser)) {
-            throw new RuntimeException("자신의 글만 삭제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_BOARD_ACCESS, "자신의 글만 삭제할 수 있습니다.");
         }
 
         // 첨부파일 삭제
@@ -129,8 +150,12 @@ public class BoardService {
         return board.getUserId().equals(user.getId());
     }
 
+    /**
+     * 사용자별 게시글 조회 + User Fetch Join (N+1 방지)
+     */
+    @Transactional(readOnly = true)
     public List<Board> getBoardsByUserId(Long userId) {
-        return boardRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        return boardRepository.findByUserIdWithUser(userId);
     }
 
     /**
@@ -161,13 +186,15 @@ public class BoardService {
     /**
      * 사용자의 임시저장 목록 조회
      */
+    @Transactional(readOnly = true)
     public List<Board> getDraftsByUserId(Long userId) {
-        return boardRepository.findByUserIdAndIsDraftTrueOrderByUpdatedAtDesc(userId);
+        return boardRepository.findByUserIdAndIsDraftTrueOrderByUpdatedAtDescTitleAsc(userId);
     }
 
     /**
      * 사용자의 임시저장 개수 조회
      */
+    @Transactional(readOnly = true)
     public long getDraftCountByUserId(Long userId) {
         return boardRepository.countByUserIdAndIsDraftTrue(userId);
     }
@@ -182,12 +209,12 @@ public class BoardService {
         // 권한 확인
         User currentUser = AuthenticationUtils.getCurrentUser(userService);
         if (currentUser != null && !isOwner(board, currentUser)) {
-            throw new RuntimeException("자신의 글만 발행할 수 있습니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_BOARD_ACCESS, "자신의 글만 발행할 수 있습니다.");
         }
 
         // 임시저장 상태 확인
         if (!board.getIsDraft()) {
-            throw new RuntimeException("이미 발행된 게시글입니다.");
+            throw new BusinessException(ErrorCode.BOARD_ALREADY_PUBLISHED);
         }
 
         board.setIsDraft(false);
@@ -217,7 +244,7 @@ public class BoardService {
     @Transactional
     public void bulkUpdateStatus(List<Long> boardIds, BoardStatus newStatus) {
         if (boardIds == null || boardIds.isEmpty()) {
-            throw new RuntimeException("게시글 ID 목록이 비어있습니다.");
+            throw new ValidationException(ErrorCode.INVALID_INPUT_VALUE, "게시글 ID 목록이 비어있습니다.");
         }
 
         for (Long boardId : boardIds) {
@@ -257,7 +284,7 @@ public class BoardService {
     @Transactional
     public void bulkHardDelete(List<Long> boardIds) {
         if (boardIds == null || boardIds.isEmpty()) {
-            throw new RuntimeException("게시글 ID 목록이 비어있습니다.");
+            throw new ValidationException(ErrorCode.INVALID_INPUT_VALUE, "게시글 ID 목록이 비어있습니다.");
         }
 
         for (Long boardId : boardIds) {
@@ -276,6 +303,7 @@ public class BoardService {
     /**
      * 복합 필터로 게시글 검색 (관리자용)
      */
+    @Transactional(readOnly = true)
     public Page<Board> searchBoardsWithFilters(
             BoardStatus status,
             Long categoryId,
@@ -290,27 +318,31 @@ public class BoardService {
     /**
      * 상태별 게시글 조회
      */
+    @Transactional(readOnly = true)
     public Page<Board> getBoardsByStatus(BoardStatus status, Pageable pageable) {
-        return boardRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+        return boardRepository.findByStatusOrderByCreatedAtDescTitleAsc(status, pageable);
     }
 
     /**
      * 카테고리별 게시글 조회
      */
+    @Transactional(readOnly = true)
     public Page<Board> getBoardsByCategory(Long categoryId, Pageable pageable) {
-        return boardRepository.findByCategoryIdOrderByCreatedAtDesc(categoryId, pageable);
+        return boardRepository.findByCategoryIdOrderByCreatedAtDescTitleAsc(categoryId, pageable);
     }
 
     /**
      * 상태와 카테고리로 게시글 조회
      */
+    @Transactional(readOnly = true)
     public Page<Board> getBoardsByStatusAndCategory(BoardStatus status, Long categoryId, Pageable pageable) {
-        return boardRepository.findByStatusAndCategoryIdOrderByCreatedAtDesc(status, categoryId, pageable);
+        return boardRepository.findByStatusAndCategoryIdOrderByCreatedAtDescTitleAsc(status, categoryId, pageable);
     }
 
     /**
      * 모든 게시글 조회 (관리자용)
      */
+    @Transactional(readOnly = true)
     public Page<Board> getAllBoardsForAdmin(Pageable pageable) {
         return boardRepository.findAllBoardsForAdmin(pageable);
     }
@@ -325,7 +357,7 @@ public class BoardService {
         // 현재 고정된 게시글 개수 확인
         long pinnedCount = boardRepository.countActivePinnedBoards(LocalDateTime.now());
         if (pinnedCount >= 3) {
-            throw new RuntimeException("최대 3개까지만 고정할 수 있습니다. 기존 고정 게시글을 먼저 해제해주세요.");
+            throw new BusinessException(ErrorCode.MAX_PINNED_BOARDS_EXCEEDED, "기존 고정 게시글을 먼저 해제해주세요.");
         }
 
         Board board = getBoardById(boardId);
@@ -358,6 +390,7 @@ public class BoardService {
     /**
      * 활성화된 고정 게시글 목록 조회
      */
+    @Transactional(readOnly = true)
     public List<Board> getActivePinnedBoards() {
         return boardRepository.findActivePinnedBoards(LocalDateTime.now());
     }
@@ -400,6 +433,7 @@ public class BoardService {
     /**
      * 고급 검색 (사용자용) - 여러 필터 조건으로 검색
      */
+    @Transactional(readOnly = true)
     public Page<Board> advancedSearch(
             String searchType,
             String keyword,
@@ -474,6 +508,7 @@ public class BoardService {
     /**
      * 간단 검색 (키워드만)
      */
+    @Transactional(readOnly = true)
     public Page<Board> simpleSearch(String keyword, Pageable pageable) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return boardRepository.findByIsDraftFalse(pageable);

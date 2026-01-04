@@ -2,14 +2,18 @@ package com.board.entity;
 
 import com.board.enums.BannedWordAction;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id")
+@ToString
 @Table(name = "banned_words",
        indexes = {
            @Index(name = "idx_banned_word_enabled", columnList = "enabled")

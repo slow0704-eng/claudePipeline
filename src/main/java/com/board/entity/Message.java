@@ -1,13 +1,17 @@
 package com.board.entity;
 
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id")
+@ToString
 @Table(name = "messages",
        indexes = {
            @Index(name = "idx_message_recipient", columnList = "recipient_id, is_read, created_at DESC"),

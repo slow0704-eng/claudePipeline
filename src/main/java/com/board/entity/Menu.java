@@ -1,7 +1,7 @@
 package com.board.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -18,7 +18,11 @@ import java.time.LocalDateTime;
            @Index(name = "idx_menu_order", columnList = "display_order"),
            @Index(name = "idx_menu_enabled", columnList = "enabled")
        })
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id")
+@ToString
 public class Menu {
 
     @Id

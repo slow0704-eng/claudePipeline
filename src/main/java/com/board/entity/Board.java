@@ -1,15 +1,28 @@
 package com.board.entity;
 
 import com.board.enums.BoardStatus;
+import com.board.enums.ReactionType;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Entity
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id")
+@ToString(exclude = {"comments", "likes", "shares", "bookmarks", "user"})
 @Table(name = "board",
        indexes = {
            @Index(name = "idx_board_status", columnList = "status"),
@@ -31,8 +44,15 @@ public class Board {
     @Column(nullable = false, length = 50)
     private String author;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", insertable = false, updatable = false)
     private Long userId;
+
+    /**
+     * 게시글 작성자 (User 엔티티와의 관계)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Column(length = 50)
     private String nickname;
@@ -67,9 +87,77 @@ public class Board {
     @Column(name = "like_count")
     private Integer likeCount = 0;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "reaction_counts", columnDefinition = "jsonb")
+    private String reactionCounts = "{\"LIKE\":0,\"HELPFUL\":0,\"FUNNY\":0,\"WOW\":0,\"SAD\":0,\"ANGRY\":0,\"THINKING\":0,\"CELEBRATE\":0}";
+
     @Column(name = "comment_count")
     private Integer commentCount = 0;
 
     @Column(name = "is_draft", nullable = false)
     private Boolean isDraft = false;
+
+    /**
+     * 게시글의 댓글 목록
+     */
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
+    /**
+     * 게시글의 좋아요 목록
+     */
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes = new ArrayList<>();
+
+    /**
+     * 게시글의 공유 목록
+     */
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Share> shares = new ArrayList<>();
+
+    /**
+     * 게시글의 북마크 목록
+     */
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Bookmark> bookmarks = new ArrayList<>();
+
+    // Helper method for reaction counts
+    @Transient
+    public Map<String, Integer> getReactionCountsMap() {
+        try {
+            return new ObjectMapper().readValue(reactionCounts,
+                    new TypeReference<Map<String, Integer>>(){});
+        } catch (Exception e) {
+            return new HashMap<>();
+        }
+    }
+
+    @Transient
+    private ReactionType userReaction;  // 뷰에서 사용자 반응 표시용
+
+    // 비즈니스 로직 메서드
+    @PrePersist
+    protected void onCreate() {
+        if (viewCount == null) viewCount = 0;
+        if (likeCount == null) likeCount = 0;
+        if (commentCount == null) commentCount = 0;
+        if (isPinned == null) isPinned = false;
+        if (isImportant == null) isImportant = false;
+        if (isDraft == null) isDraft = false;
+        if (status == null) status = BoardStatus.PUBLIC;
+    }
+
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
+
+    public void increaseCommentCount() {
+        this.commentCount++;
+    }
+
+    public void decreaseCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount--;
+        }
+    }
 }

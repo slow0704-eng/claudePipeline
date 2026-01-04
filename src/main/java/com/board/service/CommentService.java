@@ -3,10 +3,15 @@ package com.board.service;
 import com.board.entity.Board;
 import com.board.entity.Comment;
 import com.board.entity.User;
+import com.board.event.CommentCreatedEvent;
+import com.board.exception.BusinessException;
+import com.board.exception.ErrorCode;
+import com.board.exception.ResourceNotFoundException;
 import com.board.repository.BoardRepository;
 import com.board.repository.CommentRepository;
 import com.board.util.AuthenticationUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,14 +26,20 @@ public class CommentService {
     private final BoardRepository boardRepository;
     private final UserService userService;
     private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Comment createComment(Long boardId, String content, Long parentCommentId) {
         User currentUser = AuthenticationUtils.getCurrentUser(userService);
         if (currentUser == null) {
-            throw new RuntimeException("로그인이 필요합니다.");
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "로그인이 필요합니다.");
         }
 
+        // Validate board exists
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOARD_NOT_FOUND));
+
+        // Create and save comment
         Comment comment = new Comment();
         comment.setBoardId(boardId);
         comment.setUserId(currentUser.getId());
@@ -39,41 +50,16 @@ public class CommentService {
 
         Comment savedComment = commentRepository.save(comment);
 
-        // Increment board's comment count
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
-        board.setCommentCount(board.getCommentCount() + 1);
-        boardRepository.save(board);
-
-        // Create notification
-        if (parentCommentId != null) {
-            // Reply to comment - notify parent comment author
-            Comment parentComment = commentRepository.findById(parentCommentId).orElse(null);
-            if (parentComment != null && !parentComment.getUserId().equals(currentUser.getId())) {
-                notificationService.createNotification(
-                    parentComment.getUserId(),
-                    "REPLY",
-                    "새로운 답글",
-                    currentUser.getNickname() + "님이 회원님의 댓글에 답글을 남겼습니다: " +
-                        (content.length() > 50 ? content.substring(0, 50) + "..." : content),
-                    "COMMENT",
-                    savedComment.getId()
-                );
-            }
-        } else {
-            // Comment on post - notify post author
-            if (!board.getUserId().equals(currentUser.getId())) {
-                notificationService.createNotification(
-                    board.getUserId(),
-                    "COMMENT",
-                    "새로운 댓글",
-                    currentUser.getNickname() + "님이 회원님의 게시글에 댓글을 남겼습니다: " +
-                        (content.length() > 50 ? content.substring(0, 50) + "..." : content),
-                    "POST",
-                    boardId
-                );
-            }
-        }
+        // Publish event for async processing (알림 생성 + 댓글 수 증가)
+        CommentCreatedEvent event = new CommentCreatedEvent(
+            currentUser.getId(),
+            savedComment.getId(),
+            boardId,
+            currentUser.getId(),
+            parentCommentId,
+            content
+        );
+        eventPublisher.publishEvent(event);
 
         return savedComment;
     }
@@ -82,14 +68,14 @@ public class CommentService {
     public void deleteComment(Long commentId) {
         User currentUser = AuthenticationUtils.getCurrentUser(userService);
         if (currentUser == null) {
-            throw new RuntimeException("로그인이 필요합니다.");
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "로그인이 필요합니다.");
         }
 
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.COMMENT_NOT_FOUND));
 
         if (!comment.getUserId().equals(currentUser.getId())) {
-            throw new RuntimeException("자신의 댓글만 삭제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_COMMENT_ACCESS);
         }
 
         comment.setIsDeleted(true);
@@ -98,13 +84,14 @@ public class CommentService {
 
         // Decrement board's comment count
         Board board = boardRepository.findById(comment.getBoardId())
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOARD_NOT_FOUND));
         board.setCommentCount(Math.max(0, board.getCommentCount() - 1));
         boardRepository.save(board);
     }
 
     public List<Comment> getCommentsTreeByBoardId(Long boardId) {
-        List<Comment> allComments = commentRepository.findByBoardIdAndIsDeletedFalseOrderByCreatedAtAsc(boardId);
+        // Use Fetch Join to prevent N+1 query problem
+        List<Comment> allComments = commentRepository.findByBoardIdWithUser(boardId);
 
         // Build tree structure
         Map<Long, Comment> commentMap = new HashMap<>();

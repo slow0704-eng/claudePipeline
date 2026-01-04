@@ -1,7 +1,7 @@
 package com.board.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -9,7 +9,11 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "attachments",
        indexes = @Index(name = "idx_attachment_board", columnList = "board_id"))
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id")
+@ToString
 public class Attachment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

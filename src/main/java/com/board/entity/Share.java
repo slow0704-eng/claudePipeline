@@ -1,7 +1,7 @@
 package com.board.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -11,8 +11,15 @@ import java.time.LocalDateTime;
  * - Twitter Retweet, Facebook Share와 유사한 기능
  */
 @Entity
-@Table(name = "share")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode(of = "id")
+@ToString(exclude = {"user", "board"})
+@Table(name = "share", indexes = {
+    @Index(name = "idx_share_user_created", columnList = "user_id, created_at DESC"),
+    @Index(name = "idx_share_board", columnList = "board_id")
+})
 public class Share {
 
     @Id
@@ -22,14 +29,28 @@ public class Share {
     /**
      * 공유한 사용자 ID
      */
-    @Column(nullable = false, name = "user_id")
+    @Column(nullable = false, name = "user_id", insertable = false, updatable = false)
     private Long userId;
+
+    /**
+     * 공유한 사용자
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     /**
      * 원본 게시글 ID
      */
-    @Column(nullable = false, name = "board_id")
+    @Column(nullable = false, name = "board_id", insertable = false, updatable = false)
     private Long boardId;
+
+    /**
+     * 원본 게시글
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "board_id")
+    private Board board;
 
     /**
      * 공유 시 추가한 코멘트 (Quote Repost)
@@ -60,5 +81,17 @@ public class Share {
     public enum ShareType {
         SIMPLE,  // 단순 공유
         QUOTE    // 인용 공유
+    }
+
+    // 비즈니스 로직 메서드
+    @PrePersist
+    protected void onCreate() {
+        if (shareType == null) {
+            shareType = ShareType.SIMPLE;
+        }
+    }
+
+    public boolean isQuoteShare() {
+        return ShareType.QUOTE.equals(shareType);
     }
 }

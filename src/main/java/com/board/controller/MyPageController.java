@@ -1,13 +1,17 @@
 package com.board.controller;
 
+import com.board.dto.TimelineItemDTO;
+import com.board.dto.response.ApiResponse;
 import com.board.entity.Board;
 import com.board.entity.User;
 import com.board.service.BoardService;
 import com.board.service.BookmarkService;
 import com.board.service.FollowService;
 import com.board.service.MessageService;
+import com.board.service.TimelineService;
 import com.board.service.UserService;
 import com.board.util.AuthenticationUtils;
+import com.board.util.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +21,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,10 +34,10 @@ public class MyPageController {
     private final FollowService followService;
     private final BookmarkService bookmarkService;
     private final MessageService messageService;
+    private final TimelineService timelineService;
 
     @GetMapping
-    public String myPage(Model model) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public String myPage(@CurrentUser User currentUser, Model model) {
         if (currentUser == null) {
             return "redirect:/auth/login";
         }
@@ -68,8 +71,7 @@ public class MyPageController {
     }
 
     @GetMapping("/posts")
-    public String myPosts(Model model) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public String myPosts(@CurrentUser User currentUser, Model model) {
         if (currentUser == null) {
             return "redirect:/auth/login";
         }
@@ -84,31 +86,37 @@ public class MyPageController {
 
     @PostMapping("/update-nickname")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> updateNickname(@RequestBody Map<String, String> request) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public ResponseEntity<ApiResponse<Void>> updateNickname(
+            @RequestBody Map<String, String> request,
+            @CurrentUser User currentUser) {
         if (currentUser == null) {
-            return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error(401, "로그인이 필요합니다."));
         }
 
         try {
             String newNickname = request.get("nickname");
             if (newNickname == null || newNickname.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "닉네임을 입력해주세요."));
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error(400, "닉네임을 입력해주세요."));
             }
 
             userService.updateNickname(currentUser.getId(), newNickname.trim());
-            return ResponseEntity.ok(Map.of("success", true, "message", "닉네임이 변경되었습니다."));
+            return ResponseEntity.ok(ApiResponse.success("닉네임이 변경되었습니다."));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
     @PostMapping("/update-password")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> updatePassword(@RequestBody Map<String, String> request) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public ResponseEntity<ApiResponse<Void>> updatePassword(
+            @RequestBody Map<String, String> request,
+            @CurrentUser User currentUser) {
         if (currentUser == null) {
-            return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error(401, "로그인이 필요합니다."));
         }
 
         try {
@@ -117,25 +125,30 @@ public class MyPageController {
             String confirmPassword = request.get("confirmPassword");
 
             if (currentPassword == null || currentPassword.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "현재 비밀번호를 입력해주세요."));
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error(400, "현재 비밀번호를 입력해주세요."));
             }
 
             if (newPassword == null || newPassword.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "새 비밀번호를 입력해주세요."));
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error(400, "새 비밀번호를 입력해주세요."));
             }
 
             if (!newPassword.equals(confirmPassword)) {
-                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "새 비밀번호가 일치하지 않습니다."));
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error(400, "새 비밀번호가 일치하지 않습니다."));
             }
 
             if (newPassword.length() < 4) {
-                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "비밀번호는 최소 4자 이상이어야 합니다."));
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error(400, "비밀번호는 최소 4자 이상이어야 합니다."));
             }
 
             userService.updatePassword(currentUser.getId(), currentPassword, newPassword);
-            return ResponseEntity.ok(Map.of("success", true, "message", "비밀번호가 변경되었습니다."));
+            return ResponseEntity.ok(ApiResponse.success("비밀번호가 변경되었습니다."));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
@@ -143,8 +156,7 @@ public class MyPageController {
      * 회원 탈퇴 페이지
      */
     @GetMapping("/delete-account")
-    public String deleteAccountPage(Model model) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public String deleteAccountPage(@CurrentUser User currentUser, Model model) {
         if (currentUser == null) {
             return "redirect:/auth/login";
         }
@@ -158,12 +170,13 @@ public class MyPageController {
      */
     @PostMapping("/delete-account")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> deleteAccount(
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(
             @RequestBody Map<String, String> request,
+            @CurrentUser User currentUser,
             HttpServletRequest httpRequest) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
         if (currentUser == null) {
-            return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error(401, "로그인이 필요합니다."));
         }
 
         try {
@@ -171,7 +184,8 @@ public class MyPageController {
             String reason = request.get("reason");
 
             if (password == null || password.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "비밀번호를 입력해주세요."));
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error(400, "비밀번호를 입력해주세요."));
             }
 
             // 회원 탈퇴 처리
@@ -184,12 +198,39 @@ public class MyPageController {
                 session.invalidate();
             }
 
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다."
+            return ResponseEntity.ok(ApiResponse.success(
+                    "회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다."
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, e.getMessage()));
         }
+    }
+
+    /**
+     * 타임라인 피드 조회 API (무한 스크롤)
+     */
+    @GetMapping("/timeline")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getTimelineFeed(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @CurrentUser User currentUser) {
+
+        if (currentUser == null) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error(401, "로그인이 필요합니다."));
+        }
+
+        List<TimelineItemDTO> items = timelineService.getTimelineFeed(currentUser.getId(), page, size);
+        boolean hasMore = items.size() == size; // 다음 페이지 존재 여부
+
+        Map<String, Object> data = Map.of(
+                "items", items,
+                "hasMore", hasMore,
+                "currentPage", page
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 }

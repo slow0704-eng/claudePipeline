@@ -74,16 +74,19 @@ public class BookmarkService {
      * 사용자의 북마크된 게시글 목록 조회
      * @param userId 사용자 ID
      * @return 북마크된 게시글 목록
+     * N+1 문제 해결: findAllById를 사용하여 IN 쿼리로 일괄 조회
      */
+    @Transactional(readOnly = true)
     public List<Board> getBookmarkedBoards(Long userId) {
         // 북마크된 게시글 ID 목록 조회
         List<Long> boardIds = bookmarkRepository.findBoardIdsByUserId(userId);
 
-        // 게시글 ID로 게시글 조회 (순서 유지)
-        return boardIds.stream()
-                .map(boardId -> boardRepository.findById(boardId).orElse(null))
-                .filter(board -> board != null)
-                .collect(Collectors.toList());
+        if (boardIds.isEmpty()) {
+            return List.of();
+        }
+
+        // N+1 방지: IN 쿼리로 한번에 조회
+        return boardRepository.findAllById(boardIds);
     }
 
     /**

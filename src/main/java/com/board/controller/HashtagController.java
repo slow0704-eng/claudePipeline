@@ -1,5 +1,6 @@
 package com.board.controller;
 
+import com.board.dto.response.ApiResponse;
 import com.board.entity.Board;
 import com.board.entity.Hashtag;
 import com.board.entity.User;
@@ -7,6 +8,7 @@ import com.board.service.BoardService;
 import com.board.service.HashtagService;
 import com.board.service.UserService;
 import com.board.util.AuthenticationUtils;
+import com.board.util.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -32,14 +34,13 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/search")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> searchHashtags(@RequestParam String q) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> searchHashtags(@RequestParam String q) {
         List<Map<String, Object>> hashtags = hashtagService.searchHashtags(q);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("hashtags", hashtags);
-        response.put("count", hashtags.size());
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "hashtags", hashtags,
+                "count", hashtags.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -48,15 +49,14 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/popular")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getPopularHashtags(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPopularHashtags(
             @RequestParam(defaultValue = "20") int limit) {
         List<Map<String, Object>> hashtags = hashtagService.getPopularHashtags(limit);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("hashtags", hashtags);
-        response.put("count", hashtags.size());
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "hashtags", hashtags,
+                "count", hashtags.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -65,15 +65,14 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/trending")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getTrendingHashtags(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getTrendingHashtags(
             @RequestParam(defaultValue = "10") int limit) {
         List<Map<String, Object>> hashtags = hashtagService.getTrendingHashtags(limit);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("hashtags", hashtags);
-        response.put("count", hashtags.size());
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "hashtags", hashtags,
+                "count", hashtags.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -82,15 +81,14 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/recent")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getRecentHashtags(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRecentHashtags(
             @RequestParam(defaultValue = "10") int limit) {
         List<Map<String, Object>> hashtags = hashtagService.getRecentHashtags(limit);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("hashtags", hashtags);
-        response.put("count", hashtags.size());
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "hashtags", hashtags,
+                "count", hashtags.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -99,14 +97,15 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/stats")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getHashtagStats(@RequestParam String name) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getHashtagStats(@RequestParam String name) {
         Map<String, Object> stats = hashtagService.getHashtagStats(name);
 
         if (stats.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(404)
+                    .body(ApiResponse.error(404, "해시태그를 찾을 수 없습니다."));
         }
 
-        return ResponseEntity.ok(stats);
+        return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
     /**
@@ -115,15 +114,14 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/posts")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getPostsByHashtag(@RequestParam String name) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPostsByHashtag(@RequestParam String name) {
         List<Long> boardIds = hashtagService.getBoardIdsByHashtag(name);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("hashtag", name);
-        response.put("boardIds", boardIds);
-        response.put("count", boardIds.size());
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "hashtag", name,
+                "boardIds", boardIds,
+                "count", boardIds.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -132,23 +130,21 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/board/{boardId}")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getBoardHashtags(@PathVariable Long boardId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getBoardHashtags(@PathVariable Long boardId) {
         List<Hashtag> hashtags = hashtagService.getBoardHashtags(boardId);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("boardId", boardId);
-        response.put("hashtags", hashtags.stream()
-                .map(h -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("id", h.getId());
-                    map.put("name", h.getName());
-                    map.put("useCount", h.getUseCount());
-                    return map;
-                })
-                .toList());
-        response.put("count", hashtags.size());
-
-        return ResponseEntity.ok(response);
+        List<Map<String, Object>> hashtagList = hashtags.stream()
+                .<Map<String, Object>>map(h -> Map.of(
+                        "id", h.getId(),
+                        "name", h.getName(),
+                        "useCount", h.getUseCount()
+                ))
+                .toList();
+        Map<String, Object> data = Map.of(
+                "boardId", boardId,
+                "hashtags", hashtagList,
+                "count", hashtags.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     // ========== 해시태그 팔로우 기능 ==========
@@ -159,17 +155,20 @@ public class HashtagController {
      */
     @PostMapping("/api/hashtags/follow")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> toggleHashtagFollow(@RequestParam String name) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public ResponseEntity<ApiResponse<Map<String, Object>>> toggleHashtagFollow(
+            @RequestParam String name,
+            @CurrentUser User currentUser) {
         if (currentUser == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error(401, "로그인이 필요합니다."));
         }
 
         try {
             Map<String, Object> result = hashtagService.toggleHashtagFollow(currentUser.getId(), name);
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(ApiResponse.success(result));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
@@ -178,8 +177,10 @@ public class HashtagController {
      * GET /hashtag/{name}
      */
     @GetMapping("/hashtag/{name}")
-    public String hashtagPage(@PathVariable String name, Model model) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public String hashtagPage(
+            @PathVariable String name,
+            @CurrentUser User currentUser,
+            Model model) {
         Long userId = currentUser != null ? currentUser.getId() : null;
 
         // 해시태그 상세 정보 조회
@@ -217,8 +218,7 @@ public class HashtagController {
      * GET /hashtag/feed
      */
     @GetMapping("/hashtag/feed")
-    public String hashtagFeed(Model model) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public String hashtagFeed(@CurrentUser User currentUser, Model model) {
         if (currentUser == null) {
             return "redirect:/auth/login";
         }
@@ -255,28 +255,27 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/following")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getFollowedHashtags() {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getFollowedHashtags(
+            @CurrentUser User currentUser) {
         if (currentUser == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error(401, "로그인이 필요합니다."));
         }
 
         List<Hashtag> hashtags = hashtagService.getFollowedHashtags(currentUser.getId());
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("hashtags", hashtags.stream()
-                .map(h -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("id", h.getId());
-                    map.put("name", h.getName());
-                    map.put("useCount", h.getUseCount());
-                    map.put("followerCount", hashtagService.getFollowerCount(h.getId()));
-                    return map;
-                })
-                .toList());
-        response.put("count", hashtags.size());
-
-        return ResponseEntity.ok(response);
+        List<Map<String, Object>> hashtagList = hashtags.stream()
+                .<Map<String, Object>>map(h -> Map.of(
+                        "id", h.getId(),
+                        "name", h.getName(),
+                        "useCount", h.getUseCount(),
+                        "followerCount", hashtagService.getFollowerCount(h.getId())
+                ))
+                .toList();
+        Map<String, Object> data = Map.of(
+                "hashtags", hashtagList,
+                "count", hashtags.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     // ========== 해시태그 분석 기능 ==========
@@ -288,14 +287,13 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/analytics/trending")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getTrendingByPeriod() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getTrendingByPeriod() {
         Map<String, List<Map<String, Object>>> trends = hashtagService.getTrendingByPeriod();
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("trends", trends);
-        response.put("periods", List.of("1hour", "1day", "7days", "30days"));
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "trends", trends,
+                "periods", List.of("1hour", "1day", "7days", "30days")
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -307,20 +305,20 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/analytics/related")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getRelatedHashtags(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRelatedHashtags(
             @RequestParam String name,
             @RequestParam(defaultValue = "10") int limit) {
         try {
             List<Map<String, Object>> relatedHashtags = hashtagService.getRelatedHashtags(name, limit);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("hashtag", name);
-            response.put("relatedHashtags", relatedHashtags);
-            response.put("count", relatedHashtags.size());
-
-            return ResponseEntity.ok(response);
+            Map<String, Object> data = Map.of(
+                    "hashtag", name,
+                    "relatedHashtags", relatedHashtags,
+                    "count", relatedHashtags.size()
+            );
+            return ResponseEntity.ok(ApiResponse.success(data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
@@ -332,15 +330,14 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/analytics/wordcloud")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getWordCloudData(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getWordCloudData(
             @RequestParam(defaultValue = "50") int limit) {
         List<Map<String, Object>> wordCloudData = hashtagService.getWordCloudData(limit);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("data", wordCloudData);
-        response.put("count", wordCloudData.size());
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "data", wordCloudData,
+                "count", wordCloudData.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -350,13 +347,10 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/analytics/overview")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getOverallStatistics() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getOverallStatistics() {
         Map<String, Object> statistics = hashtagService.getOverallStatistics();
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("statistics", statistics);
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of("statistics", statistics);
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -367,15 +361,14 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/analytics/post-counts")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getPostCountStats(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPostCountStats(
             @RequestParam(defaultValue = "20") int limit) {
         List<Map<String, Object>> postCountStats = hashtagService.getHashtagPostCountStats(limit);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("data", postCountStats);
-        response.put("count", postCountStats.size());
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "data", postCountStats,
+                "count", postCountStats.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -383,8 +376,7 @@ public class HashtagController {
      * GET /hashtag/analytics
      */
     @GetMapping("/hashtag/analytics")
-    public String analyticsPage(Model model) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public String analyticsPage(@CurrentUser User currentUser, Model model) {
 
         // 기본 통계 데이터 로드
         Map<String, Object> overallStats = hashtagService.getOverallStatistics();
@@ -403,19 +395,21 @@ public class HashtagController {
      */
     @PostMapping("/api/hashtags/admin/ban")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> banHashtag(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> banHashtag(
             @RequestParam String name,
-            @RequestParam boolean banned) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+            @RequestParam boolean banned,
+            @CurrentUser User currentUser) {
         if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
-            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error(403, "관리자 권한이 필요합니다."));
         }
 
         try {
             Map<String, Object> result = hashtagService.toggleBanHashtag(name, banned);
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(ApiResponse.success(result));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
@@ -425,19 +419,21 @@ public class HashtagController {
      */
     @PostMapping("/api/hashtags/admin/description")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> updateDescription(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateDescription(
             @RequestParam String name,
-            @RequestParam String description) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+            @RequestParam String description,
+            @CurrentUser User currentUser) {
         if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
-            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error(403, "관리자 권한이 필요합니다."));
         }
 
         try {
             Map<String, Object> result = hashtagService.updateHashtagDescription(name, description);
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(ApiResponse.success(result));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
@@ -447,19 +443,21 @@ public class HashtagController {
      */
     @PostMapping("/api/hashtags/admin/merge")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> mergeHashtags(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> mergeHashtags(
             @RequestParam String source,
-            @RequestParam String target) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+            @RequestParam String target,
+            @CurrentUser User currentUser) {
         if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
-            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error(403, "관리자 권한이 필요합니다."));
         }
 
         try {
             Map<String, Object> result = hashtagService.mergeHashtags(source, target);
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(ApiResponse.success(result));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
@@ -469,19 +467,19 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/admin/banned")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getBannedHashtags() {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getBannedHashtags(
+            @CurrentUser User currentUser) {
         if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
-            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error(403, "관리자 권한이 필요합니다."));
         }
 
         List<Map<String, Object>> banned = hashtagService.getBannedHashtags();
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("hashtags", banned);
-        response.put("count", banned.size());
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "hashtags", banned,
+                "count", banned.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -490,19 +488,19 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/admin/merged")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getMergedHashtags() {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMergedHashtags(
+            @CurrentUser User currentUser) {
         if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
-            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error(403, "관리자 권한이 필요합니다."));
         }
 
         List<Map<String, Object>> merged = hashtagService.getMergedHashtags();
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("hashtags", merged);
-        response.put("count", merged.size());
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "hashtags", merged,
+                "count", merged.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -511,19 +509,19 @@ public class HashtagController {
      */
     @GetMapping("/api/hashtags/admin/active")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getActiveHashtags() {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getActiveHashtags(
+            @CurrentUser User currentUser) {
         if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
-            return ResponseEntity.status(403).body(Map.of("error", "관리자 권한이 필요합니다."));
+            return ResponseEntity.status(403)
+                    .body(ApiResponse.error(403, "관리자 권한이 필요합니다."));
         }
 
         List<Map<String, Object>> active = hashtagService.getActiveHashtagsForManagement();
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("hashtags", active);
-        response.put("count", active.size());
-
-        return ResponseEntity.ok(response);
+        Map<String, Object> data = Map.of(
+                "hashtags", active,
+                "count", active.size()
+        );
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     /**
@@ -531,8 +529,7 @@ public class HashtagController {
      * GET /admin/hashtags
      */
     @GetMapping("/admin/hashtags")
-    public String hashtagManagementPage(Model model) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public String hashtagManagementPage(@CurrentUser User currentUser, Model model) {
         if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
             return "redirect:/board";
         }
@@ -540,5 +537,20 @@ public class HashtagController {
         model.addAttribute("currentUser", currentUser);
 
         return "admin/hashtag-management";
+    }
+
+    /**
+     * 해시태그 분석 페이지 (관리자용)
+     * GET /admin/hashtag-analytics
+     */
+    @GetMapping("/admin/hashtag-analytics")
+    public String hashtagAnalyticsPage(@CurrentUser User currentUser, Model model) {
+        if (currentUser == null || !"ROLE_ADMIN".equals(currentUser.getRole())) {
+            return "redirect:/board";
+        }
+
+        model.addAttribute("currentUser", currentUser);
+
+        return "admin/hashtag-analytics";
     }
 }

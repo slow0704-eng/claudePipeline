@@ -1,5 +1,7 @@
 package com.board.controller;
 
+import com.board.dto.response.ApiResponse;
+import com.board.dto.response.FileUploadResponse;
 import com.board.entity.Attachment;
 import com.board.entity.BannedWord;
 import com.board.entity.Board;
@@ -8,6 +10,8 @@ import com.board.entity.User;
 import com.board.enums.BannedWordAction;
 import com.board.enums.BoardStatus;
 import com.board.enums.TargetType;
+import com.board.exception.BusinessException;
+import com.board.exception.ErrorCode;
 import com.board.service.BannedWordService;
 import com.board.service.BoardService;
 import com.board.service.BookmarkService;
@@ -16,6 +20,8 @@ import com.board.service.FileUploadService;
 import com.board.service.LikeService;
 import com.board.service.UserService;
 import com.board.util.AuthenticationUtils;
+import com.board.util.CurrentUser;
+import com.board.util.FileUploadHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,9 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/board")
@@ -42,10 +46,13 @@ public class BoardController {
     private final CommentService commentService;
     private final LikeService likeService;
     private final FileUploadService fileUploadService;
+    private final FileUploadHelper fileUploadHelper;
     private final BookmarkService bookmarkService;
     private final BannedWordService bannedWordService;
     private final com.board.service.CategoryService categoryService;
     private final com.board.service.HashtagService hashtagService;
+    private final com.board.service.TopicService topicService;
+    private final com.board.service.BoardTopicService boardTopicService;
 
     @GetMapping
     public String list(
@@ -150,9 +157,8 @@ public class BoardController {
     }
 
     @GetMapping("/{id}")
-    public String view(@PathVariable Long id, Model model) {
+    public String view(@PathVariable Long id, @CurrentUser User currentUser, Model model) {
         Board board = boardService.increaseViewCount(id);
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
 
         // Get comments tree
         List<Comment> comments = commentService.getCommentsTreeByBoardId(id);
@@ -160,9 +166,32 @@ public class BoardController {
         // Get attachments
         List<Attachment> attachments = fileUploadService.getAttachmentsByBoardId(id);
 
-        // Check if current user liked the post
+        // Check if current user liked the post (하위 호환)
         boolean isPostLiked = currentUser != null &&
                               likeService.isLiked(TargetType.POST, id, currentUser.getId());
+
+        // === 새로운 반응 시스템 데이터 ===
+        Long currentUserId = currentUser != null ? currentUser.getId() : null;
+
+        // 사용자의 현재 반응 조회
+        com.board.enums.ReactionType userPostReaction = likeService.getUserReaction(
+            TargetType.POST, id, currentUserId
+        );
+
+        // 반응 카운트 조회
+        java.util.Map<String, Integer> reactionCounts = likeService.getReactionCounts(TargetType.POST, id);
+
+        // 총 반응 수
+        int totalReactionCount = reactionCounts.values().stream()
+            .mapToInt(Integer::intValue).sum();
+
+        // 댓글별 반응 처리
+        for (Comment comment : comments) {
+            com.board.enums.ReactionType userCommentReaction = likeService.getUserReaction(
+                TargetType.COMMENT, comment.getId(), currentUserId
+            );
+            comment.setUserReaction(userCommentReaction);
+        }
 
         // Check if current user bookmarked the post
         boolean isBookmarked = currentUser != null &&
@@ -174,15 +203,23 @@ public class BoardController {
         // Get hashtags
         List<com.board.entity.Hashtag> hashtags = hashtagService.getBoardHashtags(id);
 
+        // Get topics
+        List<com.board.entity.Topic> boardTopics = boardTopicService.getBoardTopics(id);
+        List<String> topicPaths = boardTopicService.getBoardTopicPaths(id);
+
         model.addAttribute("board", board);
         model.addAttribute("isOwner", currentUser != null && boardService.isOwner(board, currentUser));
         model.addAttribute("comments", comments);
         model.addAttribute("attachments", attachments);
-        model.addAttribute("isPostLiked", isPostLiked);
+        model.addAttribute("isPostLiked", isPostLiked);  // 하위 호환용
+        model.addAttribute("userPostReaction", userPostReaction);  // 새로운 반응 시스템
+        model.addAttribute("totalReactionCount", totalReactionCount);
         model.addAttribute("isBookmarked", isBookmarked);
         model.addAttribute("bookmarkCount", bookmarkCount);
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("hashtags", hashtags);
+        model.addAttribute("boardTopics", boardTopics);
+        model.addAttribute("topicPaths", topicPaths);
 
         return "board/view";
     }
@@ -196,6 +233,7 @@ public class BoardController {
     @PostMapping
     public String create(@ModelAttribute Board board,
                         @RequestParam(value = "files", required = false) List<MultipartFile> files,
+                        @RequestParam(value = "topicIds", required = false) List<Long> topicIds,
                         RedirectAttributes redirectAttributes) {
         // 금지어 검사
         String combinedText = board.getTitle() + " " + board.getContent();
@@ -219,16 +257,14 @@ public class BoardController {
         Board savedBoard = boardService.createBoard(board);
 
         // 파일 업로드
-        if (files != null && !files.isEmpty()) {
-            for (MultipartFile file : files) {
-                if (!file.isEmpty()) {
-                    try {
-                        fileUploadService.uploadFile(file, savedBoard.getId());
-                    } catch (Exception e) {
-                        // 파일 업로드 실패해도 게시글은 생성됨
-                        System.err.println("File upload failed: " + e.getMessage());
-                    }
-                }
+        fileUploadHelper.handleFileUploads(files, savedBoard.getId());
+
+        // 토픽 연결
+        if (topicIds != null && !topicIds.isEmpty()) {
+            try {
+                boardTopicService.updateBoardTopics(savedBoard.getId(), topicIds);
+            } catch (Exception e) {
+                System.err.println("Topic linking failed: " + e.getMessage());
             }
         }
 
@@ -249,6 +285,7 @@ public class BoardController {
     public String update(@PathVariable Long id,
                         @ModelAttribute Board board,
                         @RequestParam(value = "files", required = false) List<MultipartFile> files,
+                        @RequestParam(value = "topicIds", required = false) List<Long> topicIds,
                         RedirectAttributes redirectAttributes) {
         // 금지어 검사
         String combinedText = board.getTitle() + " " + board.getContent();
@@ -272,15 +309,14 @@ public class BoardController {
         boardService.updateBoard(id, board);
 
         // 새 파일 업로드
-        if (files != null && !files.isEmpty()) {
-            for (MultipartFile file : files) {
-                if (!file.isEmpty()) {
-                    try {
-                        fileUploadService.uploadFile(file, id);
-                    } catch (Exception e) {
-                        System.err.println("File upload failed: " + e.getMessage());
-                    }
-                }
+        fileUploadHelper.handleFileUploads(files, id);
+
+        // 토픽 연결 업데이트
+        if (topicIds != null) {
+            try {
+                boardTopicService.updateBoardTopics(id, topicIds);
+            } catch (Exception e) {
+                System.err.println("Topic update failed: " + e.getMessage());
             }
         }
 
@@ -298,19 +334,16 @@ public class BoardController {
      */
     @PostMapping("/{boardId}/upload")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> uploadFile(
+    public ResponseEntity<ApiResponse<FileUploadResponse>> uploadFile(
             @PathVariable Long boardId,
             @RequestParam("file") MultipartFile file) {
-        Map<String, Object> response = new HashMap<>();
         try {
             Attachment attachment = fileUploadService.uploadFile(file, boardId);
-            response.put("success", true);
-            response.put("attachment", attachment);
-            return ResponseEntity.ok(response);
+            FileUploadResponse fileResponse = FileUploadResponse.from(attachment);
+            return ResponseEntity.ok(ApiResponse.success("파일이 업로드되었습니다.", fileResponse));
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
@@ -319,17 +352,13 @@ public class BoardController {
      */
     @DeleteMapping("/attachment/{attachmentId}")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> deleteAttachment(@PathVariable Long attachmentId) {
-        Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<ApiResponse<Void>> deleteAttachment(@PathVariable Long attachmentId) {
         try {
             fileUploadService.deleteFile(attachmentId);
-            response.put("success", true);
-            response.put("message", "파일이 삭제되었습니다.");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success("파일이 삭제되었습니다.", null));
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, e.getMessage()));
         }
     }
 
@@ -337,8 +366,7 @@ public class BoardController {
      * 임시저장 목록 페이지
      */
     @GetMapping("/drafts")
-    public String draftList(Model model) {
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+    public String draftList(@CurrentUser User currentUser, Model model) {
         if (currentUser == null) {
             return "redirect:/auth/login";
         }
@@ -358,17 +386,7 @@ public class BoardController {
         Board savedDraft = boardService.saveDraft(board);
 
         // 파일 업로드
-        if (files != null && !files.isEmpty()) {
-            for (MultipartFile file : files) {
-                if (!file.isEmpty()) {
-                    try {
-                        fileUploadService.uploadFile(file, savedDraft.getId());
-                    } catch (Exception e) {
-                        System.err.println("File upload failed: " + e.getMessage());
-                    }
-                }
-            }
-        }
+        fileUploadHelper.handleFileUploads(files, savedDraft.getId());
 
         return "redirect:/board/drafts";
     }
@@ -390,9 +408,8 @@ public class BoardController {
      * 임시저장 게시글 편집 폼
      */
     @GetMapping("/draft/{id}/edit")
-    public String editDraft(@PathVariable Long id, Model model) {
+    public String editDraft(@PathVariable Long id, @CurrentUser User currentUser, Model model) {
         Board board = boardService.getBoardById(id);
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
 
         // 권한 확인
         if (currentUser == null || !boardService.isOwner(board, currentUser)) {
@@ -419,9 +436,9 @@ public class BoardController {
     @PostMapping("/draft/{id}")
     public String updateDraft(@PathVariable Long id,
                               @ModelAttribute Board board,
-                              @RequestParam(value = "files", required = false) List<MultipartFile> files) {
+                              @RequestParam(value = "files", required = false) List<MultipartFile> files,
+                              @CurrentUser User currentUser) {
         Board existingBoard = boardService.getBoardById(id);
-        User currentUser = AuthenticationUtils.getCurrentUser(userService);
 
         // 권한 확인
         if (currentUser == null || !boardService.isOwner(existingBoard, currentUser)) {
@@ -434,17 +451,7 @@ public class BoardController {
         boardService.saveDraft(existingBoard);
 
         // 파일 업로드
-        if (files != null && !files.isEmpty()) {
-            for (MultipartFile file : files) {
-                if (!file.isEmpty()) {
-                    try {
-                        fileUploadService.uploadFile(file, id);
-                    } catch (Exception e) {
-                        System.err.println("File upload failed: " + e.getMessage());
-                    }
-                }
-            }
-        }
+        fileUploadHelper.handleFileUploads(files, id);
 
         return "redirect:/board/drafts";
     }
