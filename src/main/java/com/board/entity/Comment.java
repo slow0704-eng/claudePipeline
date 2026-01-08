@@ -15,13 +15,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Entity
-@Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EqualsAndHashCode(of = "id")
-@ToString(exclude = {"board", "user", "replies"})
 @Table(name = "comments")
 public class Comment {
 
@@ -80,6 +77,130 @@ public class Comment {
     @Transient
     private List<Comment> replies = new ArrayList<>();
 
+    @Transient
+    private ReactionType userReaction;  // 뷰에서 사용자 반응 표시용
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(Long boardId) {
+        this.boardId = boardId;
+    }
+
+    public Board getBoard() {
+        return board;
+    }
+
+    public void setBoard(Board board) {
+        this.board = board;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Long getParentCommentId() {
+        return parentCommentId;
+    }
+
+    public void setParentCommentId(Long parentCommentId) {
+        this.parentCommentId = parentCommentId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public Integer getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(Integer likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public String getReactionCounts() {
+        return reactionCounts;
+    }
+
+    public void setReactionCounts(String reactionCounts) {
+        this.reactionCounts = reactionCounts;
+    }
+
+    public List<Comment> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(List<Comment> replies) {
+        this.replies = replies;
+    }
+
+    public ReactionType getUserReaction() {
+        return userReaction;
+    }
+
+    public void setUserReaction(ReactionType userReaction) {
+        this.userReaction = userReaction;
+    }
+
     // Helper method for reaction counts
     @Transient
     public Map<String, Integer> getReactionCountsMap() {
@@ -90,9 +211,6 @@ public class Comment {
             return new HashMap<>();
         }
     }
-
-    @Transient
-    private ReactionType userReaction;  // 뷰에서 사용자 반응 표시용
 
     // 비즈니스 로직 메서드
     @PrePersist
@@ -108,5 +226,34 @@ public class Comment {
 
     public boolean isReply() {
         return parentCommentId != null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Comment comment = (Comment) o;
+        return Objects.equals(id, comment.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Comment{" +
+                "id=" + id +
+                ", boardId=" + boardId +
+                ", userId=" + userId +
+                ", nickname='" + nickname + '\'' +
+                ", content='" + content + '\'' +
+                ", parentCommentId=" + parentCommentId +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", isDeleted=" + isDeleted +
+                ", likeCount=" + likeCount +
+                '}';
     }
 }

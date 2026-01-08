@@ -8,13 +8,10 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
-@Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EqualsAndHashCode(of = "id")
-@ToString
 @Table(name = "reports",
        uniqueConstraints = @UniqueConstraint(name = "uk_report",
                                              columnNames = {"reporter_id", "target_type", "target_id"}),
@@ -58,4 +55,123 @@ public class Report {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getReporterId() {
+        return reporterId;
+    }
+
+    public void setReporterId(Long reporterId) {
+        this.reporterId = reporterId;
+    }
+
+    public ReportTargetType getTargetType() {
+        return targetType;
+    }
+
+    public void setTargetType(ReportTargetType targetType) {
+        this.targetType = targetType;
+    }
+
+    public Long getTargetId() {
+        return targetId;
+    }
+
+    public void setTargetId(Long targetId) {
+        this.targetId = targetId;
+    }
+
+    public ReportReason getReason() {
+        return reason;
+    }
+
+    public void setReason(ReportReason reason) {
+        this.reason = reason;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public ReportStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ReportStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getProcessedAt() {
+        return processedAt;
+    }
+
+    public void setProcessedAt(LocalDateTime processedAt) {
+        this.processedAt = processedAt;
+    }
+
+    public Long getProcessedBy() {
+        return processedBy;
+    }
+
+    public void setProcessedBy(Long processedBy) {
+        this.processedBy = processedBy;
+    }
+
+    public String getAdminComment() {
+        return adminComment;
+    }
+
+    public void setAdminComment(String adminComment) {
+        this.adminComment = adminComment;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Report report = (Report) o;
+        return Objects.equals(id, report.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Report{" +
+                "id=" + id +
+                ", reporterId=" + reporterId +
+                ", targetType=" + targetType +
+                ", targetId=" + targetId +
+                ", reason=" + reason +
+                ", description='" + description + '\'' +
+                ", status=" + status +
+                ", processedAt=" + processedAt +
+                ", processedBy=" + processedBy +
+                ", adminComment='" + adminComment + '\'' +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }

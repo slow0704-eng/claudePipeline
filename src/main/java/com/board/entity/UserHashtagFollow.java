@@ -1,10 +1,10 @@
 package com.board.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 사용자-해시태그 팔로우 엔티티
@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
            @Index(name = "idx_hashtag_id", columnList = "hashtag_id")
        },
        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "hashtag_id"}))
-@Data
 public class UserHashtagFollow {
 
     @Id
@@ -42,4 +41,60 @@ public class UserHashtagFollow {
     @CreationTimestamp
     @Column(name = "followed_at", updatable = false)
     private LocalDateTime followedAt;
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public Long getHashtagId() {
+        return hashtagId;
+    }
+
+    public void setHashtagId(Long hashtagId) {
+        this.hashtagId = hashtagId;
+    }
+
+    public LocalDateTime getFollowedAt() {
+        return followedAt;
+    }
+
+    public void setFollowedAt(LocalDateTime followedAt) {
+        this.followedAt = followedAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserHashtagFollow that = (UserHashtagFollow) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "UserHashtagFollow{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", hashtagId=" + hashtagId +
+                ", followedAt=" + followedAt +
+                '}';
+    }
 }

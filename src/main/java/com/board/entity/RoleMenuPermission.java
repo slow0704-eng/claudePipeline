@@ -1,10 +1,10 @@
 package com.board.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 역할-메뉴 권한 매핑 엔티티
@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
            @Index(name = "idx_rmp_role", columnList = "role_id"),
            @Index(name = "idx_rmp_menu", columnList = "menu_id")
        })
-@Data
 public class RoleMenuPermission {
 
     @Id
@@ -57,4 +56,87 @@ public class RoleMenuPermission {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
+    }
+
+    public Long getMenuId() {
+        return menuId;
+    }
+
+    public void setMenuId(Long menuId) {
+        this.menuId = menuId;
+    }
+
+    public Boolean getCanRead() {
+        return canRead;
+    }
+
+    public void setCanRead(Boolean canRead) {
+        this.canRead = canRead;
+    }
+
+    public Boolean getCanWrite() {
+        return canWrite;
+    }
+
+    public void setCanWrite(Boolean canWrite) {
+        this.canWrite = canWrite;
+    }
+
+    public Boolean getCanDelete() {
+        return canDelete;
+    }
+
+    public void setCanDelete(Boolean canDelete) {
+        this.canDelete = canDelete;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RoleMenuPermission that = (RoleMenuPermission) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "RoleMenuPermission{" +
+                "id=" + id +
+                ", roleId=" + roleId +
+                ", menuId=" + menuId +
+                ", canRead=" + canRead +
+                ", canWrite=" + canWrite +
+                ", canDelete=" + canDelete +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }

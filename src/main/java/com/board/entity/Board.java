@@ -16,13 +16,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Entity
-@Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EqualsAndHashCode(of = "id")
-@ToString(exclude = {"comments", "likes", "shares", "bookmarks", "user"})
 @Table(name = "board",
        indexes = {
            @Index(name = "idx_board_status", columnList = "status"),
@@ -121,6 +118,202 @@ public class Board {
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Bookmark> bookmarks = new ArrayList<>();
 
+    @Transient
+    private ReactionType userReaction;  // 뷰에서 사용자 반응 표시용
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public BoardStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(BoardStatus status) {
+        this.status = status;
+    }
+
+    public Boolean getIsPinned() {
+        return isPinned;
+    }
+
+    public void setIsPinned(Boolean isPinned) {
+        this.isPinned = isPinned;
+    }
+
+    public Boolean getIsImportant() {
+        return isImportant;
+    }
+
+    public void setIsImportant(Boolean isImportant) {
+        this.isImportant = isImportant;
+    }
+
+    public LocalDateTime getPinnedUntil() {
+        return pinnedUntil;
+    }
+
+    public void setPinnedUntil(LocalDateTime pinnedUntil) {
+        this.pinnedUntil = pinnedUntil;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Integer getViewCount() {
+        return viewCount;
+    }
+
+    public void setViewCount(Integer viewCount) {
+        this.viewCount = viewCount;
+    }
+
+    public Integer getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(Integer likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public String getReactionCounts() {
+        return reactionCounts;
+    }
+
+    public void setReactionCounts(String reactionCounts) {
+        this.reactionCounts = reactionCounts;
+    }
+
+    public Integer getCommentCount() {
+        return commentCount;
+    }
+
+    public void setCommentCount(Integer commentCount) {
+        this.commentCount = commentCount;
+    }
+
+    public Boolean getIsDraft() {
+        return isDraft;
+    }
+
+    public void setIsDraft(Boolean isDraft) {
+        this.isDraft = isDraft;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
+    }
+
+    public List<Like> getLikes() {
+        return likes;
+    }
+
+    public void setLikes(List<Like> likes) {
+        this.likes = likes;
+    }
+
+    public List<Share> getShares() {
+        return shares;
+    }
+
+    public void setShares(List<Share> shares) {
+        this.shares = shares;
+    }
+
+    public List<Bookmark> getBookmarks() {
+        return bookmarks;
+    }
+
+    public void setBookmarks(List<Bookmark> bookmarks) {
+        this.bookmarks = bookmarks;
+    }
+
+    public ReactionType getUserReaction() {
+        return userReaction;
+    }
+
+    public void setUserReaction(ReactionType userReaction) {
+        this.userReaction = userReaction;
+    }
+
     // Helper method for reaction counts
     @Transient
     public Map<String, Integer> getReactionCountsMap() {
@@ -131,9 +324,6 @@ public class Board {
             return new HashMap<>();
         }
     }
-
-    @Transient
-    private ReactionType userReaction;  // 뷰에서 사용자 반응 표시용
 
     // 비즈니스 로직 메서드
     @PrePersist
@@ -159,5 +349,41 @@ public class Board {
         if (this.commentCount > 0) {
             this.commentCount--;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Board board = (Board) o;
+        return Objects.equals(id, board.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Board{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", content='" + content + '\'' +
+                ", author='" + author + '\'' +
+                ", userId=" + userId +
+                ", nickname='" + nickname + '\'' +
+                ", categoryId=" + categoryId +
+                ", status=" + status +
+                ", isPinned=" + isPinned +
+                ", isImportant=" + isImportant +
+                ", pinnedUntil=" + pinnedUntil +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", viewCount=" + viewCount +
+                ", likeCount=" + likeCount +
+                ", commentCount=" + commentCount +
+                ", isDraft=" + isDraft +
+                '}';
     }
 }

@@ -5,17 +5,14 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 게시글 공유(Repost) 엔티티
  * - Twitter Retweet, Facebook Share와 유사한 기능
  */
 @Entity
-@Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EqualsAndHashCode(of = "id")
-@ToString(exclude = {"user", "board"})
 @Table(name = "share", indexes = {
     @Index(name = "idx_share_user_created", columnList = "user_id, created_at DESC"),
     @Index(name = "idx_share_board", columnList = "board_id")
@@ -83,6 +80,71 @@ public class Share {
         QUOTE    // 인용 공유
     }
 
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Long getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(Long boardId) {
+        this.boardId = boardId;
+    }
+
+    public Board getBoard() {
+        return board;
+    }
+
+    public void setBoard(Board board) {
+        this.board = board;
+    }
+
+    public String getQuoteContent() {
+        return quoteContent;
+    }
+
+    public void setQuoteContent(String quoteContent) {
+        this.quoteContent = quoteContent;
+    }
+
+    public ShareType getShareType() {
+        return shareType;
+    }
+
+    public void setShareType(ShareType shareType) {
+        this.shareType = shareType;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     // 비즈니스 로직 메서드
     @PrePersist
     protected void onCreate() {
@@ -93,5 +155,30 @@ public class Share {
 
     public boolean isQuoteShare() {
         return ShareType.QUOTE.equals(shareType);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Share share = (Share) o;
+        return Objects.equals(id, share.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Share{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", boardId=" + boardId +
+                ", quoteContent='" + quoteContent + '\'' +
+                ", shareType=" + shareType +
+                ", createdAt=" + createdAt +
+                '}';
     }
 }

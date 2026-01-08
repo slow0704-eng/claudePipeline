@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 해시태그 엔티티
@@ -15,11 +16,7 @@ import java.time.LocalDateTime;
 @Table(name = "hashtag",
        indexes = @Index(name = "idx_hashtag_name", columnList = "name"),
        uniqueConstraints = @UniqueConstraint(columnNames = "name"))
-@Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EqualsAndHashCode(of = "id")
-@ToString
 public class Hashtag {
 
     @Id
@@ -77,6 +74,79 @@ public class Hashtag {
     @Column(name = "merged_at")
     private LocalDateTime mergedAt;
 
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getUseCount() {
+        return useCount;
+    }
+
+    public void setUseCount(Long useCount) {
+        this.useCount = useCount;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLastUsedAt() {
+        return lastUsedAt;
+    }
+
+    public void setLastUsedAt(LocalDateTime lastUsedAt) {
+        this.lastUsedAt = lastUsedAt;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Boolean getIsBanned() {
+        return isBanned;
+    }
+
+    public void setIsBanned(Boolean isBanned) {
+        this.isBanned = isBanned;
+    }
+
+    public Long getMergedIntoId() {
+        return mergedIntoId;
+    }
+
+    public void setMergedIntoId(Long mergedIntoId) {
+        this.mergedIntoId = mergedIntoId;
+    }
+
+    public LocalDateTime getMergedAt() {
+        return mergedAt;
+    }
+
+    public void setMergedAt(LocalDateTime mergedAt) {
+        this.mergedAt = mergedAt;
+    }
+
     /**
      * 사용 횟수 증가
      */
@@ -92,5 +162,33 @@ public class Hashtag {
         if (this.useCount > 0) {
             this.useCount--;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Hashtag hashtag = (Hashtag) o;
+        return Objects.equals(id, hashtag.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Hashtag{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", useCount=" + useCount +
+                ", createdAt=" + createdAt +
+                ", lastUsedAt=" + lastUsedAt +
+                ", description='" + description + '\'' +
+                ", isBanned=" + isBanned +
+                ", mergedIntoId=" + mergedIntoId +
+                ", mergedAt=" + mergedAt +
+                '}';
     }
 }

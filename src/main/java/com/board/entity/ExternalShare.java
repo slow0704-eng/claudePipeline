@@ -1,10 +1,10 @@
 package com.board.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 외부 플랫폼 공유 추적 엔티티
@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "external_share",
        indexes = @Index(name = "idx_board_platform", columnList = "board_id, platform"))
-@Data
 public class ExternalShare {
 
     @Id
@@ -69,5 +68,88 @@ public class ExternalShare {
         KAKAO,        // KakaoTalk
         LINK_COPY,    // 링크 복사
         QR_CODE       // QR 코드 생성
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public Long getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(Long boardId) {
+        this.boardId = boardId;
+    }
+
+    public SharePlatform getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(SharePlatform platform) {
+        this.platform = platform;
+    }
+
+    public LocalDateTime getSharedAt() {
+        return sharedAt;
+    }
+
+    public void setSharedAt(LocalDateTime sharedAt) {
+        this.sharedAt = sharedAt;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ExternalShare that = (ExternalShare) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "ExternalShare{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", boardId=" + boardId +
+                ", platform=" + platform +
+                ", sharedAt=" + sharedAt +
+                ", ipAddress='" + ipAddress + '\'' +
+                ", userAgent='" + userAgent + '\'' +
+                '}';
     }
 }
