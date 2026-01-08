@@ -1,7 +1,5 @@
 package com.board.event;
 
-import lombok.Getter;
-
 /**
  * 댓글 생성 이벤트
  *
@@ -11,7 +9,6 @@ import lombok.Getter;
  * - 댓글 수 증가 (게시글)
  * - 활동 로그 기록
  */
-@Getter
 public class CommentCreatedEvent extends DomainEvent {
 
     private final Long commentId;
@@ -32,5 +29,25 @@ public class CommentCreatedEvent extends DomainEvent {
 
     public boolean isReply() {
         return parentCommentId != null;
+    }
+
+    public Long getCommentId() {
+        return commentId;
+    }
+
+    public Long getBoardId() {
+        return boardId;
+    }
+
+    public Long getAuthorId() {
+        return authorId;
+    }
+
+    public Long getParentCommentId() {
+        return parentCommentId;
+    }
+
+    public String getContent() {
+        return content;
     }
 }

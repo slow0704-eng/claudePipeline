@@ -1,13 +1,10 @@
 package com.board.event;
 
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
 /**
  * 모든 도메인 이벤트의 기본 클래스
  */
-@Getter
 public abstract class DomainEvent {
 
     private final LocalDateTime occurredAt;
@@ -16,5 +13,13 @@ public abstract class DomainEvent {
     protected DomainEvent(Long userId) {
         this.occurredAt = LocalDateTime.now();
         this.userId = userId;
+    }
+
+    public LocalDateTime getOccurredAt() {
+        return occurredAt;
+    }
+
+    public Long getUserId() {
+        return userId;
     }
 }

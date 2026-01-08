@@ -2,7 +2,6 @@ package com.board.event;
 
 import com.board.enums.ReactionType;
 import com.board.enums.TargetType;
-import lombok.Getter;
 
 /**
  * 반응(좋아요/리액션) 생성 이벤트
@@ -13,7 +12,6 @@ import lombok.Getter;
  * - 반응 카운트 업데이트 (JSONB)
  * - 인기도 점수 갱신
  */
-@Getter
 public class ReactionCreatedEvent extends DomainEvent {
 
     private final Long likeId;
@@ -38,5 +36,25 @@ public class ReactionCreatedEvent extends DomainEvent {
 
     public boolean isCommentReaction() {
         return TargetType.COMMENT.equals(targetType);
+    }
+
+    public Long getLikeId() {
+        return likeId;
+    }
+
+    public TargetType getTargetType() {
+        return targetType;
+    }
+
+    public Long getTargetId() {
+        return targetId;
+    }
+
+    public ReactionType getReactionType() {
+        return reactionType;
+    }
+
+    public Long getTargetAuthorId() {
+        return targetAuthorId;
     }
 }

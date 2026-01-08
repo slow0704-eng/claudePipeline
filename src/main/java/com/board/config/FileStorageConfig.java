@@ -1,7 +1,5 @@
 package com.board.config;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,8 +11,6 @@ import java.util.List;
  */
 @Configuration
 @ConfigurationProperties(prefix = "file.storage")
-@Getter
-@Setter
 public class FileStorageConfig {
 
     /**
@@ -124,5 +120,125 @@ public class FileStorageConfig {
      */
     public boolean isAllowedFileSize(long size) {
         return size <= maxFileSize;
+    }
+
+    public String getUploadDir() {
+        return uploadDir;
+    }
+
+    public void setUploadDir(String uploadDir) {
+        this.uploadDir = uploadDir;
+    }
+
+    public Long getMaxFileSize() {
+        return maxFileSize;
+    }
+
+    public void setMaxFileSize(Long maxFileSize) {
+        this.maxFileSize = maxFileSize;
+    }
+
+    public Integer getMaxFileSizeMb() {
+        return maxFileSizeMb;
+    }
+
+    public void setMaxFileSizeMb(Integer maxFileSizeMb) {
+        this.maxFileSizeMb = maxFileSizeMb;
+    }
+
+    public Integer getMaxFilesPerBoard() {
+        return maxFilesPerBoard;
+    }
+
+    public void setMaxFilesPerBoard(Integer maxFilesPerBoard) {
+        this.maxFilesPerBoard = maxFilesPerBoard;
+    }
+
+    public List<String> getImageExtensions() {
+        return imageExtensions;
+    }
+
+    public void setImageExtensions(List<String> imageExtensions) {
+        this.imageExtensions = imageExtensions;
+    }
+
+    public List<String> getDocumentExtensions() {
+        return documentExtensions;
+    }
+
+    public void setDocumentExtensions(List<String> documentExtensions) {
+        this.documentExtensions = documentExtensions;
+    }
+
+    public List<String> getArchiveExtensions() {
+        return archiveExtensions;
+    }
+
+    public void setArchiveExtensions(List<String> archiveExtensions) {
+        this.archiveExtensions = archiveExtensions;
+    }
+
+    public List<String> getVideoExtensions() {
+        return videoExtensions;
+    }
+
+    public void setVideoExtensions(List<String> videoExtensions) {
+        this.videoExtensions = videoExtensions;
+    }
+
+    public Boolean getAutoCleanupEnabled() {
+        return autoCleanupEnabled;
+    }
+
+    public void setAutoCleanupEnabled(Boolean autoCleanupEnabled) {
+        this.autoCleanupEnabled = autoCleanupEnabled;
+    }
+
+    public String getAutoCleanupCron() {
+        return autoCleanupCron;
+    }
+
+    public void setAutoCleanupCron(String autoCleanupCron) {
+        this.autoCleanupCron = autoCleanupCron;
+    }
+
+    public Integer getAutoCleanupDays() {
+        return autoCleanupDays;
+    }
+
+    public void setAutoCleanupDays(Integer autoCleanupDays) {
+        this.autoCleanupDays = autoCleanupDays;
+    }
+
+    public Boolean getBackupBeforeDelete() {
+        return backupBeforeDelete;
+    }
+
+    public void setBackupBeforeDelete(Boolean backupBeforeDelete) {
+        this.backupBeforeDelete = backupBeforeDelete;
+    }
+
+    public Boolean getThumbnailEnabled() {
+        return thumbnailEnabled;
+    }
+
+    public void setThumbnailEnabled(Boolean thumbnailEnabled) {
+        this.thumbnailEnabled = thumbnailEnabled;
+    }
+
+    public Integer getThumbnailWidth() {
+        return thumbnailWidth;
+    }
+
+    public void setThumbnailWidth(Integer thumbnailWidth) {
+        this.thumbnailWidth = thumbnailWidth;
+    }
+
+    public Integer getThumbnailHeight() {
+        return thumbnailHeight;
+    }
+
+    public void setThumbnailHeight(Integer thumbnailHeight) {
+        this.thumbnailHeight = thumbnailHeight;
     }
 }

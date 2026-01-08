@@ -1,11 +1,8 @@
 package com.board.exception;
 
-import lombok.Getter;
-
 /**
  * 비즈니스 로직 예외의 기본 클래스
  */
-@Getter
 public class BusinessException extends RuntimeException {
 
     private final ErrorCode errorCode;
@@ -28,5 +25,9 @@ public class BusinessException extends RuntimeException {
     public BusinessException(ErrorCode errorCode, String message, Throwable cause) {
         super(message, cause);
         this.errorCode = errorCode;
+    }
+
+    public ErrorCode getErrorCode() {
+        return errorCode;
     }
 }
