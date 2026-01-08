@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title th:text="${community.id != null} ? '커뮤니티 수정' : '커뮤니티 생성'">커뮤니티 생성</title>
+    <th:block layout:fragment="extra-css">
+        <style>
+            .form-container {
+                max-width: 800px;
+                margin: 0 auto;
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .form-group {
+                margin-bottom: 20px;
+            }
+            .form-group label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #333;
+            }
+            .form-group input[type="text"],
+            .form-group textarea,
+            .form-group select {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 1rem;
+            }
+            .form-group textarea {
+                min-height: 100px;
+                resize: vertical;
+            }
+            .form-help {
+                font-size: 0.85rem;
+                color: #666;
+                margin-top: 5px;
+            }
+            .form-actions {
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+                margin-top: 30px;
+            }
+            .type-option {
+                padding: 15px;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .type-option:hover {
+                border-color: #007bff;
+                background: #f8f9fa;
+            }
+            .type-option input[type="radio"] {
+                margin-right: 10px;
+            }
+            .type-option.selected {
+                border-color: #007bff;
+                background: #e7f3ff;
+            }
+            .type-description {
+                font-size: 0.9rem;
+                color: #666;
+                margin-left: 28px;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="form-container">
+            <h1 th:text="${community.id != null} ? '커뮤니티 수정' : '커뮤니티 생성'">커뮤니티 생성</h1>
+            <p style="color: #666; margin-bottom: 30px;">
+                커뮤니티를 만들어 같은 관심사를 가진 사람들과 소통하세요.
+            </p>
+
+            <form th:action="${community.id != null} ? @{/community/{id}(id=${community.id})} : @{/community}"
+                  method="post"
+                  th:object="${community}">
+
+                <!-- 커뮤니티 이름 -->
+                <div class="form-group">
+                    <label for="name">커뮤니티 이름 <span style="color: red;">*</span></label>
+                    <input type="text"
+                           id="name"
+                           name="name"
+                           th:field="*{name}"
+                           required
+                           maxlength="100"
+                           placeholder="예: 개발자 모임, 사진 동호회">
+                    <div class="form-help">커뮤니티를 대표하는 이름을 입력하세요 (최대 100자)</div>
+                </div>
+
+                <!-- 커뮤니티 설명 -->
+                <div class="form-group">
+                    <label for="description">설명</label>
+                    <textarea id="description"
+                              name="description"
+                              th:field="*{description}"
+                              maxlength="500"
+                              placeholder="커뮤니티에 대한 간단한 설명을 입력하세요"></textarea>
+                    <div class="form-help">커뮤니티의 목적이나 주제를 설명해주세요 (최대 500자)</div>
+                </div>
+
+                <!-- 커뮤니티 타입 -->
+                <div class="form-group">
+                    <label>커뮤니티 타입 <span style="color: red;">*</span></label>
+
+                    <div class="type-option" onclick="selectType('PUBLIC')">
+                        <label style="cursor: pointer; margin: 0;">
+                            <input type="radio"
+                                   name="type"
+                                   value="PUBLIC"
+                                   th:checked="${community.type == null || community.type.name() == 'PUBLIC'}"
+                                   required>
+                            <strong>공개 (PUBLIC)</strong>
+                        </label>
+                        <div class="type-description">
+                            누구나 찾아볼 수 있고 자유롭게 가입할 수 있습니다.
+                        </div>
+                    </div>
+
+                    <div class="type-option" onclick="selectType('PRIVATE')">
+                        <label style="cursor: pointer; margin: 0;">
+                            <input type="radio"
+                                   name="type"
+                                   value="PRIVATE"
+                                   th:checked="${community.type != null && community.type.name() == 'PRIVATE'}">
+                            <strong>비공개 (PRIVATE)</strong>
+                        </label>
+                        <div class="type-description">
+                            누구나 찾아볼 수 있지만 초대를 받아야 가입할 수 있습니다.
+                        </div>
+                    </div>
+
+                    <div class="type-option" onclick="selectType('SECRET')">
+                        <label style="cursor: pointer; margin: 0;">
+                            <input type="radio"
+                                   name="type"
+                                   value="SECRET"
+                                   th:checked="${community.type != null && community.type.name() == 'SECRET'}">
+                            <strong>비밀 (SECRET)</strong>
+                        </label>
+                        <div class="type-description">
+                            검색되지 않으며 초대를 받아야 찾아보고 가입할 수 있습니다.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 프로필 이미지 URL -->
+                <div class="form-group">
+                    <label for="profileImageUrl">프로필 이미지 URL</label>
+                    <input type="text"
+                           id="profileImageUrl"
+                           name="profileImageUrl"
+                           th:field="*{profileImageUrl}"
+                           placeholder="https://example.com/image.jpg">
+                    <div class="form-help">커뮤니티를 대표하는 이미지 URL을 입력하세요 (선택사항)</div>
+                </div>
+
+                <!-- 배너 이미지 URL -->
+                <div class="form-group">
+                    <label for="bannerImageUrl">배너 이미지 URL</label>
+                    <input type="text"
+                           id="bannerImageUrl"
+                           name="bannerImageUrl"
+                           th:field="*{bannerImageUrl}"
+                           placeholder="https://example.com/banner.jpg">
+                    <div class="form-help">커뮤니티 페이지 상단에 표시될 배너 이미지 URL (선택사항)</div>
+                </div>
+
+                <!-- 커뮤니티 규칙 -->
+                <div class="form-group">
+                    <label for="rules">커뮤니티 규칙</label>
+                    <textarea id="rules"
+                              name="rules"
+                              th:field="*{rules}"
+                              rows="5"
+                              placeholder="커뮤니티 규칙을 작성하세요&#10;예:&#10;1. 서로 존중하는 대화를 나눠주세요&#10;2. 광고나 홍보 글은 금지됩니다&#10;3. 불법적인 콘텐츠는 삭제됩니다"></textarea>
+                    <div class="form-help">멤버들이 지켜야 할 규칙을 작성하세요 (선택사항)</div>
+                </div>
+
+                <!-- 버튼 -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">
+                        <i class="fas fa-times"></i> 취소
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        <span th:text="${community.id != null} ? '수정하기' : '생성하기'">생성하기</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- JavaScript -->
+        <script>
+            function selectType(type) {
+                // 모든 옵션에서 selected 클래스 제거
+                document.querySelectorAll('.type-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+
+                // 해당 라디오 버튼 선택 및 selected 클래스 추가
+                const radio = document.querySelector(`input[value="${type}"]`);
+                radio.checked = true;
+                radio.closest('.type-option').classList.add('selected');
+            }
+
+            // 페이지 로드 시 선택된 옵션에 스타일 적용
+            document.addEventListener('DOMContentLoaded', function() {
+                const selectedRadio = document.querySelector('input[name="type"]:checked');
+                if (selectedRadio) {
+                    selectedRadio.closest('.type-option').classList.add('selected');
+                }
+            });
+
+            // 폼 제출 전 유효성 검사
+            document.querySelector('form').addEventListener('submit', function(e) {
+                const name = document.getElementById('name').value.trim();
+                if (!name) {
+                    e.preventDefault();
+                    alert('커뮤니티 이름을 입력하세요.');
+                    return false;
+                }
+
+                const type = document.querySelector('input[name="type"]:checked');
+                if (!type) {
+                    e.preventDefault();
+                    alert('커뮤니티 타입을 선택하세요.');
+                    return false;
+                }
+
+                return true;
+            });
+        </script>
+    </div>
+</body>
+</html>

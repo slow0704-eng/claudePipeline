@@ -98,7 +98,25 @@ public enum ErrorCode {
     NOTIFICATION_NOT_FOUND("NOTIFICATION_001", "알림을 찾을 수 없습니다."),
 
     // Attachment
-    ATTACHMENT_NOT_FOUND("ATTACHMENT_001", "첨부파일을 찾을 수 없습니다.");
+    ATTACHMENT_NOT_FOUND("ATTACHMENT_001", "첨부파일을 찾을 수 없습니다."),
+
+    // Community
+    COMMUNITY_NOT_FOUND("COMMUNITY_001", "커뮤니티를 찾을 수 없습니다."),
+    COMMUNITY_NAME_ALREADY_EXISTS("COMMUNITY_002", "이미 존재하는 커뮤니티 이름입니다."),
+    ALREADY_MEMBER("COMMUNITY_003", "이미 가입된 커뮤니티입니다."),
+    MEMBER_NOT_FOUND("COMMUNITY_004", "멤버를 찾을 수 없습니다."),
+    OWNER_CANNOT_LEAVE("COMMUNITY_005", "소유자는 탈퇴할 수 없습니다."),
+    CANNOT_CHANGE_OWNER_ROLE("COMMUNITY_006", "소유자 역할은 변경할 수 없습니다."),
+    CANNOT_KICK_OWNER("COMMUNITY_007", "소유자는 퇴출할 수 없습니다."),
+
+    // Community Category
+    COMMUNITY_CATEGORY_NOT_FOUND("COMMUNITY_CATEGORY_001", "커뮤니티 카테고리를 찾을 수 없습니다."),
+
+    // Invitation
+    INVITATION_NOT_FOUND("INVITATION_001", "초대를 찾을 수 없습니다."),
+    INVITATION_ALREADY_SENT("INVITATION_002", "이미 초대를 보냈습니다."),
+    INVITATION_ALREADY_PROCESSED("INVITATION_003", "이미 처리된 초대입니다."),
+    INVITATION_EXPIRED("INVITATION_004", "만료된 초대입니다.");
 
     private final String code;
     private final String message;

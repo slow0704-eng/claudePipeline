@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title th:text="${community.name}">커뮤니티</title>
+    <th:block layout:fragment="extra-css">
+        <style>
+            .community-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 8px;
+                margin-bottom: 30px;
+            }
+            .community-banner {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .community-info h1 {
+                margin: 0 0 10px 0;
+            }
+            .community-stats {
+                display: flex;
+                gap: 20px;
+                margin-top: 15px;
+            }
+            .stat-item {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .community-actions {
+                display: flex;
+                gap: 10px;
+            }
+            .member-section {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+            .member-list {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+                margin-top: 15px;
+            }
+            .member-card {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+            }
+            .role-badge {
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 0.75rem;
+                font-weight: 500;
+            }
+            .role-owner { background: #dc3545; color: white; }
+            .role-admin { background: #ffc107; color: #333; }
+            .role-member { background: #6c757d; color: white; }
+            .rules-section {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- 커뮤니티 헤더 -->
+        <div class="community-header">
+            <div class="community-banner">
+                <div class="community-info">
+                    <h1 th:text="${community.name}">커뮤니티 이름</h1>
+                    <p th:text="${community.description ?: '설명이 없습니다.'}">커뮤니티 설명</p>
+
+                    <div class="community-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-users"></i>
+                            <span>멤버 <strong th:text="${community.memberCount}">0</strong>명</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-file-alt"></i>
+                            <span>게시글 <strong th:text="${community.boardCount}">0</strong>개</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-globe"></i>
+                            <span th:text="${community.type.displayName}">공개</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="community-actions" sec:authorize="isAuthenticated()">
+                    <!-- 가입/탈퇴 버튼 -->
+                    <div th:if="${!isMember}">
+                        <button th:if="${community.type.name() == 'PUBLIC'}"
+                                class="btn btn-success"
+                                onclick="joinCommunity()">
+                            <i class="fas fa-user-plus"></i> 가입하기
+                        </button>
+                        <button th:unless="${community.type.name() == 'PUBLIC'}"
+                                class="btn btn-secondary" disabled>
+                            <i class="fas fa-lock"></i> 초대 필요
+                        </button>
+                    </div>
+
+                    <div th:if="${isMember}">
+                        <button th:if="${userRole != null && userRole.name() != 'OWNER'}"
+                                class="btn btn-warning"
+                                onclick="leaveCommunity()">
+                            <i class="fas fa-sign-out-alt"></i> 탈퇴하기
+                        </button>
+
+                        <!-- 관리 버튼 (OWNER, ADMIN) -->
+                        <a th:if="${userRole != null && (userRole.name() == 'OWNER' || userRole.name() == 'ADMIN')}"
+                           th:href="@{/community/{id}/edit(id=${community.id})}"
+                           class="btn btn-primary">
+                            <i class="fas fa-cog"></i> 설정
+                        </a>
+
+                        <!-- 삭제 버튼 (OWNER만) -->
+                        <form th:if="${userRole != null && userRole.name() == 'OWNER'}"
+                              th:action="@{/community/{id}/delete(id=${community.id})}"
+                              method="post"
+                              style="display: inline;"
+                              onsubmit="return confirm('정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> 삭제
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 커뮤니티 규칙 -->
+        <div class="rules-section" th:if="${community.rules != null && !community.rules.isEmpty()}">
+            <h3><i class="fas fa-gavel"></i> 커뮤니티 규칙</h3>
+            <div th:utext="${community.rules}"></div>
+        </div>
+
+        <!-- 멤버 목록 -->
+        <div class="member-section">
+            <h3><i class="fas fa-users"></i> 멤버 (<span th:text="${members.size()}">0</span>명)</h3>
+
+            <div class="member-list" th:if="${!members.isEmpty()}">
+                <div class="member-card" th:each="member : ${members}">
+                    <i class="fas fa-user-circle" style="font-size: 2rem; color: #666;"></i>
+                    <div style="flex: 1;">
+                        <div>
+                            <strong th:text="${member.user.username}">사용자명</strong>
+                            <span class="role-badge"
+                                  th:classappend="'role-' + ${member.role.name().toLowerCase()}"
+                                  th:text="${member.role.displayName}">역할</span>
+                        </div>
+                        <small style="color: #888;" th:text="${#temporals.format(member.joinedAt, 'yyyy-MM-dd HH:mm')}">가입일</small>
+                    </div>
+
+                    <!-- 역할 변경/퇴출 버튼 (OWNER만) -->
+                    <div th:if="${userRole != null && userRole.name() == 'OWNER' && member.role.name() != 'OWNER'}">
+                        <select th:id="'role-' + ${member.userId}"
+                                class="form-control form-control-sm"
+                                th:onchange="'changeRole(' + ${member.userId} + ', this.value)'">
+                            <option value="MEMBER" th:selected="${member.role.name() == 'MEMBER'}">멤버</option>
+                            <option value="ADMIN" th:selected="${member.role.name() == 'ADMIN'}">관리자</option>
+                        </select>
+                        <button class="btn btn-sm btn-danger mt-1"
+                                th:onclick="'kickMember(' + ${member.userId} + ')'">
+                            퇴출
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 게시글 섹션 (Phase 2에서 구현 예정) -->
+        <div class="member-section">
+            <h3><i class="fas fa-file-alt"></i> 최근 게시글</h3>
+            <p style="text-align: center; color: #888; padding: 20px;">Phase 2에서 게시판 기능이 추가됩니다.</p>
+        </div>
+
+        <!-- JavaScript -->
+        <script th:inline="javascript">
+            const communityId = /*[[${community.id}]]*/ 0;
+
+            function joinCommunity() {
+                if (!confirm('이 커뮤니티에 가입하시겠습니까?')) return;
+
+                fetch(`/community/${communityId}/join`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('가입에 실패했습니다.');
+                });
+            }
+
+            function leaveCommunity() {
+                if (!confirm('정말 탈퇴하시겠습니까?')) return;
+
+                fetch(`/community/${communityId}/leave`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.href = '/community';
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('탈퇴에 실패했습니다.');
+                });
+            }
+
+            function changeRole(userId, newRole) {
+                if (!confirm('멤버의 역할을 변경하시겠습니까?')) {
+                    location.reload();
+                    return;
+                }
+
+                fetch(`/community/${communityId}/members/${userId}/role?role=${newRole}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('역할 변경에 실패했습니다.');
+                    location.reload();
+                });
+            }
+
+            function kickMember(userId) {
+                const reason = prompt('퇴출 사유를 입력하세요 (선택사항):');
+                if (reason === null) return;
+
+                fetch(`/community/${communityId}/members/${userId}/kick?reason=${encodeURIComponent(reason)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('퇴출에 실패했습니다.');
+                });
+            }
+        </script>
+    </div>
+</body>
+</html>

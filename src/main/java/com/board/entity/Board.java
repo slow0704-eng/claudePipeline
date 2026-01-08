@@ -20,9 +20,9 @@ import java.util.Map;
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-@ToString(exclude = {"comments", "likes", "shares", "bookmarks", "user"})
+@ToString(exclude = {"comments", "shares", "bookmarks", "user"})
 @Table(name = "board",
        indexes = {
            @Index(name = "idx_board_status", columnList = "status"),
@@ -97,17 +97,31 @@ public class Board {
     @Column(name = "is_draft", nullable = false)
     private Boolean isDraft = false;
 
+    @Column(name = "community_id")
+    private Long communityId;
+
+    /**
+     * 게시글이 속한 커뮤니티
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "community_id", insertable = false, updatable = false)
+    private Community community;
+
+    @Column(name = "community_category_id")
+    private Long communityCategoryId;
+
+    /**
+     * 게시글이 속한 커뮤니티 카테고리
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "community_category_id", insertable = false, updatable = false)
+    private CommunityCategory communityCategory;
+
     /**
      * 게시글의 댓글 목록
      */
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
-
-    /**
-     * 게시글의 좋아요 목록
-     */
-    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Like> likes = new ArrayList<>();
 
     /**
      * 게시글의 공유 목록

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title>커뮤니티</title>
+    <th:block layout:fragment="extra-css">
+        <style>
+            .community-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }
+            .community-card {
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 20px;
+                background: white;
+                transition: box-shadow 0.3s ease;
+            }
+            .community-card:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+            .community-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+            .community-name {
+                font-size: 1.2rem;
+                font-weight: bold;
+                color: #333;
+            }
+            .community-type-badge {
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 0.8rem;
+                font-weight: 500;
+            }
+            .type-public { background: #28a745; color: white; }
+            .type-private { background: #ffc107; color: #333; }
+            .type-secret { background: #dc3545; color: white; }
+            .community-description {
+                color: #666;
+                margin-bottom: 15px;
+                min-height: 40px;
+            }
+            .community-stats {
+                display: flex;
+                gap: 15px;
+                color: #888;
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+            .filter-tabs {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            .filter-tab {
+                padding: 8px 16px;
+                border: 1px solid #ddd;
+                background: white;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .filter-tab.active {
+                background: #007bff;
+                color: white;
+                border-color: #007bff;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h1>커뮤니티</h1>
+
+        <!-- 커뮤니티 생성 버튼 -->
+        <a sec:authorize="hasAnyRole('MEMBER', 'ADMIN')"
+           th:href="@{/community/new}"
+           class="btn btn-gradient mb-20">
+            <i class="fas fa-plus"></i> 커뮤니티 만들기
+        </a>
+
+        <!-- 타입 필터 탭 -->
+        <div class="filter-tabs">
+            <button class="filter-tab" th:classappend="${currentType == null} ? 'active' : ''"
+                    onclick="location.href='/community'">
+                전체
+            </button>
+            <button class="filter-tab" th:classappend="${currentType == 'PUBLIC'} ? 'active' : ''"
+                    onclick="location.href='/community?type=PUBLIC'">
+                공개
+            </button>
+            <button class="filter-tab" th:classappend="${currentType == 'PRIVATE'} ? 'active' : ''"
+                    onclick="location.href='/community?type=PRIVATE'">
+                비공개
+            </button>
+            <button class="filter-tab" th:classappend="${currentType == 'SECRET'} ? 'active' : ''"
+                    onclick="location.href='/community?type=SECRET'">
+                비밀
+            </button>
+        </div>
+
+        <!-- 검색 폼 -->
+        <div class="search-container mb-20">
+            <form class="search-form" th:action="@{/community}" method="get">
+                <input type="text"
+                       name="search"
+                       th:value="${searchKeyword}"
+                       placeholder="커뮤니티 검색..."
+                       class="search-input">
+                <button type="submit" class="search-btn">
+                    <i class="fas fa-search"></i> 검색
+                </button>
+            </form>
+        </div>
+
+        <!-- 커뮤니티 목록 -->
+        <div class="community-grid" th:if="${communities.hasContent()}">
+            <div class="community-card" th:each="community : ${communities}">
+                <div class="community-header">
+                    <a th:href="@{/community/{id}(id=${community.id})}" class="community-name" th:text="${community.name}">커뮤니티 이름</a>
+                    <span class="community-type-badge"
+                          th:classappend="'type-' + ${community.type.name().toLowerCase()}"
+                          th:text="${community.type.displayName}">공개</span>
+                </div>
+
+                <p class="community-description" th:text="${community.description ?: '설명이 없습니다.'}">커뮤니티 설명</p>
+
+                <div class="community-stats">
+                    <span><i class="fas fa-users"></i> <span th:text="${community.memberCount}">0</span>명</span>
+                    <span><i class="fas fa-file-alt"></i> <span th:text="${community.boardCount}">0</span>개 게시글</span>
+                </div>
+
+                <div style="text-align: right;">
+                    <a th:href="@{/community/{id}(id=${community.id})}" class="btn btn-sm btn-primary">
+                        자세히 보기
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 커뮤니티 없음 -->
+        <div th:unless="${communities.hasContent()}" style="text-align: center; padding: 40px; color: #888;">
+            <i class="fas fa-folder-open" style="font-size: 3rem; margin-bottom: 10px;"></i>
+            <p>커뮤니티가 없습니다.</p>
+        </div>
+
+        <!-- 페이징 -->
+        <div th:if="${communities.totalPages > 1}" class="pagination-container">
+            <nav>
+                <ul class="pagination">
+                    <li th:if="${communities.hasPrevious()}" class="page-item">
+                        <a class="page-link" th:href="@{/community(page=${communities.number - 1}, size=${communities.size}, type=${currentType}, search=${searchKeyword})}">이전</a>
+                    </li>
+
+                    <li th:each="i : ${#numbers.sequence(0, communities.totalPages - 1)}"
+                        th:if="${i >= communities.number - 2 && i <= communities.number + 2}"
+                        class="page-item" th:classappend="${i == communities.number} ? 'active'">
+                        <a class="page-link" th:href="@{/community(page=${i}, size=${communities.size}, type=${currentType}, search=${searchKeyword})}" th:text="${i + 1}">1</a>
+                    </li>
+
+                    <li th:if="${communities.hasNext()}" class="page-item">
+                        <a class="page-link" th:href="@{/community(page=${communities.number + 1}, size=${communities.size}, type=${currentType}, search=${searchKeyword})}">다음</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</body>
+</html>
