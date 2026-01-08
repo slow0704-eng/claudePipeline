@@ -5,11 +5,13 @@ WORKDIR /app
 # Copy pom.xml and download dependencies (including provided scope like Lombok)
 COPY pom.xml .
 RUN mvn dependency:resolve -B && \
-    mvn dependency:resolve-plugins -B
+    mvn dependency:resolve-plugins -B && \
+    mvn dependency:copy-dependencies -DincludeArtifactIds=lombok -DoutputDirectory=/tmp/lombok
 
-# Copy source code and build
+# Copy source code and build with explicit Lombok configuration
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn clean compile -DskipTests && \
+    mvn package -DskipTests
 
 # Run stage
 FROM eclipse-temurin:17-jre-alpine
