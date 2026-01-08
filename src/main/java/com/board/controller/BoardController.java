@@ -1,6 +1,6 @@
 package com.board.controller;
 
-import com.board.dto.response.ApiResponse;
+import com.board.util.ApiResponse;
 import com.board.dto.response.FileUploadResponse;
 import com.board.entity.Attachment;
 import com.board.entity.BannedWord;

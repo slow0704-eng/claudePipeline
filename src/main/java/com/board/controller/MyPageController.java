@@ -1,7 +1,7 @@
 package com.board.controller;
 
 import com.board.dto.TimelineItemDTO;
-import com.board.dto.response.ApiResponse;
+import com.board.util.ApiResponse;
 import com.board.entity.Board;
 import com.board.entity.User;
 import com.board.service.BoardService;
