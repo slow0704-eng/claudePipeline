@@ -14,6 +14,8 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = {"boards", "comments", "likes"})
 public class User {
@@ -47,6 +49,12 @@ public class User {
 
     @Column(nullable = false)
     private boolean enabled = true;
+
+    /**
+     * 프로필 이미지 URL
+     */
+    @Column(name = "profile_image", length = 500)
+    private String profileImage;
 
     /**
      * 탈퇴 시간

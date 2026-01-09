@@ -226,7 +226,7 @@ public class BoardController {
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("board", new Board());
+        model.addAttribute("board", Board.builder().build());
         return "board/form";
     }
 

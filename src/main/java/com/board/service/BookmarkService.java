@@ -42,7 +42,7 @@ public class BookmarkService {
             result.put("message", "북마크가 해제되었습니다.");
         } else {
             // 북마크 추가
-            Bookmark bookmark = new Bookmark();
+            Bookmark bookmark = Bookmark.builder().build();
             bookmark.setUserId(userId);
             bookmark.setBoardId(boardId);
             bookmarkRepository.save(bookmark);

@@ -80,7 +80,7 @@ public class HashtagService {
             hashtag.incrementUseCount();
             return hashtagRepository.save(hashtag);
         } else {
-            Hashtag newHashtag = new Hashtag();
+            Hashtag newHashtag = Hashtag.builder().build();
             newHashtag.setName(normalizedName);
             newHashtag.setUseCount(1L);
             newHashtag.setLastUsedAt(LocalDateTime.now());
@@ -94,7 +94,7 @@ public class HashtagService {
     @Transactional
     public void linkBoardToHashtag(Long boardId, Long hashtagId) {
         if (!boardHashtagRepository.existsByBoardIdAndHashtagId(boardId, hashtagId)) {
-            BoardHashtag boardHashtag = new BoardHashtag();
+            BoardHashtag boardHashtag = BoardHashtag.builder().build();
             boardHashtag.setBoardId(boardId);
             boardHashtag.setHashtagId(hashtagId);
             boardHashtagRepository.save(boardHashtag);
@@ -276,7 +276,7 @@ public class HashtagService {
             isFollowing = false;
         } else {
             // 팔로우
-            com.board.entity.UserHashtagFollow follow = new com.board.entity.UserHashtagFollow();
+            com.board.entity.UserHashtagFollow follow = com.board.entity.UserHashtagFollow.builder().build();
             follow.setUserId(userId);
             follow.setHashtagId(hashtag.getId());
             userHashtagFollowRepository.save(follow);
@@ -586,7 +586,7 @@ public class HashtagService {
             // 대상 해시태그로 이미 연결되어 있는지 확인
             if (!boardHashtagRepository.existsByBoardIdAndHashtagId(bh.getBoardId(), target.getId())) {
                 // 대상 해시태그와 연결
-                BoardHashtag newLink = new BoardHashtag();
+                BoardHashtag newLink = BoardHashtag.builder().build();
                 newLink.setBoardId(bh.getBoardId());
                 newLink.setHashtagId(target.getId());
                 boardHashtagRepository.save(newLink);

@@ -1,7 +1,7 @@
 package com.board.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -17,7 +17,13 @@ import java.time.LocalDateTime;
            @Index(name = "idx_hashtag_id", columnList = "hashtag_id")
        },
        uniqueConstraints = @UniqueConstraint(columnNames = {"board_id", "hashtag_id"}))
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@EqualsAndHashCode(of = "id")
+@ToString
 public class BoardHashtag {
 
     @Id

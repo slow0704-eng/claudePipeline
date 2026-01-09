@@ -20,6 +20,8 @@ import java.util.Map;
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = {"board", "user", "replies"})
 @Table(name = "comments")

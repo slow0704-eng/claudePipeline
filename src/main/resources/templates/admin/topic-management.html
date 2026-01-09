@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title>토픽 관리 - 관리자</title>
+    <th:block layout:fragment="extra-css">
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <h1>📁 토픽 관리</h1>
+            <p>계층형 토픽 분류 시스템</p>
+        </div>
+
+        <a th:href="@{/admin}" class="back-button">← 관리자 대시보드</a>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalTopics">-</div>
+                <div class="stat-label">전체 토픽</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeTopics">-</div>
+                <div class="stat-label">활성 토픽</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="level0Topics">-</div>
+                <div class="stat-label">최상위 토픽</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="mergedTopics">-</div>
+                <div class="stat-label">병합된 토픽</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('tree')">토픽 트리</button>
+            <button class="tab" onclick="showTab('merged')">병합 이력</button>
+            <button class="tab" onclick="showTab('statistics')">통계</button>
+        </div>
+
+        <!-- Topic Tree Section -->
+        <div id="treeSection" class="section">
+            <div class="section-header">
+                <span>토픽 계층 구조</span>
+                <button class="btn btn-primary" onclick="openCreateModal(null)">
+                    + 새 토픽 추가
+                </button>
+            </div>
+            <div id="treeContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    데이터를 불러오는 중...
+                </div>
+            </div>
+        </div>
+
+        <!-- Merged Topics Section -->
+        <div id="mergedSection" class="section" style="display: none;">
+            <div class="section-header">병합된 토픽</div>
+            <div id="mergedContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    데이터를 불러오는 중...
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div id="statisticsSection" class="section" style="display: none;">
+            <div class="section-header">토픽 통계</div>
+            <div id="statisticsContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    데이터를 불러오는 중...
+                </div>
+            </div>
+        </div>
+
+        <!-- Create/Edit Topic Modal -->
+        <div id="topicModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header" id="modalTitle">새 토픽 추가</div>
+                <form id="topicForm" onsubmit="saveTopic(event)">
+                    <input type="hidden" id="topicId">
+                    <input type="hidden" id="topicParentId">
+
+                    <div class="form-group">
+                        <label>토픽명 *</label>
+                        <input type="text" id="topicName" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>설명</label>
+                        <textarea id="topicDescription" class="form-control"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>아이콘 (이모지)</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="text" id="topicIcon" class="form-control"
+                                   style="flex: 1;" placeholder="예: 💻">
+                            <button type="button" class="btn btn-secondary"
+                                    onclick="toggleEmojiPicker()">선택</button>
+                        </div>
+                        <div id="emojiPicker" class="emoji-picker"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>색상</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="color" id="topicColor" value="#667eea">
+                            <input type="text" id="topicColorHex" class="form-control"
+                                   value="#667eea" style="flex: 1;">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>표시 순서</label>
+                        <input type="number" id="topicDisplayOrder" class="form-control"
+                               value="0" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>메뉴 타입</label>
+                        <select id="topicMenuType" class="form-control">
+                            <option value="MENU" selected>메뉴</option>
+                            <option value="BUTTON">버튼</option>
+                            <option value="DIVIDER">구분선</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeTopicModal()">
+                            취소
+                        </button>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Merge Modal -->
+        <div id="mergeModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">토픽 병합</div>
+                <form id="mergeForm" onsubmit="executeMerge(event)">
+                    <input type="hidden" id="mergeSourceId">
+
+                    <div class="form-group">
+                        <label>원본 토픽</label>
+                        <input type="text" id="mergeSourceName" class="form-control" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>대상 토픽 *</label>
+                        <select id="mergeTargetId" class="form-control" required>
+                            <option value="">선택하세요</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>메모</label>
+                        <textarea id="mergeNotes" class="form-control"></textarea>
+                    </div>
+
+                    <div class="alert alert-danger">
+                        <strong>주의:</strong> 병합 후 원본 토픽은 비활성화되며,
+                        모든 게시글이 대상 토픽으로 이동합니다. 이 작업은 되돌릴 수 없습니다.
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeMergeModal()">
+                            취소
+                        </button>
+                        <button type="submit" class="btn btn-warning">병합 실행</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="extra-scripts">
+        <script th:inline="javascript">
+            // Common emojis for picker
+            const commonEmojis = [
+                '💻', '📱', '🎨', '🎮', '📚', '🎵', '🎬', '🏃',
+                '🍔', '✈️', '🏠', '💡', '⚡', '🌟', '🔥', '💼',
+                '📊', '🔧', '🎯', '🚀', '🌈', '🎪', '🎭', '🎨',
+                '📁', '🌍', '🏆', '💰', '🎓', '🏥', '🚗', '🎸'
+            ];
+
+            let allTopics = [];
+
+            // Initialize on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                loadAllData();
+                initializeEmojiPicker();
+                initializeColorPicker();
+            });
+
+            // Initialize emoji picker
+            function initializeEmojiPicker() {
+                const picker = document.getElementById('emojiPicker');
+                commonEmojis.forEach(emoji => {
+                    const option = document.createElement('div');
+                    option.className = 'emoji-option';
+                    option.textContent = emoji;
+                    option.onclick = () => selectEmoji(emoji);
+                    picker.appendChild(option);
+                });
+            }
+
+            // Initialize color picker sync
+            function initializeColorPicker() {
+                const colorInput = document.getElementById('topicColor');
+                const hexInput = document.getElementById('topicColorHex');
+
+                colorInput.addEventListener('input', (e) => {
+                    hexInput.value = e.target.value;
+                });
+
+                hexInput.addEventListener('input', (e) => {
+                    if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                        colorInput.value = e.target.value;
+                    }
+                });
+            }
+
+            // Toggle emoji picker
+            function toggleEmojiPicker() {
+                const picker = document.getElementById('emojiPicker');
+                picker.classList.toggle('show');
+            }
+
+            // Select emoji
+            function selectEmoji(emoji) {
+                document.getElementById('topicIcon').value = emoji;
+                toggleEmojiPicker();
+            }
+
+            // Load all data
+            async function loadAllData() {
+                await Promise.all([
+                    loadTopicTree(),
+                    loadStatistics()
+                ]);
+            }
+
+            // Load topic tree
+            async function loadTopicTree() {
+                try {
+                    const response = await fetch('/admin/api/topics/tree');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        allTopics = flattenTree(data.topicTree);
+                        renderTopicTree(data.topicTree);
+                    } else {
+                        showError('트리 로드 실패: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Failed to load topic tree:', error);
+                    showError('트리를 불러오는데 실패했습니다.');
+                }
+            }
+
+            // Flatten tree for easier access
+            function flattenTree(tree) {
+                let flat = [];
+                function traverse(items) {
+                    items.forEach(item => {
+                        flat.push(item);
+                        if (item.children) {
+                            traverse(item.children);
+                        }
+                    });
+                }
+                traverse(tree);
+                return flat;
+            }
+
+            // Render topic tree
+            function renderTopicTree(tree) {
+                const content = document.getElementById('treeContent');
+                if (!tree || tree.length === 0) {
+                    content.innerHTML = '<div class="no-data">토픽이 없습니다</div>';
+                    return;
+                }
+
+                content.innerHTML = '<ul class="tree-view">' + renderTreeItems(tree) + '</ul>';
+            }
+
+            // Render tree items recursively
+            function renderTreeItems(items) {
+                return items.map(item => `
+                    <li class="tree-item level-${item.level}">
+                        <div class="tree-item-content">
+                            <div class="tree-item-info">
+                                <span class="topic-icon">${item.icon || '📁'}</span>
+                                <span class="topic-color-preview"
+                                      style="background-color: ${item.color || '#667eea'}"></span>
+                                <div class="topic-details">
+                                    <div class="topic-name">${item.name}</div>
+                                    ${item.description ? `<div style="color: #666; font-size: 13px; margin-bottom: 4px;">${item.description}</div>` : ''}
+                                    <div class="topic-meta">
+                                        레벨: ${item.level} | 사용: ${item.usageCount}회 |
+                                        <span class="badge ${item.enabled ? 'badge-enabled' : 'badge-disabled'}">
+                                            ${item.enabled ? '활성' : '비활성'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tree-item-actions">
+                                ${item.level < 2 ? `
+                                    <button class="btn btn-sm btn-success" onclick="openCreateModal(${item.id})">
+                                        하위 추가
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-sm btn-primary" onclick="openEditModal(${item.id})">
+                                    수정
+                                </button>
+                                <button class="btn btn-sm btn-warning" onclick="openMergeModal(${item.id}, '${item.name}')">
+                                    병합
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteTopic(${item.id})">
+                                    삭제
+                                </button>
+                            </div>
+                        </div>
+                        ${item.children && item.children.length > 0 ? `
+                            <ul class="tree-view">${renderTreeItems(item.children)}</ul>
+                        ` : ''}
+                    </li>
+                `).join('');
+            }
+
+            // Load statistics
+            async function loadStatistics() {
+                try {
+                    const response = await fetch('/admin/api/topics/statistics');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const stats = data.statistics;
+                        document.getElementById('totalTopics').textContent = stats.totalTopics || 0;
+                        document.getElementById('activeTopics').textContent = stats.activeTopics || 0;
+                        document.getElementById('level0Topics').textContent = stats.level0Topics || 0;
+                        document.getElementById('mergedTopics').textContent = stats.mergedTopics || 0;
+                    }
+                } catch (error) {
+                    console.error('Failed to load statistics:', error);
+                }
+            }
+
+            // Show tab
+            function showTab(tabName) {
+                // Update tab buttons
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                event.target.classList.add('active');
+
+                // Update sections
+                document.getElementById('treeSection').style.display = 'none';
+                document.getElementById('mergedSection').style.display = 'none';
+                document.getElementById('statisticsSection').style.display = 'none';
+
+                if (tabName === 'tree') {
+                    document.getElementById('treeSection').style.display = 'block';
+                } else if (tabName === 'merged') {
+                    document.getElementById('mergedSection').style.display = 'block';
+                    loadMergedTopics();
+                } else if (tabName === 'statistics') {
+                    document.getElementById('statisticsSection').style.display = 'block';
+                    loadDetailedStatistics();
+                }
+            }
+
+            // Load merged topics
+            async function loadMergedTopics() {
+                const content = document.getElementById('mergedContent');
+                content.innerHTML = '<div class="loading"><div class="spinner"></div>데이터를 불러오는 중...</div>';
+
+                try {
+                    const response = await fetch('/admin/api/topics/merge-history');
+                    const data = await response.json();
+
+                    if (data.success && data.history.length > 0) {
+                        let html = '<table class="table"><thead><tr>';
+                        html += '<th>병합 일시</th><th>원본 토픽</th><th>대상 토픽</th><th>영향 게시글</th><th>메모</th>';
+                        html += '</tr></thead><tbody>';
+
+                        data.history.forEach(h => {
+                            const date = new Date(h.mergedAt).toLocaleString('ko-KR');
+                            html += `<tr>
+                                <td>${date}</td>
+                                <td>${h.sourceTopicName}</td>
+                                <td>${h.targetTopicName}</td>
+                                <td>${h.boardsAffected}개</td>
+                                <td>${h.notes || '-'}</td>
+                            </tr>`;
+                        });
+
+                        html += '</tbody></table>';
+                        content.innerHTML = html;
+                    } else {
+                        content.innerHTML = '<div class="no-data">병합 이력이 없습니다</div>';
+                    }
+                } catch (error) {
+                    console.error('Failed to load merge history:', error);
+                    content.innerHTML = '<div class="no-data">데이터를 불러오는데 실패했습니다</div>';
+                }
+            }
+
+            // Load detailed statistics
+            async function loadDetailedStatistics() {
+                const content = document.getElementById('statisticsContent');
+                content.innerHTML = '<div class="loading"><div class="spinner"></div>데이터를 불러오는 중...</div>';
+
+                try {
+                    const response = await fetch('/admin/api/topics/statistics');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const stats = data.statistics;
+                        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">';
+
+                        html += `
+                            <div class="stat-card">
+                                <div class="stat-value">${stats.totalTopics || 0}</div>
+                                <div class="stat-label">전체 토픽 수</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${stats.activeTopics || 0}</div>
+                                <div class="stat-label">활성 토픽</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${stats.mergedTopics || 0}</div>
+                                <div class="stat-label">병합된 토픽</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${stats.totalUsageCount || 0}</div>
+                                <div class="stat-label">총 사용 횟수</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${(stats.averageUsageCount || 0).toFixed(1)}</div>
+                                <div class="stat-label">평균 사용 횟수</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${stats.mostUsedTopicName || '-'}</div>
+                                <div class="stat-label">최다 사용 토픽 (${stats.mostUsedTopicCount || 0}회)</div>
+                            </div>
+                        `;
+
+                        html += '</div>';
+                        content.innerHTML = html;
+                    }
+                } catch (error) {
+                    console.error('Failed to load statistics:', error);
+                    content.innerHTML = '<div class="no-data">통계를 불러오는데 실패했습니다</div>';
+                }
+            }
+
+            // Open create modal
+            function openCreateModal(parentId) {
+                document.getElementById('modalTitle').textContent = parentId ? '하위 토픽 추가' : '새 토픽 추가';
+                document.getElementById('topicId').value = '';
+                document.getElementById('topicParentId').value = parentId || '';
+                document.getElementById('topicName').value = '';
+                document.getElementById('topicDescription').value = '';
+                document.getElementById('topicIcon').value = '📁';
+                document.getElementById('topicColor').value = '#667eea';
+                document.getElementById('topicColorHex').value = '#667eea';
+                document.getElementById('topicDisplayOrder').value = '0';
+
+                document.getElementById('topicModal').classList.add('show');
+            }
+
+            // Open edit modal
+            function openEditModal(topicId) {
+                const topic = allTopics.find(t => t.id === topicId);
+                if (!topic) return;
+
+                document.getElementById('modalTitle').textContent = '토픽 수정';
+                document.getElementById('topicId').value = topic.id;
+                document.getElementById('topicParentId').value = topic.parentId || '';
+                document.getElementById('topicName').value = topic.name;
+                document.getElementById('topicDescription').value = topic.description || '';
+                document.getElementById('topicIcon').value = topic.icon || '📁';
+                document.getElementById('topicColor').value = topic.color || '#667eea';
+                document.getElementById('topicColorHex').value = topic.color || '#667eea';
+                document.getElementById('topicDisplayOrder').value = topic.displayOrder || 0;
+
+                document.getElementById('topicModal').classList.add('show');
+            }
+
+            // Close topic modal
+            function closeTopicModal() {
+                document.getElementById('topicModal').classList.remove('show');
+            }
+
+            // Save topic
+            async function saveTopic(event) {
+                event.preventDefault();
+
+                const topicId = document.getElementById('topicId').value;
+                const data = {
+                    name: document.getElementById('topicName').value,
+                    description: document.getElementById('topicDescription').value,
+                    parentId: document.getElementById('topicParentId').value || null,
+                    icon: document.getElementById('topicIcon').value,
+                    color: document.getElementById('topicColorHex').value,
+                    displayOrder: parseInt(document.getElementById('topicDisplayOrder').value)
+                };
+
+                try {
+                    const url = topicId ? `/admin/api/topics/${topicId}` : '/admin/api/topics';
+                    const method = topicId ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert(result.message);
+                        closeTopicModal();
+                        loadAllData();
+                    } else {
+                        alert('오류: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Failed to save topic:', error);
+                    alert('토픽 저장에 실패했습니다.');
+                }
+            }
+
+            // Delete topic
+            async function deleteTopic(topicId) {
+                if (!confirm('정말 이 토픽을 삭제하시겠습니까?')) return;
+
+                try {
+                    const response = await fetch(`/admin/api/topics/${topicId}`, {
+                        method: 'DELETE'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert(result.message);
+                        loadAllData();
+                    } else {
+                        alert('오류: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Failed to delete topic:', error);
+                    alert('토픽 삭제에 실패했습니다.');
+                }
+            }
+
+            // Open merge modal
+            function openMergeModal(sourceId, sourceName) {
+                document.getElementById('mergeSourceId').value = sourceId;
+                document.getElementById('mergeSourceName').value = sourceName;
+                document.getElementById('mergeNotes').value = '';
+
+                // Populate target dropdown
+                const targetSelect = document.getElementById('mergeTargetId');
+                targetSelect.innerHTML = '<option value="">선택하세요</option>';
+
+                allTopics.filter(t => t.id !== sourceId && t.enabled && !t.mergedIntoId).forEach(t => {
+                    const option = document.createElement('option');
+                    option.value = t.id;
+                    option.textContent = `${t.icon || '📁'} ${t.name} (${t.usageCount}회)`;
+                    targetSelect.appendChild(option);
+                });
+
+                document.getElementById('mergeModal').classList.add('show');
+            }
+
+            // Close merge modal
+            function closeMergeModal() {
+                document.getElementById('mergeModal').classList.remove('show');
+            }
+
+            // Execute merge
+            async function executeMerge(event) {
+                event.preventDefault();
+
+                const data = {
+                    sourceId: parseInt(document.getElementById('mergeSourceId').value),
+                    targetId: parseInt(document.getElementById('mergeTargetId').value),
+                    notes: document.getElementById('mergeNotes').value
+                };
+
+                if (!confirm('병합을 실행하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+
+                try {
+                    const response = await fetch('/admin/api/topics/merge', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert(result.message);
+                        closeMergeModal();
+                        loadAllData();
+                    } else {
+                        alert('오류: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Failed to merge topics:', error);
+                    alert('토픽 병합에 실패했습니다.');
+                }
+            }
+
+            // Show error
+            function showError(message) {
+                const content = document.getElementById('treeContent');
+                content.innerHTML = `<div class="no-data" style="color: #cc0000;">${message}</div>`;
+            }
+        </script>
+    </th:block>
+</body>
+</html>

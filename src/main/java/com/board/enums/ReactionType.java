@@ -1,28 +1,36 @@
 package com.board.enums;
 
+/**
+ * 반응(리액션) 타입
+ */
 public enum ReactionType {
-    LIKE("❤️", "좋아요"),
-    HELPFUL("👍", "유익해요"),
-    FUNNY("😂", "재미있어요"),
-    WOW("😮", "놀라워요"),
-    SAD("😢", "슬퍼요"),
-    ANGRY("😡", "화나요"),
-    THINKING("🤔", "생각중이에요"),
-    CELEBRATE("🎉", "축하해요");
+    /**
+     * 좋아요
+     */
+    LIKE,
 
-    private final String emoji;
-    private final String displayName;
+    /**
+     * 사랑해요
+     */
+    LOVE,
 
-    ReactionType(String emoji, String displayName) {
-        this.emoji = emoji;
-        this.displayName = displayName;
-    }
+    /**
+     * 웃겨요
+     */
+    HAHA,
 
-    public String getEmoji() {
-        return emoji;
-    }
+    /**
+     * 놀라워요
+     */
+    WOW,
 
-    public String getDisplayName() {
-        return displayName;
-    }
+    /**
+     * 슬퍼요
+     */
+    SAD,
+
+    /**
+     * 화나요
+     */
+    ANGRY
 }

@@ -1,0 +1,69 @@
+﻿# Server Port
+server.port=8080
+
+# Favicon 비활성화
+spring.mvc.favicon.enabled=false
+
+# HTTP Response Configuration
+# Disabled to prevent ERR_INCOMPLETE_CHUNKED_ENCODING errors
+server.compression.enabled=false
+#server.compression.mime-types=text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+#server.compression.min-response-size=1024
+
+# Connection Timeout Settings
+server.tomcat.connection-timeout=60000
+server.tomcat.keep-alive-timeout=60000
+server.tomcat.max-keep-alive-requests=100
+
+# PostgreSQL Database Configuration
+spring.datasource.url=jdbc:postgresql://localhost:5432/boarddb
+spring.datasource.username=postgres
+spring.datasource.password=1
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA Configuration
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+spring.jpa.properties.hibernate.temp.use_jdbc_metadata_defaults=false
+
+# Thymeleaf Configuration
+spring.thymeleaf.cache=false
+spring.thymeleaf.prefix=classpath:/templates/
+spring.thymeleaf.suffix=.html
+spring.thymeleaf.encoding=UTF-8
+spring.thymeleaf.mode=HTML
+
+# File Upload Configuration
+spring.servlet.multipart.enabled=true
+spring.servlet.multipart.max-file-size=50MB
+spring.servlet.multipart.max-request-size=250MB
+file.upload-dir=uploads
+
+# HTTP Encoding Configuration
+server.servlet.encoding.charset=UTF-8
+server.servlet.encoding.enabled=true
+server.servlet.encoding.force=true
+
+# Message Source Encoding
+spring.messages.encoding=UTF-8
+
+# HTTP Response Encoding
+spring.http.encoding.charset=UTF-8
+spring.http.encoding.enabled=true
+spring.http.encoding.force=true
+
+# File Storage Management Configuration
+file.storage.upload-dir=uploads
+file.storage.max-file-size=52428800
+file.storage.max-file-size-mb=50
+file.storage.max-files-per-board=5
+file.storage.auto-cleanup-enabled=true
+file.storage.auto-cleanup-cron=0 0 3 * * ?
+file.storage.auto-cleanup-days=30
+file.storage.backup-before-delete=true
+file.storage.thumbnail-enabled=true
+file.storage.thumbnail-width=200
+file.storage.thumbnail-height=200

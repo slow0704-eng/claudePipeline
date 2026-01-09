@@ -1,0 +1,47 @@
+# ==========================================
+# Development Environment Configuration
+# 개발 환경 설정
+# ==========================================
+
+spring:
+  # 데이터소스 설정 (개발 환경 - 로컬 PostgreSQL)
+  datasource:
+    url: jdbc:postgresql://localhost:5432/boarddb
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:1}
+    driver-class-name: org.postgresql.Driver
+
+  # JPA 설정 (개발 환경)
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+  # Thymeleaf 캐시 비활성화 (개발 중 변경사항 즉시 반영)
+  thymeleaf:
+    cache: false
+
+  # DevTools 활성화
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+# Logging 설정 (개발 환경 - 상세 로깅)
+logging:
+  level:
+    root: INFO
+    com.board: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# 개발 환경 메모
+# - SQL 쿼리 로깅 활성화
+# - Thymeleaf 캐시 비활성화 (실시간 반영)
+# - 상세 로깅 활성화
+# - 디버그 엔드포인트 활성화 가능

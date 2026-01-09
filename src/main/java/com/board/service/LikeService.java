@@ -4,6 +4,7 @@ import com.board.entity.Board;
 import com.board.entity.Comment;
 import com.board.entity.Like;
 import com.board.entity.User;
+import com.board.enums.ReactionType;
 import com.board.enums.TargetType;
 import com.board.repository.BoardRepository;
 import com.board.repository.CommentRepository;
@@ -45,7 +46,7 @@ public class LikeService {
             isLiked = false;
         } else {
             // Like
-            Like like = new Like();
+            Like like = Like.builder().build();
             like.setUserId(currentUser.getId());
             like.setTargetType(targetType);
             like.setTargetId(targetId);
@@ -117,5 +118,35 @@ public class LikeService {
 
     public List<Like> getLikedPostsByUserId(Long userId) {
         return likeRepository.findByUserIdAndTargetTypeOrderByCreatedAtDesc(userId, TargetType.POST);
+    }
+
+    /**
+     * 사용자의 반응 타입 조회
+     */
+    public ReactionType getUserReaction(TargetType targetType, Long targetId, Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        return likeRepository.findByUserIdAndTargetTypeAndTargetId(userId, targetType, targetId)
+                .map(Like::getReactionType)
+                .orElse(null);
+    }
+
+    /**
+     * 반응 타입별 카운트 조회
+     */
+    public Map<String, Integer> getReactionCounts(TargetType targetType, Long targetId) {
+        List<Like> likes = likeRepository.findAll().stream()
+                .filter(like -> like.getTargetType() == targetType && like.getTargetId().equals(targetId))
+                .toList();
+
+        Map<String, Integer> counts = new HashMap<>();
+        for (ReactionType type : ReactionType.values()) {
+            long count = likes.stream()
+                    .filter(like -> like.getReactionType() == type)
+                    .count();
+            counts.put(type.name(), (int) count);
+        }
+        return counts;
     }
 }

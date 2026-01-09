@@ -1,67 +1,54 @@
 package com.board.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * 주제(토픽) 엔티티
+ * 게시글의 주제나 분류를 나타냅니다.
+ */
 @Entity
-@Table(name = "topic",
-       indexes = {
-           @Index(name = "idx_topic_name", columnList = "name"),
-           @Index(name = "idx_topic_parent", columnList = "parent_id"),
-           @Index(name = "idx_topic_level", columnList = "level"),
-           @Index(name = "idx_topic_enabled", columnList = "enabled")
-       },
-       uniqueConstraints = @UniqueConstraint(columnNames = "name"))
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@EqualsAndHashCode(of = "id")
+@ToString
+@Table(name = "topics")
 public class Topic {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    /**
+     * 주제명 (예: 기술, 일상, 여행 등)
+     */
+    @Column(nullable = false, unique = true, length = 50)
     private String name;
 
-    @Column(columnDefinition = "TEXT")
+    /**
+     * 주제 설명
+     */
+    @Column(length = 500)
     private String description;
 
-    // 계층 구조 필드 (Menu 패턴)
-    @Column(name = "parent_id")
-    private Long parentId;
-
+    /**
+     * 사용 횟수 (인기도 측정)
+     */
     @Column(nullable = false)
-    private Integer level = 0;  // 0, 1, or 2 (max 3 levels)
+    private Integer usageCount = 0;
 
-    @Column(name = "display_order", nullable = false)
-    private Integer displayOrder = 0;
-
-    // 시각적 속성
-    @Column(length = 50)
-    private String icon;  // Emoji like "💻", "🎨", "📱"
-
-    @Column(length = 7)
-    private String color;  // Hex color like "#667eea"
-
-    // 상태 필드 (Hashtag 패턴)
+    /**
+     * 활성화 여부
+     */
     @Column(nullable = false)
-    private Boolean enabled = true;
-
-    @Column(name = "merged_into_id")
-    private Long mergedIntoId;
-
-    @Column(name = "merged_at")
-    private LocalDateTime mergedAt;
-
-    // 사용 통계
-    @Column(name = "usage_count", nullable = false)
-    private Long usageCount = 0L;
-
-    @Column(name = "last_used_at")
-    private LocalDateTime lastUsedAt;
+    private Boolean active = true;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -71,15 +58,41 @@ public class Topic {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Helper methods
+    // 비즈니스 로직 메서드
+
+    /**
+     * 사용 횟수 증가
+     */
     public void incrementUsageCount() {
         this.usageCount++;
-        this.lastUsedAt = LocalDateTime.now();
     }
 
+    /**
+     * 사용 횟수 감소
+     */
     public void decrementUsageCount() {
         if (this.usageCount > 0) {
             this.usageCount--;
         }
+    }
+
+    /**
+     * 주제 활성화
+     */
+    public void activate() {
+        this.active = true;
+    }
+
+    /**
+     * 주제 비활성화
+     */
+    public void deactivate() {
+        this.active = false;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (usageCount == null) usageCount = 0;
+        if (active == null) active = true;
     }
 }

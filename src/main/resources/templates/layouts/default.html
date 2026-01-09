@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <!-- 페이지별 제목 (패턴: "페이지제목 - 커뮤니티") -->
+    <title layout:title-pattern="$CONTENT_TITLE - 커뮤니티">커뮤니티</title>
+
+    <!-- 공통 CSS -->
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- 페이지별 추가 CSS -->
+    <th:block layout:fragment="extra-css"></th:block>
+</head>
+<body>
+    <!-- 헤더 -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- 메인 컨텐츠 영역 -->
+    <main class="main-content">
+        <div class="container">
+            <div class="page-wrapper">
+                <!-- 각 페이지의 컨텐츠가 여기에 삽입됩니다 -->
+                <th:block layout:fragment="content">
+                    <p>Default Content</p>
+                </th:block>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <!-- 공통 스크립트 -->
+    <th:block th:replace="~{fragments/header :: header-scripts}"></th:block>
+    <th:block th:replace="~{fragments/footer :: footer-scripts}"></th:block>
+
+    <!-- 페이지별 추가 스크립트 -->
+    <th:block layout:fragment="extra-scripts"></th:block>
+</body>
+</html>

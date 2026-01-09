@@ -20,7 +20,9 @@ import java.time.LocalDateTime;
        })
 @Getter
 @Setter
-@NoArgsConstructor
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = {"community", "moderator"})
 public class ModerationLog {

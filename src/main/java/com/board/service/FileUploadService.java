@@ -104,7 +104,7 @@ public class FileUploadService {
         }
 
         // DB에 저장
-        Attachment attachment = new Attachment();
+        Attachment attachment = Attachment.builder().build();
         attachment.setBoardId(boardId);
         attachment.setOriginalFileName(originalFilename);
         attachment.setStoredFilePath(storedFilePath);

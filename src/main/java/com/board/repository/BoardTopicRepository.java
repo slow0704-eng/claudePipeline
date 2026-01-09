@@ -4,56 +4,47 @@ import com.board.entity.BoardTopic;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * 게시글-주제 매핑 리포지토리
+ */
 @Repository
 public interface BoardTopicRepository extends JpaRepository<BoardTopic, Long> {
 
-    // 기본 쿼리
+    /**
+     * 게시글의 모든 주제 조회
+     */
     List<BoardTopic> findByBoardId(Long boardId);
+
+    /**
+     * 특정 주제를 가진 모든 게시글 조회
+     */
     List<BoardTopic> findByTopicId(Long topicId);
 
-    @Query("SELECT bt.topicId FROM BoardTopic bt WHERE bt.boardId = :boardId")
-    List<Long> findTopicIdsByBoardId(@Param("boardId") Long boardId);
-
-    @Query("SELECT bt.boardId FROM BoardTopic bt WHERE bt.topicId = :topicId " +
-           "ORDER BY bt.createdAt DESC")
-    List<Long> findBoardIdsByTopicId(@Param("topicId") Long topicId);
-
-    // Count 쿼리
-    long countByBoardId(Long boardId);
-    long countByTopicId(Long topicId);
-
-    // 존재 확인
-    boolean existsByBoardIdAndTopicId(Long boardId, Long topicId);
-
-    // Delete 쿼리
+    /**
+     * 게시글의 모든 주제 삭제
+     */
     @Modifying
     @Query("DELETE FROM BoardTopic bt WHERE bt.boardId = :boardId")
-    void deleteByBoardId(@Param("boardId") Long boardId);
+    void deleteByBoardId(Long boardId);
 
+    /**
+     * 특정 게시글-주제 매핑 삭제
+     */
     @Modifying
-    @Query("DELETE FROM BoardTopic bt WHERE bt.topicId = :topicId")
-    void deleteByTopicId(@Param("topicId") Long topicId);
+    @Query("DELETE FROM BoardTopic bt WHERE bt.boardId = :boardId AND bt.topicId = :topicId")
+    void deleteByBoardIdAndTopicId(Long boardId, Long topicId);
 
-    // Co-occurrence 분석 (관련 토픽)
-    @Query("SELECT bt2.topicId, COUNT(bt2.topicId) as frequency " +
-           "FROM BoardTopic bt1 " +
-           "JOIN BoardTopic bt2 ON bt1.boardId = bt2.boardId " +
-           "WHERE bt1.topicId = :topicId AND bt2.topicId != :topicId " +
-           "GROUP BY bt2.topicId " +
-           "ORDER BY frequency DESC")
-    List<Object[]> findRelatedTopicIds(@Param("topicId") Long topicId);
+    /**
+     * 게시글의 주제 개수 조회
+     */
+    long countByBoardId(Long boardId);
 
-    // 토픽 빈도 통계
-    @Query("SELECT t.id, t.name, COUNT(bt.id) as frequency " +
-           "FROM BoardTopic bt " +
-           "JOIN Topic t ON bt.topicId = t.id " +
-           "WHERE t.enabled = true " +
-           "GROUP BY t.id, t.name " +
-           "ORDER BY frequency DESC")
-    List<Object[]> findAllTopicFrequencies();
+    /**
+     * 특정 주제를 가진 게시글 개수 조회
+     */
+    long countByTopicId(Long topicId);
 }

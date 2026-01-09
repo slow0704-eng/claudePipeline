@@ -15,6 +15,7 @@ public enum ErrorCode {
     INVALID_INPUT_VALUE("COMMON_002", "잘못된 입력값입니다."),
     METHOD_NOT_ALLOWED("COMMON_003", "지원하지 않는 HTTP 메서드입니다."),
     ACCESS_DENIED("COMMON_004", "접근 권한이 없습니다."),
+    NOT_FOUND("COMMON_005", "리소스를 찾을 수 없습니다."),
 
     // User
     USER_NOT_FOUND("USER_001", "사용자를 찾을 수 없습니다."),

@@ -1,95 +1,125 @@
 package com.board.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-
 /**
- * API 응답을 위한 공통 래퍼 클래스
- * @param <T> 응답 데이터 타입
+ * 표준화된 API 응답 DTO
+ *
+ * 모든 REST API 응답에 일관된 구조를 제공합니다.
+ * 기존 Map 기반 응답과 완전히 호환되는 JSON 구조를 생성합니다.
  */
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ApiResponse<T> {
 
     /**
-     * HTTP 상태 코드
+     * 요청 성공 여부
      */
-    private int status;
+    private boolean success;
 
     /**
-     * 응답 메시지
+     * 응답 메시지 (성공/실패 사유 등)
      */
     private String message;
 
     /**
-     * 응답 데이터
+     * 응답 데이터 (선택적)
      */
     private T data;
 
     /**
-     * 응답 시간
+     * 기본 생성자
      */
-    @Builder.Default
-    private LocalDateTime timestamp = LocalDateTime.now();
-
-    /**
-     * 성공 응답 생성
-     */
-    public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder()
-                .status(200)
-                .message("Success")
-                .data(data)
-                .timestamp(LocalDateTime.now())
-                .build();
+    public ApiResponse() {
     }
 
     /**
-     * 성공 응답 생성 (메시지 포함)
+     * 성공 여부와 메시지를 포함한 응답 생성
+     *
+     * @param success 성공 여부
+     * @param message 응답 메시지
      */
-    public static <T> ApiResponse<T> success(String message, T data) {
-        return ApiResponse.<T>builder()
-                .status(200)
-                .message(message)
-                .data(data)
-                .timestamp(LocalDateTime.now())
-                .build();
+    public ApiResponse(boolean success, String message) {
+        this.success = success;
+        this.message = message;
     }
 
     /**
-     * 성공 응답 생성 (메시지만 포함, 데이터 없음)
+     * 성공 여부, 메시지, 데이터를 포함한 응답 생성
+     *
+     * @param success 성공 여부
+     * @param message 응답 메시지
+     * @param data 응답 데이터
+     */
+    public ApiResponse(boolean success, String message, T data) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
+    }
+
+    // Getters and Setters
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
+    }
+
+    // Static helper methods
+
+    /**
+     * 성공 응답 생성 (데이터 없음)
      */
     public static <T> ApiResponse<T> success(String message) {
-        return ApiResponse.<T>builder()
-                .status(200)
-                .message(message)
-                .data(null)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return new ApiResponse<>(true, message);
     }
 
     /**
-     * 에러 응답 생성
+     * 성공 응답 생성 (데이터만 포함, 메시지 없음)
      */
-    public static <T> ApiResponse<T> error(int status, String message) {
-        return ApiResponse.<T>builder()
-                .status(status)
-                .message(message)
-                .data(null)
-                .timestamp(LocalDateTime.now())
-                .build();
+    public static <T> ApiResponse<T> success(T data) {
+        return new ApiResponse<>(true, null, data);
     }
 
     /**
-     * 에러 응답 생성 (기본 500 상태)
+     * 성공 응답 생성 (데이터 포함)
+     */
+    public static <T> ApiResponse<T> success(String message, T data) {
+        return new ApiResponse<>(true, message, data);
+    }
+
+    /**
+     * 실패 응답 생성
      */
     public static <T> ApiResponse<T> error(String message) {
-        return error(500, message);
+        return new ApiResponse<>(false, message);
+    }
+
+    /**
+     * 실패 응답 생성 (에러 코드 포함)
+     */
+    public static <T> ApiResponse<T> error(int errorCode, String message) {
+        return new ApiResponse<>(false, message);
+    }
+
+    /**
+     * 실패 응답 생성 (데이터 포함)
+     */
+    public static <T> ApiResponse<T> error(String message, T data) {
+        return new ApiResponse<>(false, message, data);
     }
 }

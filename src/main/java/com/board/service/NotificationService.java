@@ -19,7 +19,7 @@ public class NotificationService {
     @Transactional
     public void createNotification(Long userId, String type, String title, String content,
                                     String referenceType, Long referenceId) {
-        Notification notification = new Notification();
+        Notification notification = Notification.builder().build();
         notification.setUserId(userId);
         notification.setType(type);
         notification.setTitle(title);
@@ -73,5 +73,35 @@ public class NotificationService {
     @Transactional
     public void deleteAllNotifications(Long userId) {
         notificationRepository.deleteByUserId(userId);
+    }
+
+    /**
+     * 댓글 답글 알림 생성
+     */
+    @Transactional
+    public void createCommentReplyNotification(Long userId, Long boardId, Long commentId, Long replyId) {
+        createNotification(
+            userId,
+            "COMMENT_REPLY",
+            "새로운 답글",
+            "회원님의 댓글에 새로운 답글이 달렸습니다.",
+            "COMMENT",
+            commentId
+        );
+    }
+
+    /**
+     * 댓글 알림 생성
+     */
+    @Transactional
+    public void createCommentNotification(Long userId, Long boardId, Long commentId) {
+        createNotification(
+            userId,
+            "COMMENT",
+            "새로운 댓글",
+            "회원님의 게시글에 새로운 댓글이 달렸습니다.",
+            "POST",
+            boardId
+        );
     }
 }

@@ -38,7 +38,7 @@ public class ReportService {
         }
 
         // 신고 생성
-        Report report = new Report();
+        Report report = Report.builder().build();
         report.setReporterId(reporterId);
         report.setTargetType(targetType);
         report.setTargetId(targetId);

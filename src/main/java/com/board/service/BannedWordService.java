@@ -58,7 +58,7 @@ public class BannedWordService {
             throw new RuntimeException("이미 존재하는 금지어입니다.");
         }
 
-        BannedWord bannedWord = new BannedWord();
+        BannedWord bannedWord = BannedWord.builder().build();
         bannedWord.setWord(word);
         bannedWord.setDescription(description);
         bannedWord.setIsRegex(isRegex != null ? isRegex : false);

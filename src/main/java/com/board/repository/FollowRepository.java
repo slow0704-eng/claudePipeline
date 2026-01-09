@@ -32,4 +32,8 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
 
     // Delete follow relationship
     void deleteByFollowerIdAndFollowingId(Long followerId, Long followingId);
+
+    // Get all user IDs that userId is following
+    @Query("SELECT f.followingId FROM Follow f WHERE f.followerId = :followerId")
+    List<Long> findFollowingUserIds(@Param("followerId") Long followerId);
 }

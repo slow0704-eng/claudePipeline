@@ -1,9 +1,9 @@
 package com.board.service;
 
+import com.board.entity.Board;
 import com.board.entity.BoardTopic;
 import com.board.entity.Topic;
 import com.board.repository.BoardTopicRepository;
-import com.board.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,126 +11,147 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 게시글-주제 매핑 서비스
+ * 게시글과 주제의 연결을 관리합니다.
+ */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BoardTopicService {
 
     private final BoardTopicRepository boardTopicRepository;
-    private final TopicRepository topicRepository;
+    private final TopicService topicService;
 
-    private static final int MAX_TOPICS_PER_BOARD = 5;
-
-    @Transactional
-    public void linkBoardToTopic(Long boardId, Long topicId) {
-        // Check max topics limit
-        long currentCount = boardTopicRepository.countByBoardId(boardId);
-        if (currentCount >= MAX_TOPICS_PER_BOARD) {
-            throw new RuntimeException("게시글당 최대 " + MAX_TOPICS_PER_BOARD + "개의 토픽만 추가할 수 있습니다.");
-        }
-
-        // Check if already linked
-        if (boardTopicRepository.existsByBoardIdAndTopicId(boardId, topicId)) {
-            return; // Already linked
-        }
-
-        // Create link
-        BoardTopic boardTopic = new BoardTopic();
-        boardTopic.setBoardId(boardId);
-        boardTopic.setTopicId(topicId);
-        boardTopicRepository.save(boardTopic);
-
-        // Increment usage count
-        topicRepository.findById(topicId).ifPresent(topic -> {
-            topic.incrementUsageCount();
-            topicRepository.save(topic);
-        });
-    }
-
-    @Transactional
-    public void unlinkBoardFromTopic(Long boardId, Long topicId) {
-        List<BoardTopic> links = boardTopicRepository.findByBoardId(boardId).stream()
-                .filter(bt -> bt.getTopicId().equals(topicId))
+    /**
+     * 게시글의 모든 주제 조회
+     */
+    public List<Topic> getTopicsByBoardId(Long boardId) {
+        return boardTopicRepository.findByBoardId(boardId).stream()
+                .map(BoardTopic::getTopic)
                 .collect(Collectors.toList());
-
-        for (BoardTopic link : links) {
-            boardTopicRepository.delete(link);
-        }
-
-        // Decrement usage count
-        topicRepository.findById(topicId).ifPresent(topic -> {
-            topic.decrementUsageCount();
-            topicRepository.save(topic);
-        });
     }
 
+    /**
+     * 게시글의 모든 주제 조회 (별칭 메서드)
+     */
+    public List<Topic> getBoardTopics(Long boardId) {
+        return getTopicsByBoardId(boardId);
+    }
+
+    /**
+     * 게시글의 주제 경로 목록 조회 (주제명 문자열 리스트)
+     */
+    public List<String> getBoardTopicPaths(Long boardId) {
+        return getTopicsByBoardId(boardId).stream()
+                .map(Topic::getName)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 특정 주제를 가진 모든 게시글 조회
+     */
+    public List<Board> getBoardsByTopicId(Long topicId) {
+        return boardTopicRepository.findByTopicId(topicId).stream()
+                .map(BoardTopic::getBoard)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 게시글에 주제 추가
+     */
     @Transactional
-    public void updateBoardTopics(Long boardId, List<Long> topicIds) {
-        // Validate max topics
-        if (topicIds.size() > MAX_TOPICS_PER_BOARD) {
-            throw new RuntimeException("게시글당 최대 " + MAX_TOPICS_PER_BOARD + "개의 토픽만 추가할 수 있습니다.");
-        }
+    public BoardTopic addTopicToBoard(Board board, Topic topic) {
+        BoardTopic boardTopic = new BoardTopic(board, topic);
+        BoardTopic saved = boardTopicRepository.save(boardTopic);
 
-        // Remove all existing links and decrement counts
-        removeAllTopicsFromBoard(boardId);
+        // 주제 사용 횟수 증가
+        topicService.incrementUsageCount(topic.getId());
 
-        // Add new links
-        for (Long topicId : topicIds) {
-            linkBoardToTopic(boardId, topicId);
+        return saved;
+    }
+
+    /**
+     * 게시글에 여러 주제 추가
+     */
+    @Transactional
+    public void addTopicsToBoard(Board board, List<String> topicNames) {
+        for (String topicName : topicNames) {
+            Topic topic = topicService.getOrCreateTopic(topicName);
+            addTopicToBoard(board, topic);
         }
     }
 
+    /**
+     * 게시글에서 주제 제거
+     */
+    @Transactional
+    public void removeTopicFromBoard(Long boardId, Long topicId) {
+        boardTopicRepository.deleteByBoardIdAndTopicId(boardId, topicId);
+
+        // 주제 사용 횟수 감소
+        topicService.decrementUsageCount(topicId);
+    }
+
+    /**
+     * 게시글의 모든 주제 제거
+     */
     @Transactional
     public void removeAllTopicsFromBoard(Long boardId) {
-        List<Long> topicIds = boardTopicRepository.findTopicIdsByBoardId(boardId);
+        List<BoardTopic> boardTopics = boardTopicRepository.findByBoardId(boardId);
 
-        // Decrement usage counts
-        for (Long topicId : topicIds) {
-            topicRepository.findById(topicId).ifPresent(topic -> {
-                topic.decrementUsageCount();
-                topicRepository.save(topic);
-            });
+        // 각 주제의 사용 횟수 감소
+        for (BoardTopic boardTopic : boardTopics) {
+            topicService.decrementUsageCount(boardTopic.getTopicId());
         }
 
-        // Delete relationships
         boardTopicRepository.deleteByBoardId(boardId);
     }
 
-    public List<Topic> getBoardTopics(Long boardId) {
-        List<Long> topicIds = boardTopicRepository.findTopicIdsByBoardId(boardId);
-        return topicIds.stream()
-                .map(id -> topicRepository.findById(id).orElse(null))
-                .filter(topic -> topic != null)
-                .collect(Collectors.toList());
-    }
+    /**
+     * 게시글의 주제 업데이트 (기존 주제 제거 후 새 주제 추가)
+     */
+    @Transactional
+    public void updateBoardTopics(Board board, List<String> topicNames) {
+        // 기존 주제 제거
+        removeAllTopicsFromBoard(board.getId());
 
-    public List<String> getBoardTopicPaths(Long boardId) {
-        List<Topic> topics = getBoardTopics(boardId);
-        return topics.stream()
-                .map(this::buildTopicPath)
-                .collect(Collectors.toList());
-    }
-
-    private String buildTopicPath(Topic topic) {
-        StringBuilder path = new StringBuilder();
-        buildPathRecursive(topic, path);
-        return path.toString();
-    }
-
-    private void buildPathRecursive(Topic topic, StringBuilder path) {
-        if (topic.getParentId() != null) {
-            topicRepository.findById(topic.getParentId()).ifPresent(parent -> {
-                buildPathRecursive(parent, path);
-                path.append(" > ");
-            });
+        // 새 주제 추가
+        if (topicNames != null && !topicNames.isEmpty()) {
+            addTopicsToBoard(board, topicNames);
         }
-        path.append(topic.getName());
     }
 
-    public long countBoardTopics(Long boardId) {
+    /**
+     * 게시글의 주제 업데이트 (ID 버전)
+     */
+    @Transactional
+    public void updateBoardTopics(Long boardId, List<Long> topicIds) {
+        // 기존 주제 제거
+        removeAllTopicsFromBoard(boardId);
+
+        // 새 주제 추가
+        if (topicIds != null && !topicIds.isEmpty()) {
+            for (Long topicId : topicIds) {
+                Topic topic = topicService.getTopicById(topicId);
+                Board board = Board.builder().build();
+                board.setId(boardId);
+                addTopicToBoard(board, topic);
+            }
+        }
+    }
+
+    /**
+     * 게시글의 주제 개수 조회
+     */
+    public long countTopicsByBoardId(Long boardId) {
         return boardTopicRepository.countByBoardId(boardId);
     }
 
-    public boolean canAddMoreTopics(Long boardId) {
-        return countBoardTopics(boardId) < MAX_TOPICS_PER_BOARD;
+    /**
+     * 특정 주제를 가진 게시글 개수 조회
+     */
+    public long countBoardsByTopicId(Long topicId) {
+        return boardTopicRepository.countByTopicId(topicId);
     }
 }

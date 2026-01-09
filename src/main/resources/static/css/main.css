@@ -1,0 +1,30 @@
+/**
+ * Main CSS Entry Point
+ * 모든 CSS 파일을 import합니다.
+ */
+
+/* Base Styles */
+@import url('./base/variables.css');
+@import url('./base/reset.css');
+
+/* Layout Styles */
+@import url('./layouts/grid.css');
+@import url('./layouts/header.css');
+@import url('./layouts/footer.css');
+@import url('./layouts/sidebar.css');
+
+/* Component Styles */
+@import url('./components/buttons.css');
+@import url('./components/forms.css');
+@import url('./components/cards.css');
+@import url('./components/reactions.css');
+
+/* Page Styles */
+@import url('./pages/board.css');
+@import url('./pages/auth.css');
+@import url('./pages/admin.css');
+@import url('./pages/mypage.css');
+
+/* Utility Styles */
+@import url('./utilities/animations.css');
+@import url('./utilities/spacing.css');

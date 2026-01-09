@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>해시태그 분석 - 관리자</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- WordCloud2.js -->
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>📊 해시태그 분석</h1>
+            <p class="subtitle">해시태그 트렌드, 통계 및 관련성 분석</p>
+            <div class="nav-links">
+                <a href="/admin/dashboard">대시보드</a>
+                <a href="/admin/hashtags">해시태그 관리</a>
+                <a href="/board">게시판</a>
+            </div>
+        </div>
+
+        <!-- 전체 통계 -->
+        <div class="stats-overview" id="statsOverview">
+            <div class="stat-card">
+                <div class="icon">📌</div>
+                <div class="label">전체 해시태그</div>
+                <div class="value" id="totalHashtags">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">📈</div>
+                <div class="label">총 사용 횟수</div>
+                <div class="value" id="totalUsage">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🔥</div>
+                <div class="label">오늘 활성 해시태그</div>
+                <div class="value" id="activeToday">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">⚡</div>
+                <div class="label">이번 주 활성</div>
+                <div class="value" id="activeThisWeek">-</div>
+            </div>
+        </div>
+
+        <!-- 트렌딩 해시태그 (시간대별) -->
+        <div class="section">
+            <div class="section-header">
+                <div>
+                    <h2>🔥 트렌딩 해시태그</h2>
+                    <p class="description">시간대별 인기 해시태그 추이</p>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('1hour')">1시간</button>
+                <button class="tab" onclick="switchTab('1day')">24시간</button>
+                <button class="tab" onclick="switchTab('7days')">7일</button>
+                <button class="tab" onclick="switchTab('30days')">30일</button>
+            </div>
+
+            <div id="trending-1hour" class="tab-content active">
+                <div id="trending-1hour-list" class="hashtag-list"></div>
+            </div>
+            <div id="trending-1day" class="tab-content">
+                <div id="trending-1day-list" class="hashtag-list"></div>
+            </div>
+            <div id="trending-7days" class="tab-content">
+                <div id="trending-7days-list" class="hashtag-list"></div>
+            </div>
+            <div id="trending-30days" class="tab-content">
+                <div id="trending-30days-list" class="hashtag-list"></div>
+            </div>
+        </div>
+
+        <!-- 워드클라우드 -->
+        <div class="section">
+            <div class="section-header">
+                <div>
+                    <h2>☁️ 해시태그 워드클라우드</h2>
+                    <p class="description">사용 빈도에 따른 시각화</p>
+                </div>
+            </div>
+            <canvas id="wordCloudCanvas"></canvas>
+        </div>
+
+        <!-- 해시태그별 게시글 수 통계 -->
+        <div class="section">
+            <div class="section-header">
+                <div>
+                    <h2>📊 게시글 수 통계</h2>
+                    <p class="description">해시태그별 게시글 개수 (상위 20개)</p>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="postCountChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 관련 해시태그 추천 -->
+        <div class="section">
+            <div class="section-header">
+                <div>
+                    <h2>🔗 관련 해시태그 추천</h2>
+                    <p class="description">함께 사용된 해시태그 분석</p>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="relatedHashtagInput" placeholder="해시태그 입력 (예: javascript)" />
+                <button onclick="searchRelatedHashtags()">검색</button>
+            </div>
+
+            <div id="relatedHashtagsResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let postCountChart = null;
+        let trendingData = {};
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOverallStats();
+            loadTrendingHashtags();
+            loadWordCloud();
+            loadPostCountStats();
+        });
+
+        // 전체 통계 로드
+        async function loadOverallStats() {
+            try {
+                const response = await fetch('/api/hashtags/overall-stats');
+                const stats = await response.json();
+
+                document.getElementById('totalHashtags').textContent =
+                    (stats.totalHashtags || 0).toLocaleString();
+                document.getElementById('totalUsage').textContent =
+                    (stats.totalUsage || 0).toLocaleString();
+                document.getElementById('activeToday').textContent =
+                    (stats.activeToday || 0).toLocaleString();
+                document.getElementById('activeThisWeek').textContent =
+                    (stats.activeThisWeek || 0).toLocaleString();
+            } catch (error) {
+                console.error('전체 통계 로드 실패:', error);
+            }
+        }
+
+        // 트렌딩 해시태그 로드
+        async function loadTrendingHashtags() {
+            try {
+                const response = await fetch('/api/hashtags/trending-by-period');
+                trendingData = await response.json();
+
+                displayTrending('1hour', trendingData['1hour'] || []);
+                displayTrending('1day', trendingData['1day'] || []);
+                displayTrending('7days', trendingData['7days'] || []);
+                displayTrending('30days', trendingData['30days'] || []);
+            } catch (error) {
+                console.error('트렌딩 해시태그 로드 실패:', error);
+            }
+        }
+
+        function displayTrending(period, data) {
+            const container = document.getElementById(`trending-${period}-list`);
+
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999;">데이터가 없습니다</p>';
+                return;
+            }
+
+            container.innerHTML = data.map(tag => `
+                <div class="hashtag-item">
+                    <div class="tag-name">#${tag.name}</div>
+                    <div class="tag-stats">
+                        <span>📝 ${tag.postCount}개 게시글</span>
+                        <span>🔄 ${tag.useCount}회 사용</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(period) {
+            // 모든 탭 비활성화
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // 선택한 탭 활성화
+            event.target.classList.add('active');
+            document.getElementById(`trending-${period}`).classList.add('active');
+        }
+
+        // 워드클라우드 로드
+        async function loadWordCloud() {
+            try {
+                const response = await fetch('/api/hashtags/wordcloud?limit=100');
+                const result = await response.json();
+                const data = result.data || [];
+
+                if (data.length === 0) {
+                    document.getElementById('wordCloudCanvas').style.display = 'none';
+                    return;
+                }
+
+                // WordCloud2.js 형식으로 변환
+                const wordList = data.map(item => [item.name, item.value]);
+
+                WordCloud(document.getElementById('wordCloudCanvas'), {
+                    list: wordList,
+                    gridSize: Math.round(16 * window.devicePixelRatio),
+                    weightFactor: function(size) {
+                        return Math.pow(size, 0.8) * window.devicePixelRatio * 3;
+                    },
+                    fontFamily: 'Segoe UI, sans-serif',
+                    color: function() {
+                        const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b'];
+                        return colors[Math.floor(Math.random() * colors.length)];
+                    },
+                    rotateRatio: 0.3,
+                    rotationSteps: 2,
+                    backgroundColor: '#ffffff',
+                    drawOutOfBound: false
+                });
+            } catch (error) {
+                console.error('워드클라우드 로드 실패:', error);
+            }
+        }
+
+        // 게시글 수 통계 차트
+        async function loadPostCountStats() {
+            try {
+                const response = await fetch('/api/hashtags/post-count-stats?limit=20');
+                const result = await response.json();
+                const stats = result.stats || [];
+
+                if (stats.length === 0) return;
+
+                const labels = stats.map(s => '#' + s.name);
+                const data = stats.map(s => s.postCount);
+
+                const ctx = document.getElementById('postCountChart').getContext('2d');
+
+                if (postCountChart) {
+                    postCountChart.destroy();
+                }
+
+                postCountChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '게시글 수',
+                            data: data,
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            barThickness: 'flex',
+                            maxBarThickness: 50
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                padding: 12,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.y + '개 게시글';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                },
+                                grid: {
+                                    display: true,
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('게시글 수 통계 로드 실패:', error);
+            }
+        }
+
+        // 관련 해시태그 검색
+        async function searchRelatedHashtags() {
+            const input = document.getElementById('relatedHashtagInput').value.trim();
+            const resultDiv = document.getElementById('relatedHashtagsResult');
+
+            if (!input) {
+                alert('해시태그를 입력해주세요');
+                return;
+            }
+
+            // # 제거
+            const tag = input.replace('#', '');
+
+            resultDiv.innerHTML = '<div class="loading">로딩 중...</div>';
+
+            try {
+                const response = await fetch(`/api/hashtags/related?tag=${encodeURIComponent(tag)}&limit=15`);
+                const result = await response.json();
+                const related = result.related || [];
+
+                if (related.length === 0) {
+                    resultDiv.innerHTML = `
+                        <p style="text-align: center; color: #999; padding: 40px;">
+                            #${tag}와 관련된 해시태그가 없습니다
+                        </p>
+                    `;
+                    return;
+                }
+
+                resultDiv.innerHTML = `
+                    <h3 style="margin-bottom: 20px; color: #333;">
+                        #${tag}와 함께 사용된 해시태그 (${related.length}개)
+                    </h3>
+                    <div class="hashtag-list">
+                        ${related.map(r => `
+                            <div class="hashtag-item">
+                                <div class="tag-name">#${r.name}</div>
+                                <div class="tag-stats">
+                                    <span>🔗 ${r.coOccurrence}회 함께 사용</span>
+                                    <span>📝 ${r.postCount}개 게시글</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('관련 해시태그 검색 실패:', error);
+                resultDiv.innerHTML = `
+                    <p style="text-align: center; color: #ff5252; padding: 40px;">
+                        오류가 발생했습니다: ${error.message}
+                    </p>
+                `;
+            }
+        }
+
+        // Enter 키로 검색
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('relatedHashtagInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchRelatedHashtags();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

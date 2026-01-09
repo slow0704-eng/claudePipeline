@@ -64,7 +64,7 @@ public class RoleManagementService {
             throw new RuntimeException("이미 존재하는 역할명입니다: " + name);
         }
 
-        Role role = new Role();
+        Role role = Role.builder().build();
         role.setName(name);
         role.setDisplayName(displayName);
         role.setDescription(description);
@@ -159,7 +159,7 @@ public class RoleManagementService {
         // 기존 권한 확인
         RoleMenuPermission permission = permissionRepository
                 .findByRoleIdAndMenuId(roleId, menuId)
-                .orElse(new RoleMenuPermission());
+                .orElseGet(() -> RoleMenuPermission.builder().build());
 
         permission.setRoleId(roleId);
         permission.setMenuId(menuId);

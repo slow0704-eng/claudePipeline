@@ -131,7 +131,7 @@ public class CommunityController {
             return "redirect:/auth/login";
         }
 
-        model.addAttribute("community", new Community());
+        model.addAttribute("community", Community.builder().build());
         model.addAttribute("types", CommunityType.values());
         model.addAttribute("currentUser", currentUser);
 

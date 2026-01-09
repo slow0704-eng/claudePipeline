@@ -65,7 +65,7 @@ public class CategoryService {
             throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS);
         }
 
-        Category category = new Category();
+        Category category = Category.builder().build();
         category.setName(name);
         category.setDescription(description);
         category.setDisplayOrder(displayOrder != null ? displayOrder : 0);

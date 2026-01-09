@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title>운영정책</title>
+
+    <th:block layout:fragment="extra-css">
+        <style>
+            .legal-container {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 40px 20px;
+            }
+
+            .legal-header {
+                text-align: center;
+                margin-bottom: 50px;
+                padding-bottom: 30px;
+                border-bottom: 3px solid var(--primary-color);
+            }
+
+            .legal-header h1 {
+                font-size: 32px;
+                color: #1a1a1a;
+                margin-bottom: 10px;
+            }
+
+            .legal-header .update-date {
+                color: #666;
+                font-size: 14px;
+            }
+
+            .legal-content {
+                background: white;
+                padding: 40px;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+
+            .legal-content h2 {
+                font-size: 24px;
+                color: #1a1a1a;
+                margin-top: 40px;
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #e9ecef;
+            }
+
+            .legal-content h2:first-child {
+                margin-top: 0;
+            }
+
+            .legal-content h3 {
+                font-size: 18px;
+                color: #333;
+                margin-top: 25px;
+                margin-bottom: 15px;
+            }
+
+            .legal-content p {
+                line-height: 1.8;
+                color: #444;
+                margin-bottom: 15px;
+            }
+
+            .legal-content ul, .legal-content ol {
+                margin: 15px 0;
+                padding-left: 30px;
+            }
+
+            .legal-content li {
+                line-height: 1.8;
+                color: #444;
+                margin-bottom: 10px;
+            }
+
+            .warning-box {
+                background: #fff3cd;
+                padding: 20px;
+                border-left: 4px solid #ffc107;
+                margin: 20px 0;
+                border-radius: 4px;
+            }
+
+            .danger-box {
+                background: #f8d7da;
+                padding: 20px;
+                border-left: 4px solid #dc3545;
+                margin: 20px 0;
+                border-radius: 4px;
+            }
+
+            .info-box {
+                background: #d1ecf1;
+                padding: 20px;
+                border-left: 4px solid #17a2b8;
+                margin: 20px 0;
+                border-radius: 4px;
+            }
+
+            @media (max-width: 768px) {
+                .legal-container {
+                    padding: 20px 15px;
+                }
+
+                .legal-content {
+                    padding: 25px 20px;
+                }
+
+                .legal-header h1 {
+                    font-size: 24px;
+                }
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+    <th:block layout:fragment="content">
+        <div class="legal-container">
+            <div class="legal-header">
+                <h1><i class="fas fa-gavel"></i> 운영정책</h1>
+                <p class="update-date">최종 업데이트: 2024년 12월 29일</p>
+            </div>
+
+            <div class="legal-content">
+                <div class="info-box">
+                    <strong><i class="fas fa-info-circle"></i> 운영정책 안내</strong>
+                    <p>익명 커뮤니티는 모든 이용자가 안전하고 즐겁게 소통할 수 있는 공간을 만들기 위해 다음과 같은 운영정책을 시행하고 있습니다. 모든 회원은 이 정책을 준수해야 합니다.</p>
+                </div>
+
+                <h2>1. 기본 원칙</h2>
+                <p>우리 커뮤니티는 다음의 기본 원칙을 바탕으로 운영됩니다:</p>
+                <ul>
+                    <li><strong>존중:</strong> 모든 회원을 존중하며 예의를 갖춘 대화</li>
+                    <li><strong>책임:</strong> 본인이 작성한 글과 댓글에 대한 책임</li>
+                    <li><strong>투명성:</strong> 명확하고 일관된 운영 기준</li>
+                    <li><strong>안전:</strong> 모든 회원이 안전하게 활동할 수 있는 환경</li>
+                </ul>
+
+                <h2>2. 금지 행위</h2>
+                <p>다음 행위는 커뮤니티 운영정책에 위배되며 제재 대상이 됩니다:</p>
+
+                <h3>2.1 불법 행위</h3>
+                <ul>
+                    <li>법률에 위배되는 내용의 게시</li>
+                    <li>타인의 저작권, 상표권 등 지적재산권 침해</li>
+                    <li>개인정보 무단 수집 또는 유출</li>
+                    <li>도박, 불법 약물 관련 홍보 및 거래</li>
+                    <li>음란물, 아동·청소년 이용 음란물 게시</li>
+                </ul>
+
+                <h3>2.2 타인에 대한 피해 행위</h3>
+                <ul>
+                    <li>특정인 또는 특정 집단에 대한 비방, 모욕, 명예훼손</li>
+                    <li>허위사실 유포</li>
+                    <li>성희롱, 성적 수치심을 유발하는 내용</li>
+                    <li>스토킹, 괴롭힘 등 지속적인 피해 행위</li>
+                    <li>개인정보 무단 공개 (주소, 전화번호, 이메일 등)</li>
+                </ul>
+
+                <h3>2.3 커뮤니티 질서 위반</h3>
+                <ul>
+                    <li>도배, 스팸성 게시물 작성</li>
+                    <li>광고, 홍보 목적의 무분별한 게시물</li>
+                    <li>음란, 선정적 내용</li>
+                    <li>혐오 발언 (인종, 종교, 성별, 지역 등에 대한 차별)</li>
+                    <li>정치·종교 관련 갈등 조장 및 논쟁 유발</li>
+                    <li>욕설, 비속어 남용</li>
+                </ul>
+
+                <h3>2.4 서비스 악용</h3>
+                <ul>
+                    <li>다중 계정 생성 및 악용</li>
+                    <li>타인의 계정 도용 또는 사칭</li>
+                    <li>시스템 해킹, 크래킹 시도</li>
+                    <li>서비스 장애를 유발하는 행위</li>
+                    <li>자동화 프로그램(봇) 사용</li>
+                </ul>
+
+                <div class="danger-box">
+                    <strong><i class="fas fa-exclamation-triangle"></i> 중대한 위반</strong>
+                    <p>다음 행위는 즉시 영구 정지 처분을 받을 수 있습니다:</p>
+                    <ul style="margin-bottom: 0;">
+                        <li>범죄 행위 조장 또는 예고</li>
+                        <li>아동·청소년 대상 성범죄 관련 내용</li>
+                        <li>타인의 생명, 신체에 위협을 가하는 내용</li>
+                        <li>개인정보 대량 유출</li>
+                    </ul>
+                </div>
+
+                <h2>3. 제재 정책</h2>
+                <p>운영정책 위반 시 다음과 같은 제재가 이루어집니다:</p>
+
+                <h3>3.1 제재 단계</h3>
+                <ol>
+                    <li><strong>1차 경고:</strong> 경미한 위반 시 게시물 삭제 및 경고 메시지 발송</li>
+                    <li><strong>2차 경고:</strong> 재위반 시 게시물 삭제 및 3일 활동 정지</li>
+                    <li><strong>3차 경고:</strong> 7일 활동 정지</li>
+                    <li><strong>영구 정지:</strong> 중대한 위반 또는 반복적 위반 시 계정 영구 정지</li>
+                </ol>
+
+                <h3>3.2 즉시 영구 정지 사유</h3>
+                <ul>
+                    <li>법률 위반 행위</li>
+                    <li>타인에게 심각한 피해를 주는 행위</li>
+                    <li>서비스 정상 운영을 방해하는 행위</li>
+                    <li>운영진의 업무를 심각하게 방해하는 행위</li>
+                </ul>
+
+                <h2>4. 게시물 관리</h2>
+
+                <h3>4.1 게시물 삭제 기준</h3>
+                <p>다음에 해당하는 게시물은 통보 없이 삭제될 수 있습니다:</p>
+                <ul>
+                    <li>운영정책 위반 게시물</li>
+                    <li>사실관계가 명백히 잘못된 게시물</li>
+                    <li>타인의 권리를 침해하는 게시물</li>
+                    <li>게시판 주제와 무관한 게시물</li>
+                </ul>
+
+                <h3>4.2 임시저장 및 초안</h3>
+                <ul>
+                    <li>임시저장된 게시물은 90일간 보관됩니다</li>
+                    <li>90일 경과 시 자동으로 삭제됩니다</li>
+                </ul>
+
+                <h2>5. 익명성 정책</h2>
+                <p>우리 커뮤니티는 익명 게시를 지원하지만, 다음의 원칙을 준수합니다:</p>
+                <ul>
+                    <li>익명이라도 모든 작성 내용에 대한 법적 책임은 작성자에게 있습니다</li>
+                    <li>법원의 영장이나 수사기관의 적법한 요청이 있을 경우 개인정보를 제공할 수 있습니다</li>
+                    <li>익명을 악용한 명예훼손, 사생활 침해 등은 엄격히 제재합니다</li>
+                </ul>
+
+                <h2>6. 신고 제도</h2>
+
+                <h3>6.1 신고 방법</h3>
+                <ul>
+                    <li>각 게시물 및 댓글의 '신고' 버튼을 통해 신고</li>
+                    <li>신고 사유를 명확히 기재</li>
+                    <li>허위 신고 시 신고자도 제재 대상이 될 수 있습니다</li>
+                </ul>
+
+                <h3>6.2 신고 처리</h3>
+                <ul>
+                    <li>신고 접수 후 24시간 내 검토</li>
+                    <li>정책 위반이 확인되면 즉시 조치</li>
+                    <li>신고 결과는 신고자에게 통보</li>
+                </ul>
+
+                <div class="warning-box">
+                    <strong><i class="fas fa-hand-paper"></i> 허위 신고 금지</strong>
+                    <p>악의적이거나 반복적인 허위 신고는 그 자체로 운영정책 위반이며, 신고자에게 제재가 가해질 수 있습니다.</p>
+                </div>
+
+                <h2>7. 이의제기 절차</h2>
+                <p>제재 조치에 이의가 있는 경우 다음 절차를 따를 수 있습니다:</p>
+                <ol>
+                    <li>제재 통보 메시지에 포함된 이의제기 링크 클릭</li>
+                    <li>이의제기 사유를 구체적으로 작성</li>
+                    <li>운영진 검토 (영업일 기준 3일 이내)</li>
+                    <li>검토 결과 통보</li>
+                </ol>
+
+                <h2>8. 회원 간 분쟁</h2>
+                <ul>
+                    <li>회원 간 발생한 분쟁은 당사자 간 해결을 원칙으로 합니다</li>
+                    <li>운영진은 중재 역할을 할 수 있으나 법적 책임은 지지 않습니다</li>
+                    <li>법적 분쟁으로 발전한 경우 법원의 판단에 따릅니다</li>
+                </ul>
+
+                <h2>9. 저작권 보호</h2>
+                <ul>
+                    <li>타인의 저작물을 무단으로 게시하는 것은 금지됩니다</li>
+                    <li>저작권자의 삭제 요청이 있을 경우 즉시 삭제 조치합니다</li>
+                    <li>회원이 작성한 게시물의 저작권은 작성자에게 있습니다</li>
+                    <li>단, 사이트 운영 및 홍보를 위한 최소한의 사용권은 사이트에 부여됩니다</li>
+                </ul>
+
+                <h2>10. 광고 및 상업적 활동</h2>
+                <ul>
+                    <li>무분별한 광고성 게시물은 금지됩니다</li>
+                    <li>상업적 목적의 활동은 사전 승인이 필요합니다</li>
+                    <li>승인되지 않은 광고 게시 시 계정 정지 조치됩니다</li>
+                </ul>
+
+                <h2>11. 미성년자 보호</h2>
+                <ul>
+                    <li>만 14세 미만은 회원가입이 제한됩니다</li>
+                    <li>미성년자에게 유해한 내용은 엄격히 제재합니다</li>
+                    <li>미성년자 대상 범죄 관련 내용은 즉시 수사기관에 신고합니다</li>
+                </ul>
+
+                <h2>12. 정책 변경</h2>
+                <p>이 운영정책은 법령 및 서비스 환경 변화에 따라 변경될 수 있습니다. 중요한 변경사항이 있을 경우 최소 7일 전 공지하며, 변경된 정책은 공지일로부터 효력이 발생합니다.</p>
+
+                <div class="info-box">
+                    <strong><i class="fas fa-envelope"></i> 문의사항</strong>
+                    <p style="margin-bottom: 0;">운영정책에 대한 문의사항이 있으시면 이메일(support@example.com)로 연락 주시기 바랍니다.</p>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</body>
+</html>

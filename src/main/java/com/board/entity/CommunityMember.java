@@ -21,7 +21,9 @@ import java.time.LocalDateTime;
        uniqueConstraints = @UniqueConstraint(columnNames = {"community_id", "user_id"}))
 @Getter
 @Setter
-@NoArgsConstructor
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = {"community", "user"})
 public class CommunityMember {

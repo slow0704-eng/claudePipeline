@@ -1,0 +1,40 @@
+# ==========================================
+# Test Environment Configuration
+# 테스트 환경 설정
+# ==========================================
+
+spring:
+  # 데이터소스 설정 (테스트 환경 - H2 또는 별도 테스트 DB)
+  datasource:
+    url: jdbc:postgresql://localhost:5432/boarddb_test
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:1}
+    driver-class-name: org.postgresql.Driver
+
+  # JPA 설정 (테스트 환경)
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+  # Thymeleaf 캐시 비활성화
+  thymeleaf:
+    cache: false
+
+# Logging 설정 (테스트 환경)
+logging:
+  level:
+    root: INFO
+    com.board: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+
+# 테스트 환경 메모
+# - 테스트용 별도 데이터베이스 사용
+# - ddl-auto: create-drop (테스트 후 스키마 삭제)
+# - SQL 로깅 활성화

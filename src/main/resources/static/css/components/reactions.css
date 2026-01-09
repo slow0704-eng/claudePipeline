@@ -1,0 +1,610 @@
+/**
+ * Reactions Component Styles
+ * 게시글 및 댓글 반응(리액션) 관련 스타일을 정의합니다.
+ */
+
+/* 반응 섹션 스타일 */
+.reaction-section {
+    text-align: center;
+    padding: 35px 30px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin: 60px 0 40px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    position: relative;
+}
+
+.reaction-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.reaction-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 70px;
+}
+
+.reaction-btn .emoji {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.reaction-btn .count {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.reaction-btn:hover {
+    transform: scale(1.1);
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+}
+
+.reaction-btn.active {
+    border-color: #007bff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: scale(1.05);
+}
+
+.reaction-btn.active .count {
+    color: white;
+    font-weight: 600;
+}
+
+.reaction-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 반응별 색상 */
+.reaction-btn[data-reaction="LIKE"].active {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+.reaction-btn[data-reaction="HELPFUL"].active {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+.reaction-btn[data-reaction="FUNNY"].active {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+.reaction-btn[data-reaction="WOW"].active {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+.reaction-btn[data-reaction="SAD"].active {
+    background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+}
+.reaction-btn[data-reaction="ANGRY"].active {
+    background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%);
+}
+.reaction-btn[data-reaction="THINKING"].active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.reaction-btn[data-reaction="CELEBRATE"].active {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
+
+/* Facebook 스타일 메인 반응 버튼 */
+.primary-reaction-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.primary-reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 36px;
+    border: 2px solid #e4e6eb;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    font-size: 16px;
+    font-weight: 500;
+    color: #65676b;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.primary-reaction-btn:hover {
+    background: #f0f2f5;
+    border-color: #1877f2;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.primary-reaction-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.primary-reaction-btn .emoji {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.primary-reaction-btn .label {
+    font-weight: 600;
+}
+
+.primary-reaction-btn .count {
+    padding: 2px 10px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 12px;
+    font-size: 14px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.primary-reaction-btn.active .count {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+/* 반응 선택 팝업 */
+.reaction-picker {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 50px;
+    padding: 8px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+    gap: 6px;
+    z-index: 1000;
+}
+
+.reaction-picker.show {
+    display: flex;
+    animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.reaction-picker .reaction-btn {
+    width: 48px;
+    height: 48px;
+    min-width: auto;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.reaction-picker .reaction-btn:hover {
+    transform: scale(1.5);
+    z-index: 10;
+}
+
+.reaction-picker .reaction-btn .emoji {
+    font-size: 32px;
+    margin: 0;
+}
+
+.reaction-picker .reaction-btn .count {
+    display: none;
+}
+
+/* 툴팁 */
+.reaction-picker .tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.reaction-picker .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: rgba(0,0,0,0.8);
+}
+
+.reaction-picker .reaction-btn:hover .tooltip {
+    opacity: 1;
+}
+
+/* 애니메이션 */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 각 반응 순차 애니메이션 */
+.reaction-picker.show .reaction-btn:nth-child(1) { animation: scaleIn 0.25s ease 0.05s both; }
+.reaction-picker.show .reaction-btn:nth-child(2) { animation: scaleIn 0.25s ease 0.1s both; }
+.reaction-picker.show .reaction-btn:nth-child(3) { animation: scaleIn 0.25s ease 0.15s both; }
+.reaction-picker.show .reaction-btn:nth-child(4) { animation: scaleIn 0.25s ease 0.2s both; }
+.reaction-picker.show .reaction-btn:nth-child(5) { animation: scaleIn 0.25s ease 0.25s both; }
+.reaction-picker.show .reaction-btn:nth-child(6) { animation: scaleIn 0.25s ease 0.3s both; }
+.reaction-picker.show .reaction-btn:nth-child(7) { animation: scaleIn 0.25s ease 0.35s both; }
+.reaction-picker.show .reaction-btn:nth-child(8) { animation: scaleIn 0.25s ease 0.4s both; }
+
+/* 댓글 반응 (작은 크기) */
+.comment-reactions {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-right: 10px;
+}
+
+.reaction-btn.mini {
+    flex-direction: row;
+    min-width: auto;
+    padding: 6px 10px;
+    font-size: 14px;
+    border-radius: 20px;
+}
+
+.reaction-btn.mini .emoji {
+    font-size: 16px;
+    margin-bottom: 0;
+    margin-right: 4px;
+}
+
+.reaction-btn.mini .count {
+    font-size: 12px;
+}
+
+.more-reactions-btn {
+    padding: 6px 12px;
+    border: 1px dashed #ccc;
+    border-radius: 20px;
+    background: white;
+    color: #666;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.more-reactions-btn:hover {
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.hidden-reactions {
+    display: none;
+    gap: 6px;
+}
+
+/* 반응 통계 컨테이너 */
+.total-reactions-container {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.total-reactions {
+    color: #666;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.total-reactions:hover {
+    background: #f0f2f5;
+    color: #1877f2;
+}
+
+.total-reactions::after {
+    content: '📊';
+    font-size: 12px;
+    opacity: 0.6;
+    margin-left: 4px;
+}
+
+/* 반응 통계 툴팁 */
+.reactions-stats-tooltip {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+    z-index: 1000;
+    min-width: 200px;
+    animation: tooltipFadeIn 0.2s ease;
+}
+
+.reactions-stats-tooltip.show {
+    display: block;
+}
+
+.reactions-stats-tooltip .tooltip-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: #65676b;
+    margin-bottom: 12px;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reactions-stats-tooltip .tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.reaction-stat-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.reaction-stat-item:hover {
+    background: #f0f2f5;
+}
+
+.reaction-stat-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reaction-stat-emoji {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.reaction-stat-name {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+
+.reaction-stat-count {
+    font-size: 14px;
+    color: #65676b;
+    font-weight: 600;
+    background: #f0f2f5;
+    padding: 2px 8px;
+    border-radius: 10px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.no-reactions-message {
+    color: #999;
+    font-size: 13px;
+    text-align: center;
+    padding: 8px;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* 툴팁 화살표 */
+.reactions-stats-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-bottom-color: white;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .reaction-section {
+        padding: 20px 15px;
+    }
+
+    .primary-reaction-btn {
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+        padding: 12px 24px;
+        font-size: 15px;
+    }
+
+    .primary-reaction-btn .emoji {
+        font-size: 24px;
+    }
+
+    .primary-reaction-btn .label {
+        font-size: 15px;
+    }
+
+    .reaction-picker {
+        width: 95%;
+        max-width: 360px;
+        flex-wrap: wrap;
+        border-radius: 20px;
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .reaction-picker .reaction-btn {
+        width: 42px;
+        height: 42px;
+    }
+
+    .reaction-picker .reaction-btn .emoji {
+        font-size: 28px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .action-buttons button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .total-reactions {
+        font-size: 13px;
+    }
+
+    .reactions-stats-tooltip {
+        max-width: 90%;
+        min-width: 180px;
+    }
+
+    .reaction-stat-emoji {
+        font-size: 18px;
+    }
+
+    .reaction-stat-name {
+        font-size: 13px;
+    }
+
+    .reaction-stat-count {
+        font-size: 13px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    .reaction-picker .reaction-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    .reaction-picker .reaction-btn .emoji {
+        font-size: 30px;
+    }
+
+    .primary-reaction-btn {
+        max-width: 320px;
+    }
+}
+
+@media (max-width: 375px) {
+    .reaction-section {
+        padding: 15px 10px;
+    }
+
+    .primary-reaction-btn {
+        max-width: 260px;
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+
+    .primary-reaction-btn .emoji {
+        font-size: 22px;
+    }
+
+    .primary-reaction-btn .label {
+        font-size: 14px;
+    }
+
+    .reaction-picker {
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .reaction-picker .reaction-btn {
+        width: 38px;
+        height: 38px;
+    }
+
+    .reaction-picker .reaction-btn .emoji {
+        font-size: 26px;
+    }
+
+    .action-buttons button {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 1920px) {
+    .primary-reaction-btn .emoji {
+        font-size: 32px;
+    }
+
+    .reaction-picker .reaction-btn {
+        width: 52px;
+        height: 52px;
+    }
+
+    .reaction-picker .reaction-btn .emoji {
+        font-size: 36px;
+    }
+}

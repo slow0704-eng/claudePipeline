@@ -1,0 +1,61 @@
+# ==========================================
+# Production Environment Configuration
+# 운영 환경 설정
+# ==========================================
+
+spring:
+  # 데이터소스 설정 (운영 환경 - 환경변수 필수)
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # JPA 설정 (운영 환경)
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+        # Query Plan Cache
+        query:
+          plan_cache_max_size: 2048
+        # Second Level Cache (선택적)
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+
+  # Thymeleaf 캐시 활성화 (성능 향상)
+  thymeleaf:
+    cache: true
+
+  # DevTools 비활성화
+  devtools:
+    restart:
+      enabled: false
+    livereload:
+      enabled: false
+
+# Logging 설정 (운영 환경 - 최소 로깅)
+logging:
+  level:
+    root: WARN
+    com.board: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+
+# 운영 환경 메모
+# - SQL 쿼리 로깅 비활성화 (성능)
+# - Thymeleaf 캐시 활성화 (성능)
+# - 최소 로깅 (WARN 레벨)
+# - 디버그 엔드포인트 완전 비활성화
+# - HikariCP 커넥션 풀 최적화
+# - 환경변수로 민감 정보 관리

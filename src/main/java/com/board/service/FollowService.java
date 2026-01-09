@@ -38,7 +38,7 @@ public class FollowService {
             isFollowing = false;
         } else {
             // Follow
-            Follow follow = new Follow();
+            Follow follow = Follow.builder().build();
             follow.setFollowerId(followerId);
             follow.setFollowingId(followingId);
             followRepository.save(follow);

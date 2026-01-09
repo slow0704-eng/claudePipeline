@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>토픽 피드</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <style>
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 피드 헤더 */
+        .feed-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .feed-title {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .feed-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        /* 팔로우한 토픽 목록 */
+        .followed-topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .topic-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background-color: rgba(255, 255, 255, 0.25);
+            color: white;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .topic-badge:hover {
+            background-color: rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .topic-badge .topic-icon {
+            font-size: 18px;
+        }
+
+        /* 피드 아이템 */
+        .feed-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .feed-item {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+
+        .feed-item:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        .feed-item-topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .feed-item-topic {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .feed-item-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+            text-decoration: none;
+            display: block;
+            line-height: 1.4;
+        }
+
+        .feed-item-title:hover {
+            color: #667eea;
+        }
+
+        .feed-item-content {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .feed-item-meta {
+            color: #888;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .feed-item-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 빈 상태 */
+        .no-content {
+            text-align: center;
+            padding: 80px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .no-content-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .no-content h3 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .no-content p {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 15px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* 로딩 더보기 버튼 */
+        .load-more-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .btn-load-more {
+            padding: 14px 32px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-load-more:hover:not(:disabled) {
+            background-color: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-load-more:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 하단 버튼 */
+        .bottom-actions {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .feed-header {
+                padding: 30px 20px;
+            }
+
+            .feed-title {
+                font-size: 28px;
+            }
+
+            .feed-item {
+                padding: 20px;
+            }
+
+            .feed-item-title {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 피드 헤더 -->
+        <div class="feed-header">
+            <div class="feed-title">📚 토픽 피드</div>
+            <p class="feed-subtitle">팔로우한 토픽의 최신 게시글을 확인하세요</p>
+
+            <!-- 팔로우한 토픽 목록 -->
+            <div class="followed-topics" th:if="${followedTopics != null and !followedTopics.isEmpty()}">
+                <a th:each="topic : ${followedTopics}"
+                   th:href="@{/topics/{id}/feed(id=${topic.id})}"
+                   class="topic-badge"
+                   th:style="'background-color: ' + ${topic.color != null ? topic.color : 'rgba(255, 255, 255, 0.25)'}">
+                    <span class="topic-icon" th:text="${topic.icon != null ? topic.icon : '📁'}">📁</span>
+                    <span th:text="${topic.name}">토픽</span>
+                </a>
+            </div>
+
+            <div th:if="${followedTopicsCount != null}" style="margin-top: 15px; opacity: 0.85;">
+                <span th:text="${followedTopicsCount} + '개의 토픽 팔로우 중'">0개의 토픽 팔로우 중</span>
+            </div>
+        </div>
+
+        <!-- 피드 아이템 목록 -->
+        <div id="feedList" class="feed-list">
+            <!-- 초기 피드 데이터 -->
+            <div th:each="item : ${initialFeed}" class="feed-item">
+                <!-- 토픽 태그 -->
+                <div class="feed-item-topics" th:if="${item.topics != null and !item.topics.isEmpty()}">
+                    <div th:each="topic : ${item.topics}"
+                         class="feed-item-topic"
+                         th:style="'background-color: ' + ${topic.color != null ? topic.color : '#667eea'}">
+                        <span th:text="${topic.icon != null ? topic.icon : '📁'}">📁</span>
+                        <span th:text="${topic.name}">토픽</span>
+                    </div>
+                </div>
+
+                <!-- 제목 -->
+                <a th:href="@{/board/{id}(id=${item.boardId})}"
+                   class="feed-item-title"
+                   th:text="${item.title}">게시글 제목</a>
+
+                <!-- 내용 미리보기 -->
+                <div class="feed-item-content" th:text="${item.content}">
+                    게시글 내용 미리보기...
+                </div>
+
+                <!-- 메타 정보 -->
+                <div class="feed-item-meta">
+                    <span>
+                        <span>✍️</span>
+                        <span th:text="${item.author}">작성자</span>
+                    </span>
+                    <span>
+                        <span>📅</span>
+                        <span th:text="${#temporals.format(item.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</span>
+                    </span>
+                    <span>
+                        <span>👁️</span>
+                        <span th:text="${item.viewCount}">0</span>
+                    </span>
+                    <span>
+                        <span>❤️</span>
+                        <span th:text="${item.likeCount}">0</span>
+                    </span>
+                    <span>
+                        <span>💬</span>
+                        <span th:text="${item.commentCount}">0</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 팔로우한 토픽이 없을 때 -->
+        <div th:if="${followedTopics == null or followedTopics.isEmpty()}" class="no-content">
+            <div class="no-content-icon">📚</div>
+            <h3>팔로우한 토픽이 없습니다</h3>
+            <p>관심있는 토픽을 팔로우하고 맞춤 피드를 만들어보세요!</p>
+            <a th:href="@{/board}" class="btn btn-primary">토픽 탐색하기</a>
+        </div>
+
+        <!-- 게시글이 없을 때 -->
+        <div th:if="${followedTopics != null and !followedTopics.isEmpty() and (initialFeed == null or initialFeed.isEmpty())}"
+             class="no-content">
+            <div class="no-content-icon">📝</div>
+            <h3>아직 게시글이 없습니다</h3>
+            <p>팔로우한 토픽의 게시글이 여기에 표시됩니다.</p>
+        </div>
+
+        <!-- 더보기 버튼 -->
+        <div class="load-more-container" th:if="${initialFeed != null and initialFeed.size() >= 20}">
+            <button id="loadMoreBtn" class="btn-load-more" onclick="loadMore()">
+                더 보기
+            </button>
+        </div>
+
+        <!-- 하단 버튼 -->
+        <div class="bottom-actions">
+            <a th:href="@{/board}" class="btn btn-secondary">게시판으로 돌아가기</a>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let loading = false;
+        const topicId = /*[[${topicId}]]*/ null;
+
+        /**
+         * 더 많은 피드 아이템 로드
+         */
+        async function loadMore() {
+            if (loading) return;
+
+            const btn = document.getElementById('loadMoreBtn');
+            btn.disabled = true;
+            btn.textContent = '로딩 중...';
+            loading = true;
+
+            try {
+                // API 엔드포인트 결정
+                const apiUrl = topicId
+                    ? `/api/topics/${topicId}/feed?page=${currentPage}&size=20`
+                    : `/api/topics/feed?page=${currentPage}&size=20`;
+
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error('피드 로드 실패');
+                }
+
+                const data = await response.json();
+                const items = data.items;
+
+                if (items && items.length > 0) {
+                    // 피드 아이템 추가
+                    const feedList = document.getElementById('feedList');
+                    items.forEach(item => {
+                        feedList.appendChild(createFeedItemElement(item));
+                    });
+
+                    currentPage++;
+
+                    // 더 이상 로드할 아이템이 없으면 버튼 숨김
+                    if (!data.hasMore || items.length < 20) {
+                        btn.style.display = 'none';
+                    }
+                } else {
+                    btn.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('피드 로드 오류:', error);
+                alert('피드를 불러오는 중 오류가 발생했습니다.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '더 보기';
+                loading = false;
+            }
+        }
+
+        /**
+         * 피드 아이템 HTML 엘리먼트 생성
+         */
+        function createFeedItemElement(item) {
+            const div = document.createElement('div');
+            div.className = 'feed-item';
+
+            // 토픽 태그
+            let topicsHtml = '';
+            if (item.topics && item.topics.length > 0) {
+                topicsHtml = '<div class="feed-item-topics">';
+                item.topics.forEach(topic => {
+                    const color = topic.color || '#667eea';
+                    const icon = topic.icon || '📁';
+                    topicsHtml += `
+                        <div class="feed-item-topic" style="background-color: ${color}">
+                            <span>${icon}</span>
+                            <span>${topic.name}</span>
+                        </div>
+                    `;
+                });
+                topicsHtml += '</div>';
+            }
+
+            // 날짜 포맷팅
+            const createdAt = new Date(item.createdAt);
+            const dateStr = createdAt.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            div.innerHTML = `
+                ${topicsHtml}
+                <a href="/board/${item.boardId}" class="feed-item-title">${item.title}</a>
+                <div class="feed-item-content">${item.content || ''}</div>
+                <div class="feed-item-meta">
+                    <span><span>✍️</span><span>${item.author}</span></span>
+                    <span><span>📅</span><span>${dateStr}</span></span>
+                    <span><span>👁️</span><span>${item.viewCount}</span></span>
+                    <span><span>❤️</span><span>${item.likeCount}</span></span>
+                    <span><span>💬</span><span>${item.commentCount}</span></span>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // 무한 스크롤 (선택적)
+        /*
+        window.addEventListener('scroll', () => {
+            if (loading) return;
+
+            const scrollPosition = window.innerHeight + window.scrollY;
+            const threshold = document.documentElement.scrollHeight - 500;
+
+            if (scrollPosition >= threshold) {
+                const btn = document.getElementById('loadMoreBtn');
+                if (btn && btn.style.display !== 'none') {
+                    loadMore();
+                }
+            }
+        });
+        */
+    </script>
+</body>
+</html>
