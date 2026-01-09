@@ -36,7 +36,7 @@ public class TopicService {
      */
     public Topic getTopicById(Long id) {
         return topicRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("주제를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.TOPIC_NOT_FOUND, "주제를 찾을 수 없습니다."));
     }
 
     /**
@@ -44,7 +44,7 @@ public class TopicService {
      */
     public Topic getTopicByName(String name) {
         return topicRepository.findByName(name)
-                .orElseThrow(() -> new ResourceNotFoundException("주제를 찾을 수 없습니다: " + name));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.TOPIC_NOT_FOUND, "주제를 찾을 수 없습니다: " + name));
     }
 
     /**

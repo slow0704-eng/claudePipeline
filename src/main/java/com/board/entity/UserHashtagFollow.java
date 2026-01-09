@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
        },
        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "hashtag_id"}))
 @Data
+@Builder
 public class UserHashtagFollow {
 
     @Id

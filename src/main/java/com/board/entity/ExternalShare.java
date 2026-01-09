@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Table(name = "external_share",
        indexes = @Index(name = "idx_board_platform", columnList = "board_id, platform"))
 @Data
+@Builder
 public class ExternalShare {
 
     @Id

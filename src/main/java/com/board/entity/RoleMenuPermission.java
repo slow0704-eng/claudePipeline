@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
            @Index(name = "idx_rmp_menu", columnList = "menu_id")
        })
 @Data
+@Builder
 public class RoleMenuPermission {
 
     @Id

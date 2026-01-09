@@ -100,11 +100,11 @@ public class FileUploadResponse {
      */
     public static FileUploadResponse from(com.board.entity.Attachment attachment) {
         return new FileUploadResponse(
-            attachment.getOriginalFilename(),
-            attachment.getStoredFilename(),
-            attachment.getFileUrl(),
+            attachment.getOriginalFileName(),
+            attachment.getStoredFilePath(),
+            "/files/" + attachment.getId(),  // URL 생성
             attachment.getFileSize(),
-            attachment.getContentType()
+            attachment.getFileType()
         );
     }
 }
