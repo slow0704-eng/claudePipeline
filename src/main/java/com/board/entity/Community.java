@@ -23,7 +23,9 @@ import java.util.List;
        })
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = {"owner", "members", "categories"})
 public class Community {
