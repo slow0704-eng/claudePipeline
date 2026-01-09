@@ -57,12 +57,13 @@ public class CommunityService {
                 savedCommunity.getId(), savedCommunity.getName(), currentUser.getId());
 
         // 생성자를 OWNER로 자동 추가
-        CommunityMember ownerMember = new CommunityMember();
-        ownerMember.setCommunity(savedCommunity);
-        ownerMember.setCommunityId(savedCommunity.getId());
-        ownerMember.setUser(currentUser);
-        ownerMember.setUserId(currentUser.getId());
-        ownerMember.setRole(CommunityRole.OWNER);
+        CommunityMember ownerMember = CommunityMember.builder()
+                .community(savedCommunity)
+                .communityId(savedCommunity.getId())
+                .user(currentUser)
+                .userId(currentUser.getId())
+                .role(CommunityRole.OWNER)
+                .build();
 
         communityMemberRepository.save(ownerMember);
         log.info("커뮤니티 소유자 멤버십 생성 완료: communityId={}, userId={}, role=OWNER",
