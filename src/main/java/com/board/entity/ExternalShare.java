@@ -1,7 +1,7 @@
 package com.board.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -13,8 +13,13 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "external_share",
        indexes = @Index(name = "idx_board_platform", columnList = "board_id, platform"))
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
+@EqualsAndHashCode(of = "id")
+@ToString
 public class ExternalShare {
 
     @Id

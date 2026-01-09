@@ -1,7 +1,7 @@
 package com.board.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -17,8 +17,13 @@ import java.time.LocalDateTime;
            @Index(name = "idx_rmp_role", columnList = "role_id"),
            @Index(name = "idx_rmp_menu", columnList = "menu_id")
        })
-@Data
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
+@EqualsAndHashCode(of = "id")
+@ToString
 public class RoleMenuPermission {
 
     @Id
