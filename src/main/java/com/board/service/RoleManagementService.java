@@ -159,7 +159,7 @@ public class RoleManagementService {
         // 기존 권한 확인
         RoleMenuPermission permission = permissionRepository
                 .findByRoleIdAndMenuId(roleId, menuId)
-                .orElse(new RoleMenuPermission());
+                .orElseGet(() -> RoleMenuPermission.builder().build());
 
         permission.setRoleId(roleId);
         permission.setMenuId(menuId);

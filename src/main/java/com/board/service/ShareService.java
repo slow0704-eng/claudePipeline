@@ -161,7 +161,7 @@ public class ShareService {
         boardRepository.findById(boardId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
-        ExternalShare share = new ExternalShare();
+        ExternalShare share = ExternalShare.builder().build();
         share.setBoardId(boardId);
         share.setPlatform(platform);
         share.setUserId(userId);  // 비로그인 사용자의 경우 null

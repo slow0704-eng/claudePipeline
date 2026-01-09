@@ -58,7 +58,7 @@ public class CommunityMemberService {
         }
 
         // 멤버십 생성
-        CommunityMember member = new CommunityMember();
+        CommunityMember member = CommunityMember.builder().build();
         member.setCommunity(community);
         member.setCommunityId(communityId);
         member.setUser(currentUser);
@@ -126,7 +126,7 @@ public class CommunityMemberService {
         invitedUser.setId(invitedUserId);
 
         // 멤버십 생성
-        CommunityMember member = new CommunityMember();
+        CommunityMember member = CommunityMember.builder().build();
         member.setCommunity(community);
         member.setCommunityId(communityId);
         member.setUser(invitedUser);
@@ -296,7 +296,7 @@ public class CommunityMemberService {
                                       ModerationActionType actionType,
                                       String targetType, Long targetId, String reason) {
         try {
-            ModerationLog log = new ModerationLog();
+            ModerationLog log = ModerationLog.builder().build();
             log.setCommunityId(communityId);
             log.setModeratorId(moderatorId);
             log.setActionType(actionType);
