@@ -65,7 +65,7 @@ public class AdminController {
         long pendingReports = reportService.getPendingReportCount();
 
         // Recent boards
-        List<Board> recentBoards = boardRepository.findTop10ByOrderByCreatedAtDesc();
+        List<Board> recentBoards = boardRepository.findTop10ByOrderByCreatedAtDescTitleAsc();
 
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("totalUsers", totalUsers);

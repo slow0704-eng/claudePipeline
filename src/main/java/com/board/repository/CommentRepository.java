@@ -13,6 +13,10 @@ import java.util.List;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByBoardIdAndIsDeletedFalseOrderByCreatedAtAsc(Long boardId);
+
+    @Query("SELECT c FROM Comment c LEFT JOIN FETCH c.user WHERE c.boardId = :boardId AND c.isDeleted = false ORDER BY c.createdAt ASC")
+    List<Comment> findByBoardIdWithUser(@Param("boardId") Long boardId);
+
     List<Comment> findByUserIdOrderByCreatedAtDesc(Long userId);
     long countByBoardIdAndIsDeletedFalse(Long boardId);
 

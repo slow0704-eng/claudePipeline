@@ -75,7 +75,7 @@ public class MenuManagementService {
     @Transactional
     public Menu createMenu(String name, String description, Long parentId, String url,
                            String icon, Integer displayOrder, String menuType) {
-        Menu menu = new Menu();
+        Menu menu = Menu.builder().build();
         menu.setName(name);
         menu.setDescription(description);
         menu.setParentId(parentId);

@@ -46,7 +46,7 @@ public class MessageService {
             throw new RuntimeException("비활성화된 사용자에게 메시지를 보낼 수 없습니다.");
         }
 
-        Message message = new Message();
+        Message message = Message.builder().build();
         message.setSenderId(senderId);
         message.setRecipientId(recipientId);
         message.setContent(content);

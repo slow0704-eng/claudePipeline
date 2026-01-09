@@ -40,7 +40,7 @@ public class CommentService {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOARD_NOT_FOUND));
 
         // Create and save comment
-        Comment comment = new Comment();
+        Comment comment = Comment.builder().build();
         comment.setBoardId(boardId);
         comment.setUserId(currentUser.getId());
         comment.setNickname(currentUser.getNickname());

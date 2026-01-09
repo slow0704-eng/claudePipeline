@@ -122,7 +122,7 @@ public class CommunityMemberService {
         }
 
         // 초대받은 사용자 조회 (User 엔티티는 이미 있다고 가정)
-        User invitedUser = new User();
+        User invitedUser = User.builder().build();
         invitedUser.setId(invitedUserId);
 
         // 멤버십 생성

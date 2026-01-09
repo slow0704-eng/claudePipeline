@@ -89,6 +89,13 @@ public class ApiResponse<T> {
     }
 
     /**
+     * 성공 응답 생성 (데이터만 포함, 메시지 없음)
+     */
+    public static <T> ApiResponse<T> success(T data) {
+        return new ApiResponse<>(true, null, data);
+    }
+
+    /**
      * 성공 응답 생성 (데이터 포함)
      */
     public static <T> ApiResponse<T> success(String message, T data) {

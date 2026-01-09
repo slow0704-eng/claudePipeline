@@ -48,7 +48,7 @@ public class DataLoader implements CommandLineRunner {
             }
 
             // 새 관리자 계정 생성
-            User admin = new User();
+            User admin = User.builder().build();
             admin.setUsername("admin");
             admin.setPassword(passwordEncoder.encode("admin1234"));
             admin.setNickname("시스템관리자");

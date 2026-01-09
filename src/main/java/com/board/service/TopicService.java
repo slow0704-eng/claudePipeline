@@ -2,6 +2,7 @@ package com.board.service;
 
 import com.board.entity.Topic;
 import com.board.exception.ResourceNotFoundException;
+import com.board.exception.ErrorCode;
 import com.board.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -76,7 +77,7 @@ public class TopicService {
     @Transactional
     @CacheEvict(value = "popularTopics", allEntries = true)
     public Topic createTopic(String name, String description) {
-        Topic topic = new Topic();
+        Topic topic = Topic.builder().build();
         topic.setName(name);
         topic.setDescription(description);
         return topicRepository.save(topic);

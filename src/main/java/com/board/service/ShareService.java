@@ -51,7 +51,7 @@ public class ShareService {
             isShared = false;
         } else {
             // 공유 생성
-            share = new Share();
+            share = Share.builder().build();
             share.setUserId(currentUser.getId());
             share.setBoardId(boardId);
 

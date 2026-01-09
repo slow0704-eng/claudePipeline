@@ -80,7 +80,7 @@ public class HashtagService {
             hashtag.incrementUseCount();
             return hashtagRepository.save(hashtag);
         } else {
-            Hashtag newHashtag = new Hashtag();
+            Hashtag newHashtag = Hashtag.builder().build();
             newHashtag.setName(normalizedName);
             newHashtag.setUseCount(1L);
             newHashtag.setLastUsedAt(LocalDateTime.now());

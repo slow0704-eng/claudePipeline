@@ -94,4 +94,17 @@ public class FileUploadResponse {
     public void setFileType(String fileType) {
         this.fileType = fileType;
     }
+
+    /**
+     * Attachment 엔티티로부터 FileUploadResponse 생성
+     */
+    public static FileUploadResponse from(com.board.entity.Attachment attachment) {
+        return new FileUploadResponse(
+            attachment.getOriginalFilename(),
+            attachment.getStoredFilename(),
+            attachment.getFileUrl(),
+            attachment.getFileSize(),
+            attachment.getContentType()
+        );
+    }
 }

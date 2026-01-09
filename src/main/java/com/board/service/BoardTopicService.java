@@ -120,3 +120,54 @@ public class BoardTopicService {
         return boardTopicRepository.countByTopicId(topicId);
     }
 }
+
+    /**
+     * 게시글의 모든 주제 조회 (별칭 메서드)
+     */
+    public List<Topic> getBoardTopics(Long boardId) {
+        return getTopicsByBoardId(boardId);
+    }
+
+    /**
+     * 게시글의 주제 경로 목록 조회 (주제명 문자열 리스트)
+     */
+    public List<String> getBoardTopicPaths(Long boardId) {
+        return getTopicsByBoardId(boardId).stream()
+                .map(Topic::getName)
+                .collect(Collectors.toList());
+
+    /**
+     * 게시글의 모든 주제 조회 (별칭 메서드)
+     */
+    public List<Topic> getBoardTopics(Long boardId) {
+        return getTopicsByBoardId(boardId);
+    }
+
+    /**
+     * 게시글의 주제 경로 목록 조회 (주제명 문자열 리스트)
+     */
+    public List<String> getBoardTopicPaths(Long boardId) {
+        return getTopicsByBoardId(boardId).stream()
+                .map(Topic::getName)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 게시글의 주제 업데이트 (ID 버전)
+     */
+    @Transactional
+    public void updateBoardTopics(Long boardId, List<Long> topicIds) {
+        // 기존 주제 제거
+        removeAllTopicsFromBoard(boardId);
+
+        // 새 주제 추가
+        if (topicIds != null && !topicIds.isEmpty()) {
+            for (Long topicId : topicIds) {
+                Topic topic = topicService.getTopicById(topicId);
+                Board board = new Board();
+                board.setId(boardId);
+                addTopicToBoard(board, topic);
+            }
+        }
+    }
+}

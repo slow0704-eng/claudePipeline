@@ -35,7 +35,7 @@ public class UserService {
         }
 
         // Create new user
-        User user = new User();
+        User user = User.builder().build();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
         user.setNickname(nickname);
@@ -50,6 +50,10 @@ public class UserService {
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+    }
+
+    public User getUserByUsername(String username) {
+        return findByUsername(username);
     }
 
     public User findById(Long userId) {

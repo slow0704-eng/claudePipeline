@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = {"user", "board"})
 @Table(name = "bookmarks",
