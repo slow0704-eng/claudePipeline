@@ -33,6 +33,22 @@ public class BoardTopicService {
     }
 
     /**
+     * 게시글의 모든 주제 조회 (별칭 메서드)
+     */
+    public List<Topic> getBoardTopics(Long boardId) {
+        return getTopicsByBoardId(boardId);
+    }
+
+    /**
+     * 게시글의 주제 경로 목록 조회 (주제명 문자열 리스트)
+     */
+    public List<String> getBoardTopicPaths(Long boardId) {
+        return getTopicsByBoardId(boardId).stream()
+                .map(Topic::getName)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 특정 주제를 가진 모든 게시글 조회
      */
     public List<Board> getBoardsByTopicId(Long topicId) {
@@ -107,52 +123,6 @@ public class BoardTopicService {
     }
 
     /**
-     * 게시글의 주제 개수 조회
-     */
-    public long countTopicsByBoardId(Long boardId) {
-        return boardTopicRepository.countByBoardId(boardId);
-    }
-
-    /**
-     * 특정 주제를 가진 게시글 개수 조회
-     */
-    public long countBoardsByTopicId(Long topicId) {
-        return boardTopicRepository.countByTopicId(topicId);
-    }
-}
-
-    /**
-     * 게시글의 모든 주제 조회 (별칭 메서드)
-     */
-    public List<Topic> getBoardTopics(Long boardId) {
-        return getTopicsByBoardId(boardId);
-    }
-
-    /**
-     * 게시글의 주제 경로 목록 조회 (주제명 문자열 리스트)
-     */
-    public List<String> getBoardTopicPaths(Long boardId) {
-        return getTopicsByBoardId(boardId).stream()
-                .map(Topic::getName)
-                .collect(Collectors.toList());
-
-    /**
-     * 게시글의 모든 주제 조회 (별칭 메서드)
-     */
-    public List<Topic> getBoardTopics(Long boardId) {
-        return getTopicsByBoardId(boardId);
-    }
-
-    /**
-     * 게시글의 주제 경로 목록 조회 (주제명 문자열 리스트)
-     */
-    public List<String> getBoardTopicPaths(Long boardId) {
-        return getTopicsByBoardId(boardId).stream()
-                .map(Topic::getName)
-                .collect(Collectors.toList());
-    }
-
-    /**
      * 게시글의 주제 업데이트 (ID 버전)
      */
     @Transactional
@@ -164,10 +134,24 @@ public class BoardTopicService {
         if (topicIds != null && !topicIds.isEmpty()) {
             for (Long topicId : topicIds) {
                 Topic topic = topicService.getTopicById(topicId);
-                Board board = new Board();
+                Board board = Board.builder().build();
                 board.setId(boardId);
                 addTopicToBoard(board, topic);
             }
         }
+    }
+
+    /**
+     * 게시글의 주제 개수 조회
+     */
+    public long countTopicsByBoardId(Long boardId) {
+        return boardTopicRepository.countByBoardId(boardId);
+    }
+
+    /**
+     * 특정 주제를 가진 게시글 개수 조회
+     */
+    public long countBoardsByTopicId(Long topicId) {
+        return boardTopicRepository.countByTopicId(topicId);
     }
 }
