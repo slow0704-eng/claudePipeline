@@ -44,7 +44,8 @@ public class Like {
     private Long targetId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "reaction_type", nullable = false, length = 20)
+    @Column(name = "reaction_type", nullable = true, length = 20)
+    @Builder.Default
     private ReactionType reactionType = ReactionType.LIKE;
 
     @CreationTimestamp
