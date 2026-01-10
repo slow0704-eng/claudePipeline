@@ -91,29 +91,22 @@
             position: relative;
         }
 
-        .form-group input {
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
             width: 100%;
             padding: 12px 45px 12px 15px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 14px;
             transition: all 0.3s;
-            background-color: white;
-            color: #333;
+            background-color: #ffffff !important;
+            color: #333333 !important;
         }
 
         .form-group input:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-group input.error {
-            border-color: #dc3545;
-        }
-
-        .form-group input.success {
-            border-color: #28a745;
         }
 
         .toggle-password {
@@ -129,19 +122,6 @@
 
         .toggle-password:hover {
             color: #667eea;
-        }
-
-        .caps-warning {
-            display: none;
-            align-items: center;
-            gap: 6px;
-            margin-top: 5px;
-            color: #ff9800;
-            font-size: 12px;
-        }
-
-        .caps-warning.show {
-            display: flex;
         }
 
         .checkbox-group {
@@ -194,10 +174,6 @@
             border: 1px solid #cfc;
         }
 
-        .alert i {
-            font-size: 18px;
-        }
-
         .btn {
             width: 100%;
             padding: 14px;
@@ -222,32 +198,6 @@
 
         .btn:active {
             transform: translateY(0);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-loading {
-            position: relative;
-        }
-
-        .btn-loading::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            border: 2px solid white;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            right: 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
 
         .divider {
@@ -288,33 +238,6 @@
             color: #5568d3;
         }
 
-        .saved-username {
-            display: none;
-            background: #f8f9fa;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            color: #666;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .saved-username.show {
-            display: flex;
-        }
-
-        .saved-username .clear-saved {
-            color: #dc3545;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .saved-username .clear-saved:hover {
-            text-decoration: underline;
-        }
-
-        /* Responsive */
         @media (max-width: 480px) {
             .login-container {
                 padding: 30px 20px;
@@ -333,30 +256,27 @@
             <p>익명 커뮤니티에 오신 것을 환영합니다</p>
         </div>
 
+        <!-- Error Message -->
         <div th:if="${error}" class="alert alert-error">
             <i class="fas fa-exclamation-circle"></i>
-            <span th:text="${error}"></span>
+            <span th:text="${error}">로그인 오류</span>
         </div>
 
+        <!-- Success Message -->
         <div th:if="${message}" class="alert alert-success">
             <i class="fas fa-check-circle"></i>
-            <span th:text="${message}"></span>
+            <span th:text="${message}">성공</span>
         </div>
 
+        <!-- Registration Success -->
         <div th:if="${param.registered}" class="alert alert-success">
             <i class="fas fa-check-circle"></i>
             <span>회원가입이 완료되었습니다. 로그인해주세요.</span>
         </div>
 
-        <!-- Saved Username Display -->
-        <div id="savedUsernameDisplay" class="saved-username">
-            <span id="savedUsernameText"></span>
-            <span class="clear-saved" onclick="clearSavedUsername()">
-                <i class="fas fa-times"></i> 삭제
-            </span>
-        </div>
-
-        <form th:action="@{/auth/login}" method="post" id="loginForm" onsubmit="return handleLoginSubmit(event)">
+        <!-- Login Form -->
+        <form action="/auth/login" method="post" id="loginForm">
+            <!-- Username -->
             <div class="form-group">
                 <label for="username">
                     <i class="fas fa-user"></i> 아이디
@@ -372,6 +292,7 @@
                 </div>
             </div>
 
+            <!-- Password -->
             <div class="form-group">
                 <label for="password">
                     <i class="fas fa-key"></i> 비밀번호
@@ -382,25 +303,21 @@
                            name="password"
                            required
                            autocomplete="current-password"
-                           placeholder="비밀번호를 입력하세요"
-                           onkeydown="checkCapsLock(event)"
-                           onkeyup="checkCapsLock(event)">
+                           placeholder="비밀번호를 입력하세요">
                     <i class="fas fa-eye toggle-password"
                        id="togglePassword"
                        onclick="togglePasswordVisibility()"></i>
                 </div>
-                <div id="capsWarning" class="caps-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Caps Lock이 켜져 있습니다</span>
-                </div>
             </div>
 
+            <!-- Remember Me -->
             <div class="checkbox-group">
                 <input type="checkbox" id="rememberMe" name="rememberMe">
                 <label for="rememberMe">아이디 저장</label>
             </div>
 
-            <button type="submit" class="btn" id="loginBtn">
+            <!-- Submit Button -->
+            <button type="submit" class="btn">
                 <i class="fas fa-sign-in-alt"></i>
                 <span>로그인</span>
             </button>
@@ -408,6 +325,7 @@
 
         <div class="divider">또는</div>
 
+        <!-- Links -->
         <div class="links" style="margin-bottom: 15px;">
             <a href="/auth/find-username">
                 <i class="fas fa-search"></i> 아이디 찾기
@@ -428,25 +346,6 @@
     </div>
 
     <script>
-        // Load saved username on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedUsername = localStorage.getItem('savedUsername');
-            if (savedUsername) {
-                document.getElementById('username').value = savedUsername;
-                document.getElementById('rememberMe').checked = true;
-
-                const display = document.getElementById('savedUsernameDisplay');
-                const text = document.getElementById('savedUsernameText');
-                text.textContent = `저장된 아이디: ${savedUsername}`;
-                display.classList.add('show');
-            }
-
-            // Auto-focus password field if username is saved
-            if (savedUsername) {
-                document.getElementById('password').focus();
-            }
-        });
-
         // Toggle password visibility
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('password');
@@ -463,53 +362,24 @@
             }
         }
 
-        // Check Caps Lock status
-        function checkCapsLock(event) {
-            const capsWarning = document.getElementById('capsWarning');
-
-            if (event.getModifierState && event.getModifierState('CapsLock')) {
-                capsWarning.classList.add('show');
-            } else {
-                capsWarning.classList.remove('show');
-            }
-        }
-
-        // Handle form submission
-        function handleLoginSubmit(event) {
+        // Save username to localStorage
+        document.getElementById('loginForm').addEventListener('submit', function() {
             const username = document.getElementById('username').value;
             const rememberMe = document.getElementById('rememberMe').checked;
-            const loginBtn = document.getElementById('loginBtn');
 
-            // Save or clear username based on checkbox
             if (rememberMe) {
                 localStorage.setItem('savedUsername', username);
             } else {
                 localStorage.removeItem('savedUsername');
             }
+        });
 
-            // Show loading state
-            loginBtn.disabled = true;
-            loginBtn.classList.add('btn-loading');
-            loginBtn.querySelector('span').textContent = '로그인 중...';
-
-            return true;
-        }
-
-        // Clear saved username
-        function clearSavedUsername() {
-            if (confirm('저장된 아이디를 삭제하시겠습니까?')) {
-                localStorage.removeItem('savedUsername');
-                document.getElementById('username').value = '';
-                document.getElementById('rememberMe').checked = false;
-                document.getElementById('savedUsernameDisplay').classList.remove('show');
-                document.getElementById('username').focus();
-            }
-        }
-
-        // Enter key support for form fields
-        document.getElementById('username').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
+        // Load saved username
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedUsername = localStorage.getItem('savedUsername');
+            if (savedUsername) {
+                document.getElementById('username').value = savedUsername;
+                document.getElementById('rememberMe').checked = true;
                 document.getElementById('password').focus();
             }
         });
