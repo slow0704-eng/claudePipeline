@@ -5,10 +5,9 @@
 
 spring:
   # 데이터소스 설정 (운영 환경 - 환경변수 필수)
+  # Render/Heroku는 DATABASE_URL에 username/password 포함
   datasource:
-    url: ${DATABASE_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/boarddb}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
