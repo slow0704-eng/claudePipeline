@@ -44,10 +44,11 @@ public class AuthenticationUtilsTest {
     void getCurrentUser_인증된_사용자_조회_성공() {
         // Given
         String username = "testuser";
-        User mockUser = new User();
-        mockUser.setId(1L);
-        mockUser.setUsername(username);
-        mockUser.setNickname("테스트유저");
+        User mockUser = User.builder()
+                .id(1L)
+                .username(username)
+                .nickname("테스트유저")
+                .build();
 
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 username, "password",
@@ -96,9 +97,10 @@ public class AuthenticationUtilsTest {
     void getCurrentUserId_인증된_사용자_ID_조회_성공() {
         // Given
         String username = "testuser";
-        User mockUser = new User();
-        mockUser.setId(123L);
-        mockUser.setUsername(username);
+        User mockUser = User.builder()
+                .id(123L)
+                .username(username)
+                .build();
 
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 username, "password",

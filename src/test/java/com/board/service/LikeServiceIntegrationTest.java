@@ -61,30 +61,33 @@ public class LikeServiceIntegrationTest {
         userRepository.deleteAll();
 
         // Create test user
-        testUser = new User();
-        testUser.setUsername("testuser");
-        testUser.setPassword(passwordEncoder.encode("password"));
-        testUser.setNickname("테스트유저");
-        testUser.setRole(UserRole.MEMBER);
-        testUser.setEnabled(true);
+        testUser = User.builder()
+                .username("testuser")
+                .password(passwordEncoder.encode("password"))
+                .nickname("테스트유저")
+                .role(UserRole.MEMBER)
+                .enabled(true)
+                .build();
         testUser = userRepository.save(testUser);
 
         // Create test board
-        testBoard = new Board();
-        testBoard.setTitle("테스트 게시글");
-        testBoard.setContent("테스트 내용");
-        testBoard.setUserId(testUser.getId());
-        testBoard.setNickname(testUser.getNickname());
-        testBoard.setAuthor(testUser.getNickname());
+        testBoard = Board.builder()
+                .title("테스트 게시글")
+                .content("테스트 내용")
+                .userId(testUser.getId())
+                .nickname(testUser.getNickname())
+                .author(testUser.getNickname())
+                .build();
         testBoard = boardRepository.save(testBoard);
 
         // Create test comment
-        testComment = new Comment();
-        testComment.setBoardId(testBoard.getId());
-        testComment.setUserId(testUser.getId());
-        testComment.setNickname(testUser.getNickname());
-        testComment.setContent("테스트 댓글");
-        testComment.setIsDeleted(false);
+        testComment = Comment.builder()
+                .boardId(testBoard.getId())
+                .userId(testUser.getId())
+                .nickname(testUser.getNickname())
+                .content("테스트 댓글")
+                .isDeleted(false)
+                .build();
         testComment = commentRepository.save(testComment);
 
         // Set authentication with UserDetails
@@ -183,12 +186,13 @@ public class LikeServiceIntegrationTest {
         likeService.toggleLike(TargetType.POST, testBoard.getId());
 
         // Create another user and like
-        User anotherUser = new User();
-        anotherUser.setUsername("another");
-        anotherUser.setPassword(passwordEncoder.encode("password"));
-        anotherUser.setNickname("다른유저");
-        anotherUser.setRole(UserRole.MEMBER);
-        anotherUser.setEnabled(true);
+        User anotherUser = User.builder()
+                .username("another")
+                .password(passwordEncoder.encode("password"))
+                .nickname("다른유저")
+                .role(UserRole.MEMBER)
+                .enabled(true)
+                .build();
         anotherUser = userRepository.save(anotherUser);
 
         org.springframework.security.core.userdetails.UserDetails anotherUserDetails =
@@ -213,12 +217,13 @@ public class LikeServiceIntegrationTest {
     @Test
     void testGetLikedPostsByUserId() {
         // Given
-        Board board2 = new Board();
-        board2.setTitle("게시글2");
-        board2.setContent("내용2");
-        board2.setUserId(testUser.getId());
-        board2.setNickname(testUser.getNickname());
-        board2.setAuthor(testUser.getNickname());
+        Board board2 = Board.builder()
+                .title("게시글2")
+                .content("내용2")
+                .userId(testUser.getId())
+                .nickname(testUser.getNickname())
+                .author(testUser.getNickname())
+                .build();
         board2 = boardRepository.save(board2);
 
         likeService.toggleLike(TargetType.POST, testBoard.getId());
@@ -246,12 +251,13 @@ public class LikeServiceIntegrationTest {
         // Given
         likeService.toggleLike(TargetType.POST, testBoard.getId());
 
-        User user2 = new User();
-        user2.setUsername("user2");
-        user2.setPassword(passwordEncoder.encode("password"));
-        user2.setNickname("유저2");
-        user2.setRole(UserRole.MEMBER);
-        user2.setEnabled(true);
+        User user2 = User.builder()
+                .username("user2")
+                .password(passwordEncoder.encode("password"))
+                .nickname("유저2")
+                .role(UserRole.MEMBER)
+                .enabled(true)
+                .build();
         user2 = userRepository.save(user2);
 
         org.springframework.security.core.userdetails.UserDetails user2Details =

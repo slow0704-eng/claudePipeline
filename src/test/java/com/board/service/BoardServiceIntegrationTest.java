@@ -45,12 +45,13 @@ public class BoardServiceIntegrationTest {
         userRepository.deleteAll();
 
         // Create test user
-        testUser = new User();
-        testUser.setUsername("testuser");
-        testUser.setPassword(passwordEncoder.encode("password"));
-        testUser.setNickname("테스트유저");
-        testUser.setRole(UserRole.MEMBER);
-        testUser.setEnabled(true);
+        testUser = User.builder()
+                .username("testuser")
+                .password(passwordEncoder.encode("password"))
+                .nickname("테스트유저")
+                .role(UserRole.MEMBER)
+                .enabled(true)
+                .build();
         testUser = userRepository.save(testUser);
 
         // Set authentication with UserDetails
@@ -69,9 +70,10 @@ public class BoardServiceIntegrationTest {
     @Test
     void testCreateBoard() {
         // Given
-        Board board = new Board();
-        board.setTitle("테스트 제목");
-        board.setContent("테스트 내용");
+        Board board = Board.builder()
+                .title("테스트 제목")
+                .content("테스트 내용")
+                .build();
 
         // When
         Board savedBoard = boardService.createBoard(board);
@@ -88,14 +90,16 @@ public class BoardServiceIntegrationTest {
     @Test
     void testGetAllBoards() {
         // Given
-        Board board1 = new Board();
-        board1.setTitle("제목1");
-        board1.setContent("내용1");
+        Board board1 = Board.builder()
+                .title("제목1")
+                .content("내용1")
+                .build();
         boardService.createBoard(board1);
 
-        Board board2 = new Board();
-        board2.setTitle("제목2");
-        board2.setContent("내용2");
+        Board board2 = Board.builder()
+                .title("제목2")
+                .content("내용2")
+                .build();
         boardService.createBoard(board2);
 
         // When
@@ -108,9 +112,10 @@ public class BoardServiceIntegrationTest {
     @Test
     void testGetBoardById() {
         // Given
-        Board board = new Board();
-        board.setTitle("테스트 제목");
-        board.setContent("테스트 내용");
+        Board board = Board.builder()
+                .title("테스트 제목")
+                .content("테스트 내용")
+                .build();
         Board savedBoard = boardService.createBoard(board);
 
         // When
@@ -131,9 +136,10 @@ public class BoardServiceIntegrationTest {
     @Test
     void testIncreaseViewCount() {
         // Given
-        Board board = new Board();
-        board.setTitle("테스트 제목");
-        board.setContent("테스트 내용");
+        Board board = Board.builder()
+                .title("테스트 제목")
+                .content("테스트 내용")
+                .build();
         Board savedBoard = boardService.createBoard(board);
         int initialViewCount = savedBoard.getViewCount();
 
@@ -147,15 +153,17 @@ public class BoardServiceIntegrationTest {
     @Test
     void testUpdateBoard() {
         // Given
-        Board board = new Board();
-        board.setTitle("원래 제목");
-        board.setContent("원래 내용");
+        Board board = Board.builder()
+                .title("원래 제목")
+                .content("원래 내용")
+                .build();
         Board savedBoard = boardService.createBoard(board);
 
         // When
-        Board updateDetails = new Board();
-        updateDetails.setTitle("수정된 제목");
-        updateDetails.setContent("수정된 내용");
+        Board updateDetails = Board.builder()
+                .title("수정된 제목")
+                .content("수정된 내용")
+                .build();
         Board updatedBoard = boardService.updateBoard(savedBoard.getId(), updateDetails);
 
         // Then
@@ -166,9 +174,10 @@ public class BoardServiceIntegrationTest {
     @Test
     void testDeleteBoard() {
         // Given
-        Board board = new Board();
-        board.setTitle("삭제할 게시글");
-        board.setContent("삭제할 내용");
+        Board board = Board.builder()
+                .title("삭제할 게시글")
+                .content("삭제할 내용")
+                .build();
         Board savedBoard = boardService.createBoard(board);
 
         // When
@@ -181,9 +190,10 @@ public class BoardServiceIntegrationTest {
     @Test
     void testIsOwner() {
         // Given
-        Board board = new Board();
-        board.setTitle("테스트 제목");
-        board.setContent("테스트 내용");
+        Board board = Board.builder()
+                .title("테스트 제목")
+                .content("테스트 내용")
+                .build();
         Board savedBoard = boardService.createBoard(board);
 
         // When
@@ -196,14 +206,16 @@ public class BoardServiceIntegrationTest {
     @Test
     void testGetBoardsByUserId() {
         // Given
-        Board board1 = new Board();
-        board1.setTitle("제목1");
-        board1.setContent("내용1");
+        Board board1 = Board.builder()
+                .title("제목1")
+                .content("내용1")
+                .build();
         boardService.createBoard(board1);
 
-        Board board2 = new Board();
-        board2.setTitle("제목2");
-        board2.setContent("내용2");
+        Board board2 = Board.builder()
+                .title("제목2")
+                .content("내용2")
+                .build();
         boardService.createBoard(board2);
 
         // When
