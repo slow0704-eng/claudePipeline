@@ -1,6 +1,5 @@
 package com.board.controller;
 
-import com.board.dto.TimelineItemDTO;
 import com.board.dto.response.ApiResponse;
 import com.board.entity.Board;
 import com.board.entity.User;
@@ -8,7 +7,6 @@ import com.board.service.BoardService;
 import com.board.service.BookmarkService;
 import com.board.service.FollowService;
 import com.board.service.MessageService;
-import com.board.service.TimelineService;
 import com.board.service.UserService;
 import com.board.util.AuthenticationUtils;
 import com.board.util.CurrentUser;
@@ -34,7 +32,6 @@ public class MyPageController {
     private final FollowService followService;
     private final BookmarkService bookmarkService;
     private final MessageService messageService;
-    private final TimelineService timelineService;
 
     @GetMapping
     public String myPage(@CurrentUser User currentUser, Model model) {
@@ -222,12 +219,13 @@ public class MyPageController {
                     .body(ApiResponse.error(401, "로그인이 필요합니다."));
         }
 
-        List<TimelineItemDTO> items = timelineService.getTimelineFeed(currentUser.getId(), page, size);
-        boolean hasMore = items.size() == size; // 다음 페이지 존재 여부
+        // TEMPORARILY DISABLED - Timeline feature
+        // List<TimelineItemDTO> items = timelineService.getTimelineFeed(currentUser.getId(), page, size);
+        // boolean hasMore = items.size() == size; // 다음 페이지 존재 여부
 
         Map<String, Object> data = Map.of(
-                "items", items,
-                "hasMore", hasMore,
+                "items", java.util.Collections.emptyList(),
+                "hasMore", false,
                 "currentPage", page
         );
 

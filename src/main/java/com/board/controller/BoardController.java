@@ -51,8 +51,6 @@ public class BoardController {
     private final BannedWordService bannedWordService;
     private final com.board.service.CategoryService categoryService;
     private final com.board.service.HashtagService hashtagService;
-    private final com.board.service.TopicService topicService;
-    private final com.board.service.BoardTopicService boardTopicService;
 
     @GetMapping
     public String list(
@@ -203,9 +201,9 @@ public class BoardController {
         // Get hashtags
         List<com.board.entity.Hashtag> hashtags = hashtagService.getBoardHashtags(id);
 
-        // Get topics
-        List<com.board.entity.Topic> boardTopics = boardTopicService.getBoardTopics(id);
-        List<String> topicPaths = boardTopicService.getBoardTopicPaths(id);
+        // Get topics - TEMPORARILY DISABLED
+        // List<com.board.entity.Topic> boardTopics = boardTopicService.getBoardTopics(id);
+        // List<String> topicPaths = boardTopicService.getBoardTopicPaths(id);
 
         model.addAttribute("board", board);
         model.addAttribute("isOwner", currentUser != null && boardService.isOwner(board, currentUser));
@@ -218,8 +216,8 @@ public class BoardController {
         model.addAttribute("bookmarkCount", bookmarkCount);
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("hashtags", hashtags);
-        model.addAttribute("boardTopics", boardTopics);
-        model.addAttribute("topicPaths", topicPaths);
+        // model.addAttribute("boardTopics", boardTopics);
+        // model.addAttribute("topicPaths", topicPaths);
 
         return "board/view";
     }
@@ -259,14 +257,14 @@ public class BoardController {
         // 파일 업로드
         fileUploadHelper.handleFileUploads(files, savedBoard.getId());
 
-        // 토픽 연결
-        if (topicIds != null && !topicIds.isEmpty()) {
-            try {
-                boardTopicService.updateBoardTopics(savedBoard.getId(), topicIds);
-            } catch (Exception e) {
-                System.err.println("Topic linking failed: " + e.getMessage());
-            }
-        }
+        // 토픽 연결 - TEMPORARILY DISABLED
+        // if (topicIds != null && !topicIds.isEmpty()) {
+        //     try {
+        //         boardTopicService.updateBoardTopics(savedBoard.getId(), topicIds);
+        //     } catch (Exception e) {
+        //         System.err.println("Topic linking failed: " + e.getMessage());
+        //     }
+        // }
 
         return "redirect:/board/" + savedBoard.getId();
     }
@@ -311,14 +309,14 @@ public class BoardController {
         // 새 파일 업로드
         fileUploadHelper.handleFileUploads(files, id);
 
-        // 토픽 연결 업데이트
-        if (topicIds != null) {
-            try {
-                boardTopicService.updateBoardTopics(id, topicIds);
-            } catch (Exception e) {
-                System.err.println("Topic update failed: " + e.getMessage());
-            }
-        }
+        // 토픽 연결 업데이트 - TEMPORARILY DISABLED
+        // if (topicIds != null) {
+        //     try {
+        //         boardTopicService.updateBoardTopics(id, topicIds);
+        //     } catch (Exception e) {
+        //         System.err.println("Topic update failed: " + e.getMessage());
+        //     }
+        // }
 
         return "redirect:/board/" + id;
     }

@@ -34,13 +34,13 @@ public class CommentCreateRequest {
      * Request DTO -> Entity 변환
      */
     public Comment toEntity(Long userId, String nickname) {
-        Comment comment = new Comment();
-        comment.setBoardId(this.boardId);
-        comment.setUserId(userId);
-        comment.setNickname(nickname);
-        comment.setContent(this.content);
-        comment.setParentCommentId(this.parentCommentId);
-        comment.setIsDeleted(false);
-        return comment;
+        return Comment.builder()
+                .boardId(this.boardId)
+                .userId(userId)
+                .nickname(nickname)
+                .content(this.content)
+                .parentCommentId(this.parentCommentId)
+                .isDeleted(false)
+                .build();
     }
 }

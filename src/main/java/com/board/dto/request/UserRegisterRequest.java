@@ -43,14 +43,14 @@ public class UserRegisterRequest {
      * Request DTO -> Entity 변환 (비밀번호는 암호화된 상태로 전달받음)
      */
     public User toEntity(String encodedPassword) {
-        User user = new User();
-        user.setUsername(this.username);
-        user.setPassword(encodedPassword);
-        user.setNickname(this.nickname);
-        user.setEmail(this.email);
-        user.setName(this.name);
-        user.setRole(UserRole.MEMBER);
-        user.setEnabled(true);
-        return user;
+        return User.builder()
+                .username(this.username)
+                .password(encodedPassword)
+                .nickname(this.nickname)
+                .email(this.email)
+                .name(this.name)
+                .role(UserRole.MEMBER)
+                .enabled(true)
+                .build();
     }
 }

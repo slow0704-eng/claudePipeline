@@ -38,17 +38,17 @@ public class BoardCreateRequest {
      * Request DTO -> Entity 변환
      */
     public Board toEntity(String author, String nickname, Long userId) {
-        Board board = new Board();
-        board.setTitle(this.title);
-        board.setContent(this.content);
-        board.setAuthor(author);
-        board.setNickname(nickname);
-        board.setUserId(userId);
-        board.setCategoryId(this.categoryId);
-        board.setStatus(this.status);
-        board.setIsDraft(this.isDraft);
-        board.setIsPinned(false);
-        board.setIsImportant(false);
-        return board;
+        return Board.builder()
+                .title(this.title)
+                .content(this.content)
+                .author(author)
+                .nickname(nickname)
+                .userId(userId)
+                .categoryId(this.categoryId)
+                .status(this.status)
+                .isDraft(this.isDraft)
+                .isPinned(false)
+                .isImportant(false)
+                .build();
     }
 }
