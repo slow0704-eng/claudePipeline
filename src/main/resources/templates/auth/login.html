@@ -353,7 +353,8 @@
         </div>
 
         <!-- Login Form -->
-        <form th:action="@{/auth/login}" method="post" id="loginForm" onsubmit="return handleLoginSubmit(event)">
+        <form action="/auth/login" method="post" id="loginForm" onsubmit="return handleLoginSubmit(event)">
+            <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
             <!-- Saved Username Display -->
             <div id="savedUsernameDisplay" class="saved-username">
