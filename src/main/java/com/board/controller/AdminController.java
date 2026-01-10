@@ -52,6 +52,9 @@ public class AdminController {
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
     private final ReportRepository reportRepository;
+    private final com.board.service.CommunityService communityService;
+    private final com.board.service.CommunityStatisticsService communityStatisticsService;
+    private final com.board.repository.CommunityRepository communityRepository;
 
     @GetMapping
     public String dashboard(Model model) {
@@ -63,6 +66,8 @@ public class AdminController {
         long totalComments = commentRepository.count();
         long totalLikes = likeRepository.count();
         long pendingReports = reportService.getPendingReportCount();
+        long totalCommunities = communityRepository.count();
+        long activeCommunities = communityRepository.countByIsActive(true);
 
         // Recent boards
         List<Board> recentBoards = boardRepository.findTop10ByOrderByCreatedAtDescTitleAsc();
@@ -73,6 +78,8 @@ public class AdminController {
         model.addAttribute("totalComments", totalComments);
         model.addAttribute("totalLikes", totalLikes);
         model.addAttribute("pendingReports", pendingReports);
+        model.addAttribute("totalCommunities", totalCommunities);
+        model.addAttribute("activeCommunities", activeCommunities);
         model.addAttribute("recentBoards", recentBoards);
 
         return "admin/dashboard";
@@ -1401,6 +1408,202 @@ public class AdminController {
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "기본 역할 및 메뉴가 초기화되었습니다."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    // ==================== 커뮤니티 관리 ====================
+
+    /**
+     * 커뮤니티 관리 페이지
+     */
+    @GetMapping("/communities")
+    public String communities(Model model) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        List<com.board.entity.Community> communities = communityRepository.findAll();
+
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("communities", communities);
+
+        return "admin/communities";
+    }
+
+    /**
+     * 커뮤니티 활성화/비활성화 토글
+     */
+    @PostMapping("/communities/{id}/toggle-active")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> toggleCommunityActive(@PathVariable Long id) {
+        try {
+            com.board.entity.Community community = communityService.toggleCommunityActive(id);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "커뮤니티 상태가 변경되었습니다.",
+                "isActive", community.getIsActive()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 커뮤니티 삭제
+     */
+    @PostMapping("/communities/{id}/delete")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteCommunity(@PathVariable Long id) {
+        try {
+            communityService.deleteCommunity(id);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "커뮤니티가 삭제되었습니다."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 커뮤니티 대량 삭제
+     */
+    @PostMapping("/communities/bulk-delete")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> bulkDeleteCommunities(@RequestBody Map<String, List<Long>> request) {
+        try {
+            List<Long> communityIds = request.get("communityIds");
+            if (communityIds == null || communityIds.isEmpty()) {
+                throw new RuntimeException("삭제할 커뮤니티를 선택해주세요.");
+            }
+
+            for (Long communityId : communityIds) {
+                communityService.deleteCommunity(communityId);
+            }
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", communityIds.size() + "개의 커뮤니티가 삭제되었습니다."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 커뮤니티 대량 활성화/비활성화
+     */
+    @PostMapping("/communities/bulk-toggle")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> bulkToggleCommunities(@RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Long> communityIds = (List<Long>) request.get("communityIds");
+            Boolean active = (Boolean) request.get("active");
+
+            if (communityIds == null || communityIds.isEmpty()) {
+                throw new RuntimeException("선택된 커뮤니티가 없습니다.");
+            }
+
+            for (Long communityId : communityIds) {
+                com.board.entity.Community community = communityService.getCommunityByIdBasic(communityId);
+                if (!community.getIsActive().equals(active)) {
+                    communityService.toggleCommunityActive(communityId);
+                }
+            }
+
+            String status = active ? "활성화" : "비활성화";
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", communityIds.size() + "개의 커뮤니티가 " + status + "되었습니다."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 커뮤니티 통계 조회
+     */
+    @GetMapping("/communities/statistics")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getCommunityStatistics() {
+        try {
+            Map<String, Object> stats = new HashMap<>();
+
+            // 전체 통계
+            long totalCommunities = communityRepository.count();
+            long activeCommunities = communityRepository.countByIsActive(true);
+            long inactiveCommunities = communityRepository.countByIsActive(false);
+
+            stats.put("totalCommunities", totalCommunities);
+            stats.put("activeCommunities", activeCommunities);
+            stats.put("inactiveCommunities", inactiveCommunities);
+
+            // 타입별 통계
+            long publicCount = communityRepository.countByType(com.board.enums.CommunityType.PUBLIC);
+            long privateCount = communityRepository.countByType(com.board.enums.CommunityType.PRIVATE);
+            long secretCount = communityRepository.countByType(com.board.enums.CommunityType.SECRET);
+
+            stats.put("publicCount", publicCount);
+            stats.put("privateCount", privateCount);
+            stats.put("secretCount", secretCount);
+
+            // 최근 생성 통계
+            LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+            LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+
+            long recentCommunities7Days = communityRepository.countByCreatedAtAfter(sevenDaysAgo);
+            long recentCommunities30Days = communityRepository.countByCreatedAtAfter(thirtyDaysAgo);
+
+            stats.put("recentCommunities7Days", recentCommunities7Days);
+            stats.put("recentCommunities30Days", recentCommunities30Days);
+
+            // 상위 커뮤니티 (멤버 수, 게시글 수)
+            List<com.board.entity.Community> topByMembers = communityRepository.findTop5ByOrderByMemberCountDesc();
+            List<com.board.entity.Community> topByBoards = communityRepository.findTop5ByOrderByBoardCountDesc();
+
+            stats.put("topByMembers", topByMembers);
+            stats.put("topByBoards", topByBoards);
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", stats
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 커뮤니티 상세 통계 조회
+     */
+    @GetMapping("/communities/{id}/statistics")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getCommunityDetailStatistics(@PathVariable Long id) {
+        try {
+            Map<String, Object> stats = communityStatisticsService.getCommunityStatistics(id);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", stats
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(

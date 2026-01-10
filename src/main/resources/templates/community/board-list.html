@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>커뮤니티 게시판</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .categories {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .category-btn {
+            padding: 8px 16px;
+            background-color: #e9ecef;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .category-btn:hover, .category-btn.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 30px;
+        }
+        .pagination a {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .pagination a.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>커뮤니티 게시판</h1>
+        <div>
+            <a th:href="@{/community/{id}(id=${communityId})}" class="btn btn-secondary">커뮤니티로</a>
+            <a th:if="${currentUser != null}" th:href="@{/community/{id}/board/new(id=${communityId})}" class="btn">게시글 작성</a>
+        </div>
+    </div>
+
+    <!-- 카테고리 필터 -->
+    <div class="categories" th:if="${categories != null && !categories.isEmpty()}">
+        <a th:href="@{/community/{id}/board(id=${communityId})}"
+           class="category-btn"
+           th:classappend="${selectedCategoryId == null} ? 'active' : ''">
+            전체
+        </a>
+        <a th:each="category : ${categories}"
+           th:href="@{/community/{id}/board(id=${communityId}, categoryId=${category.id})}"
+           class="category-btn"
+           th:classappend="${selectedCategoryId == category.id} ? 'active' : ''"
+           th:text="${category.name}">
+        </a>
+    </div>
+
+    <!-- 게시글 목록 -->
+    <table th:if="${boards != null && !boards.isEmpty()}">
+        <thead>
+        <tr>
+            <th>번호</th>
+            <th>제목</th>
+            <th>작성자</th>
+            <th>작성일</th>
+            <th>조회</th>
+            <th>좋아요</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="board, iterStat : ${boards.content}">
+            <td th:text="${boards.totalElements - (boards.number * boards.size) - iterStat.index}"></td>
+            <td>
+                <a th:href="@{/board/{id}(id=${board.id})}" th:text="${board.title}"></a>
+                <span th:if="${board.commentCount > 0}" th:text="'[' + ${board.commentCount} + ']'" style="color: #28a745;"></span>
+            </td>
+            <td th:text="${board.nickname}"></td>
+            <td th:text="${#temporals.format(board.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+            <td th:text="${board.viewCount}"></td>
+            <td th:text="${board.likeCount}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="no-data" th:if="${boards == null || boards.isEmpty()}">
+        게시글이 없습니다.
+    </div>
+
+    <!-- 페이징 -->
+    <div class="pagination" th:if="${boards != null && !boards.isEmpty() && boards.totalPages > 1}">
+        <a th:if="${boards.number > 0}"
+           th:href="@{/community/{id}/board(id=${communityId}, page=${boards.number - 1}, categoryId=${selectedCategoryId})}">
+            이전
+        </a>
+        <span th:each="i : ${#numbers.sequence(0, boards.totalPages - 1)}">
+            <a th:href="@{/community/{id}/board(id=${communityId}, page=${i}, categoryId=${selectedCategoryId})}"
+               th:text="${i + 1}"
+               th:classappend="${i == boards.number} ? 'active' : ''">
+            </a>
+        </span>
+        <a th:if="${boards.number < boards.totalPages - 1}"
+           th:href="@{/community/{id}/board(id=${communityId}, page=${boards.number + 1}, categoryId=${selectedCategoryId})}">
+            다음
+        </a>
+    </div>
+</div>
+</body>
+</html>

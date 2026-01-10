@@ -87,6 +87,11 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     long countByIsActive(Boolean isActive);
 
     /**
+     * 활성 커뮤니티 수 (간편 메서드)
+     */
+    long countByIsActiveTrue();
+
+    /**
      * 타입별 커뮤니티 수
      */
     long countByType(CommunityType type);
@@ -95,4 +100,24 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
      * 최근 생성된 커뮤니티 수
      */
     long countByCreatedAtAfter(LocalDateTime since);
+
+    /**
+     * 멤버 수 기준 순위 계산용
+     */
+    long countByMemberCountGreaterThan(Integer memberCount);
+
+    /**
+     * 게시글 수 기준 순위 계산용
+     */
+    long countByBoardCountGreaterThan(Integer boardCount);
+
+    /**
+     * 멤버 수 상위 커뮤니티 조회
+     */
+    List<Community> findTop5ByOrderByMemberCountDesc();
+
+    /**
+     * 게시글 수 상위 커뮤니티 조회
+     */
+    List<Community> findTop5ByOrderByBoardCountDesc();
 }

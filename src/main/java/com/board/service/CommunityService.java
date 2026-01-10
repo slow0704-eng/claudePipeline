@@ -314,4 +314,22 @@ public class CommunityService {
         // PRIVATE, SECRET 커뮤니티는 멤버만 접근 가능
         return isMember(communityId, userId);
     }
+
+    // ==================== 통계 조회 메서드 ====================
+
+    /**
+     * 전체 활성 커뮤니티 수 조회
+     */
+    @Transactional(readOnly = true)
+    public long getTotalActiveCommunityCount() {
+        return communityRepository.countByIsActiveTrue();
+    }
+
+    /**
+     * 타입별 커뮤니티 수 조회
+     */
+    @Transactional(readOnly = true)
+    public long getCountByType(CommunityType type) {
+        return communityRepository.countByType(type);
+    }
 }

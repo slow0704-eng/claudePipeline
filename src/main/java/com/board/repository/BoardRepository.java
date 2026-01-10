@@ -296,7 +296,28 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     long countByCommunityIdAndIsDraftFalse(Long communityId);
 
     /**
+     * 커뮤니티별 임시저장 게시글 수
+     */
+    long countByCommunityIdAndIsDraftTrue(Long communityId);
+
+    /**
      * 특정 시간 이후 커뮤니티 게시글 수
      */
     long countByCommunityIdAndCreatedAtAfter(Long communityId, LocalDateTime since);
+
+    /**
+     * 특정 기간 내 커뮤니티 게시글 수
+     */
+    long countByCommunityIdAndCreatedAtBetween(Long communityId, LocalDateTime start, LocalDateTime end);
+
+    /**
+     * 커뮤니티 내 상위 활동 멤버 조회 (게시글 수 기준)
+     * @return Object[] { userId, nickname, boardCount }
+     */
+    @Query("SELECT b.userId, b.nickname, COUNT(b) as boardCount " +
+           "FROM Board b " +
+           "WHERE b.communityId = :communityId AND b.isDraft = false " +
+           "GROUP BY b.userId, b.nickname " +
+           "ORDER BY boardCount DESC")
+    List<Object[]> findTopActiveMembersByCommunity(@Param("communityId") Long communityId);
 }

@@ -52,10 +52,19 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
     long countByCommunityId(Long communityId);
 
     /**
+     * 역할별 멤버 수
+     */
+    long countByCommunityIdAndRole(Long communityId, CommunityRole role);
+
+    /**
      * 특정 시간 이후 가입한 멤버 수
      */
-    @Query("SELECT COUNT(cm) FROM CommunityMember cm WHERE cm.communityId = :communityId AND cm.joinedAt >= :since")
-    long countByJoinedAtAfter(@Param("communityId") Long communityId, @Param("since") LocalDateTime since);
+    long countByCommunityIdAndJoinedAtAfter(Long communityId, LocalDateTime since);
+
+    /**
+     * 특정 기간 내 가입한 멤버 수
+     */
+    long countByCommunityIdAndJoinedAtBetween(Long communityId, LocalDateTime start, LocalDateTime end);
 
     /**
      * 멤버 삭제

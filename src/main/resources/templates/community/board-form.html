@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 작성</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        textarea {
+            min-height: 300px;
+            resize: vertical;
+        }
+        select {
+            cursor: pointer;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>커뮤니티 게시글 작성</h1>
+
+    <div class="error" th:if="${error}" th:text="${error}"></div>
+
+    <form th:action="@{/community/{id}/board(id=${communityId})}" method="post">
+        <input type="hidden" name="communityId" th:value="${communityId}">
+
+        <!-- 카테고리 선택 -->
+        <div class="form-group" th:if="${categories != null && !categories.isEmpty()}">
+            <label for="communityCategoryId">카테고리</label>
+            <select id="communityCategoryId" name="communityCategoryId">
+                <option value="">선택 안함</option>
+                <option th:each="category : ${categories}"
+                        th:value="${category.id}"
+                        th:text="${category.name}"
+                        th:selected="${selectedCategoryId != null && selectedCategoryId == category.id}">
+                </option>
+            </select>
+        </div>
+
+        <!-- 제목 -->
+        <div class="form-group">
+            <label for="title">제목 <span style="color: red;">*</span></label>
+            <input type="text" id="title" name="title" required
+                   maxlength="200"
+                   placeholder="제목을 입력하세요"
+                   th:value="${request != null} ? ${request.title} : ''">
+        </div>
+
+        <!-- 내용 -->
+        <div class="form-group">
+            <label for="content">내용 <span style="color: red;">*</span></label>
+            <textarea id="content" name="content" required
+                      maxlength="10000"
+                      placeholder="내용을 입력하세요"
+                      th:text="${request != null} ? ${request.content} : ''"></textarea>
+        </div>
+
+        <!-- 임시저장 옵션 -->
+        <div class="form-group">
+            <div class="checkbox-group">
+                <input type="checkbox" id="isDraft" name="isDraft" value="true">
+                <label for="isDraft" style="margin: 0;">임시저장</label>
+            </div>
+        </div>
+
+        <!-- 버튼 -->
+        <div class="btn-group">
+            <button type="submit" class="btn">작성하기</button>
+            <a th:href="@{/community/{id}/board(id=${communityId})}" class="btn btn-secondary">취소</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

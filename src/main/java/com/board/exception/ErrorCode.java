@@ -16,6 +16,7 @@ public enum ErrorCode {
     METHOD_NOT_ALLOWED("COMMON_003", "지원하지 않는 HTTP 메서드입니다."),
     ACCESS_DENIED("COMMON_004", "접근 권한이 없습니다."),
     NOT_FOUND("COMMON_005", "리소스를 찾을 수 없습니다."),
+    AUTHENTICATION_REQUIRED("COMMON_006", "로그인이 필요합니다."),
 
     // User
     USER_NOT_FOUND("USER_001", "사용자를 찾을 수 없습니다."),
@@ -112,6 +113,7 @@ public enum ErrorCode {
 
     // Community Category
     COMMUNITY_CATEGORY_NOT_FOUND("COMMUNITY_CATEGORY_001", "커뮤니티 카테고리를 찾을 수 없습니다."),
+    INVALID_CATEGORY("COMMUNITY_CATEGORY_002", "유효하지 않은 카테고리입니다."),
 
     // Invitation
     INVITATION_NOT_FOUND("INVITATION_001", "초대를 찾을 수 없습니다."),

@@ -86,6 +86,7 @@ public class SecurityConfig {
                 .requestMatchers("/community/new", "/community/*/edit", "/community/*/delete").hasAnyRole("MEMBER", "ADMIN")
                 .requestMatchers("/community/*/join", "/community/*/leave").hasAnyRole("MEMBER", "ADMIN")
                 .requestMatchers("/community/*/members/**").hasAnyRole("MEMBER", "ADMIN")
+                .requestMatchers("/community/*/board/new", "/community/*/board/categories/**").hasAnyRole("MEMBER", "ADMIN")
 
                 // Admin only
                 .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -96,7 +97,8 @@ public class SecurityConfig {
                     .requestMatchers("/topics/explore", "/topics/**").permitAll()
 
                     // Community - public access (must come after member-only /community patterns)
-                    .requestMatchers("/community", "/community/{id}").permitAll()
+                    .requestMatchers("/community", "/community/{id}", "/community/*/board", "/community/explore").permitAll()
+                    .requestMatchers("/community/explore/api/**").permitAll()
 
                     .anyRequest().authenticated();
             })

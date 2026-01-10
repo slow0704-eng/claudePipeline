@@ -515,4 +515,80 @@ public class BoardService {
         }
         return boardRepository.searchByKeyword(keyword, pageable);
     }
+
+    // ==================== 커뮤니티 게시판 통합 ====================
+
+    /**
+     * 커뮤니티 게시글 조회
+     */
+    @Transactional(readOnly = true)
+    public Page<Board> getCommunityBoards(Long communityId, Pageable pageable) {
+        return boardRepository.findByCommunityIdWithUser(communityId, pageable);
+    }
+
+    /**
+     * 커뮤니티 + 카테고리별 게시글 조회
+     */
+    @Transactional(readOnly = true)
+    public Page<Board> getCommunityBoardsByCategory(Long communityId, Long categoryId, Pageable pageable) {
+        return boardRepository.findByCommunityIdAndCategoryIdWithUser(communityId, categoryId, pageable);
+    }
+
+    /**
+     * 커뮤니티 게시글 생성
+     * 멤버 여부 확인 필수
+     */
+    @Transactional
+    public Board createCommunityBoard(Board board, Long communityId, Long communityCategoryId) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+        if (currentUser == null) {
+            throw new BusinessException(ErrorCode.AUTHENTICATION_REQUIRED);
+        }
+
+        // 커뮤니티 설정
+        board.setCommunityId(communityId);
+        board.setCommunityCategoryId(communityCategoryId);
+
+        // 작성자 정보 설정
+        board.setUserId(currentUser.getId());
+        board.setNickname(currentUser.getNickname());
+        board.setAuthor(currentUser.getNickname());
+
+        // 카운트 필드 명시적 초기화
+        if (board.getViewCount() == null) {
+            board.setViewCount(0);
+        }
+        if (board.getLikeCount() == null) {
+            board.setLikeCount(0);
+        }
+        if (board.getCommentCount() == null) {
+            board.setCommentCount(0);
+        }
+
+        Board savedBoard = boardRepository.save(board);
+
+        // 해시태그 자동 추출 및 저장 (임시저장이 아닌 경우에만)
+        if (!Boolean.TRUE.equals(board.getIsDraft())) {
+            String contentWithTitle = board.getTitle() + " " + board.getContent();
+            hashtagService.updateBoardHashtags(savedBoard.getId(), contentWithTitle);
+        }
+
+        return savedBoard;
+    }
+
+    /**
+     * 커뮤니티 게시글 수 조회
+     */
+    @Transactional(readOnly = true)
+    public long getCommunityBoardCount(Long communityId) {
+        return boardRepository.countByCommunityIdAndIsDraftFalse(communityId);
+    }
+
+    /**
+     * 커뮤니티 최근 게시글 수 조회 (활동 통계용)
+     */
+    @Transactional(readOnly = true)
+    public long getRecentCommunityBoardCount(Long communityId, LocalDateTime since) {
+        return boardRepository.countByCommunityIdAndCreatedAtAfter(communityId, since);
+    }
 }

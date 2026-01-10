@@ -280,6 +280,16 @@ public class CommunityMemberService {
     }
 
     /**
+     * 멤버의 역할 조회
+     */
+    @Transactional(readOnly = true)
+    public CommunityRole getMemberRole(Long communityId, Long userId) {
+        CommunityMember member = communityMemberRepository.findByCommunityIdAndUserId(communityId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        return member.getRole();
+    }
+
+    /**
      * 멤버 수 조회
      */
     @Transactional(readOnly = true)
