@@ -52,21 +52,23 @@ public class CommentServiceIntegrationTest {
         userRepository.deleteAll();
 
         // Create test user
-        testUser = new User();
-        testUser.setUsername("testuser");
-        testUser.setPassword(passwordEncoder.encode("password"));
-        testUser.setNickname("테스트유저");
-        testUser.setRole(UserRole.MEMBER);
-        testUser.setEnabled(true);
+        testUser = User.builder()
+                .username("testuser")
+                .password(passwordEncoder.encode("password"))
+                .nickname("테스트유저")
+                .role(UserRole.MEMBER)
+                .enabled(true)
+                .build();
         testUser = userRepository.save(testUser);
 
         // Create test board
-        testBoard = new Board();
-        testBoard.setTitle("테스트 게시글");
-        testBoard.setContent("테스트 내용");
-        testBoard.setUserId(testUser.getId());
-        testBoard.setNickname(testUser.getNickname());
-        testBoard.setAuthor(testUser.getNickname());
+        testBoard = Board.builder()
+                .title("테스트 게시글")
+                .content("테스트 내용")
+                .userId(testUser.getId())
+                .nickname(testUser.getNickname())
+                .author(testUser.getNickname())
+                .build();
         testBoard = boardRepository.save(testBoard);
 
         // Set authentication with UserDetails
@@ -143,12 +145,13 @@ public class CommentServiceIntegrationTest {
         Comment comment = commentService.createComment(testBoard.getId(), "댓글", null);
 
         // Create another user
-        User anotherUser = new User();
-        anotherUser.setUsername("another");
-        anotherUser.setPassword(passwordEncoder.encode("password"));
-        anotherUser.setNickname("다른유저");
-        anotherUser.setRole(UserRole.MEMBER);
-        anotherUser.setEnabled(true);
+        User anotherUser = User.builder()
+                .username("another")
+                .password(passwordEncoder.encode("password"))
+                .nickname("다른유저")
+                .role(UserRole.MEMBER)
+                .enabled(true)
+                .build();
         anotherUser = userRepository.save(anotherUser);
 
         // Change authentication
