@@ -154,8 +154,8 @@
     <script th:inline="javascript">
         /*<![CDATA[*/
         const hashtagName = /*[[${hashtag.name}]]*/ '';
-        const csrfToken = /*[[${_csrf.token}]]*/ '';
-        const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+        const csrfToken = /*[[${_csrf != null ? _csrf.token : ''}]]*/ '';
+        const csrfHeader = /*[[${_csrf != null ? _csrf.headerName : ''}]]*/ '';
 
         function toggleFollow() {
             const params = new URLSearchParams();

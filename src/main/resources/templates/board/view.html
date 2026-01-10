@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}"/>
+    <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title th:text="${board.title}">게시글 보기</title>
     <style>
         * {
@@ -510,7 +510,7 @@
             crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="container" th:attr="data-csrf-token=${_csrf.token}, data-csrf-header=${_csrf.headerName}, data-board-id=${board.id}">
+    <div class="container" th:attr="data-csrf-token=${_csrf != null ? _csrf.token : ''}, data-csrf-header=${_csrf != null ? _csrf.headerName : ''}, data-board-id=${board.id}">
         <div class="header">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div style="flex: 1;">
