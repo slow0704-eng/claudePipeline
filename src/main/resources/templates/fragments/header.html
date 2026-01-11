@@ -33,6 +33,12 @@
                             <span>게시판</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a th:href="@{/community/explore}" class="nav-link">
+                            <i class="fas fa-users"></i>
+                            <span>커뮤니티</span>
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a href="#" class="nav-link" onclick="toggleDropdown('explore-dropdown', event)">
                             <i class="fas fa-compass"></i>
@@ -40,6 +46,7 @@
                             <i class="fas fa-chevron-down dropdown-icon"></i>
                         </a>
                         <ul class="dropdown-menu" id="explore-dropdown">
+                            <li><a th:href="@{/community/explore}"><i class="fas fa-users"></i> 커뮤니티 탐색</a></li>
                             <li><a th:href="@{/topics/explore}"><i class="fas fa-fire"></i> 토픽 탐색</a></li>
                             <li><a th:href="@{/hashtag/analytics}"><i class="fas fa-hashtag"></i> 해시태그 분석</a></li>
                         </ul>
@@ -148,6 +155,7 @@
             <nav class="mobile-nav">
                 <ul class="mobile-nav-list">
                     <li><a th:href="@{/board}"><i class="fas fa-home"></i> 게시판</a></li>
+                    <li><a th:href="@{/community/explore}"><i class="fas fa-users"></i> 커뮤니티</a></li>
                     <li><a th:href="@{/topics/explore}"><i class="fas fa-fire"></i> 토픽 탐색</a></li>
                     <li><a th:href="@{/hashtag/analytics}"><i class="fas fa-hashtag"></i> 해시태그 분석</a></li>
 
