@@ -55,6 +55,7 @@ public class AdminController {
     private final com.board.service.CommunityService communityService;
     private final com.board.service.CommunityStatisticsService communityStatisticsService;
     private final com.board.repository.CommunityRepository communityRepository;
+    private final com.board.service.AdminDashboardService adminDashboardService;
 
     @GetMapping
     public String dashboard(Model model) {
@@ -83,6 +84,63 @@ public class AdminController {
         model.addAttribute("recentBoards", recentBoards);
 
         return "admin/dashboard";
+    }
+
+    // ==================== 대시보드 API ====================
+
+    /**
+     * 대시보드 통계 API
+     */
+    @GetMapping("/dashboard/api/stats")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getDashboardStats() {
+        try {
+            Map<String, Object> stats = adminDashboardService.getDashboardStats();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", stats
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 종합 통계 페이지
+     */
+    @GetMapping("/statistics")
+    public String statistics(Model model) {
+        User currentUser = AuthenticationUtils.getCurrentUser(userService);
+
+        Map<String, Object> stats = adminDashboardService.getComprehensiveStats();
+
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("stats", stats);
+
+        return "admin/statistics";
+    }
+
+    /**
+     * 종합 통계 API
+     */
+    @GetMapping("/statistics/api")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getStatisticsApi() {
+        try {
+            Map<String, Object> stats = adminDashboardService.getComprehensiveStats();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", stats
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
     }
 
     @GetMapping("/users")
@@ -1427,8 +1485,19 @@ public class AdminController {
         User currentUser = AuthenticationUtils.getCurrentUser(userService);
         List<com.board.entity.Community> communities = communityRepository.findAll();
 
+        // 통계 데이터 추가
+        long totalCommunities = communityRepository.count();
+        long activeCommunities = communityRepository.countByIsActive(true);
+        long inactiveCommunities = communityRepository.countByIsActive(false);
+        java.time.LocalDateTime sevenDaysAgo = java.time.LocalDateTime.now().minusDays(7);
+        long recentCommunities7Days = communityRepository.countByCreatedAtAfter(sevenDaysAgo);
+
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("communities", communities);
+        model.addAttribute("totalCommunities", totalCommunities);
+        model.addAttribute("activeCommunities", activeCommunities);
+        model.addAttribute("inactiveCommunities", inactiveCommunities);
+        model.addAttribute("recentCommunities7Days", recentCommunities7Days);
 
         return "admin/communities";
     }

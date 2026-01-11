@@ -320,4 +320,34 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
            "GROUP BY b.userId, b.nickname " +
            "ORDER BY boardCount DESC")
     List<Object[]> findTopActiveMembersByCommunity(@Param("communityId") Long communityId);
+
+    // ==================== 대시보드 통계용 메서드 ====================
+
+    /**
+     * 최근 10개 게시글 조회 (작성일 내림차순)
+     */
+    List<Board> findTop10ByOrderByCreatedAtDesc();
+
+    /**
+     * 특정 기간 이후 조회수 내림차순 상위 10개
+     */
+    List<Board> findTop10ByCreatedAtAfterOrderByViewCountDesc(LocalDateTime since);
+
+    /**
+     * 총 조회수 합계
+     */
+    @Query("SELECT COALESCE(SUM(b.viewCount), 0) FROM Board b")
+    Long sumViewCount();
+
+    /**
+     * 총 좋아요 합계
+     */
+    @Query("SELECT COALESCE(SUM(b.likeCount), 0) FROM Board b")
+    Long sumLikeCount();
+
+    /**
+     * 평균 조회수
+     */
+    @Query("SELECT COALESCE(AVG(b.viewCount), 0) FROM Board b")
+    Double avgViewCount();
 }

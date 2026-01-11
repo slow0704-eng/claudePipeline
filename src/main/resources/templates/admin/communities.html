@@ -213,23 +213,28 @@
         </div>
 
         <!-- Statistics Grid -->
-        <div class="stats-grid" id="statsGrid" style="display: none;">
+        <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
                 <h3>전체 커뮤니티</h3>
-                <p id="statTotal">0</p>
+                <p id="statTotal" th:text="${totalCommunities != null ? totalCommunities : 0}">0</p>
             </div>
             <div class="stat-card">
                 <h3>활성 커뮤니티</h3>
-                <p id="statActive">0</p>
+                <p id="statActive" th:text="${activeCommunities != null ? activeCommunities : 0}">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>비활성 커뮤니티</h3>
+                <p id="statInactive" th:text="${inactiveCommunities != null ? inactiveCommunities : 0}">0</p>
             </div>
             <div class="stat-card">
                 <h3>최근 7일 생성</h3>
-                <p id="stat7Days">0</p>
+                <p id="stat7Days" th:text="${recentCommunities7Days != null ? recentCommunities7Days : 0}">0</p>
             </div>
-            <div class="stat-card">
-                <h3>최근 30일 생성</h3>
-                <p id="stat30Days">0</p>
-            </div>
+        </div>
+
+        <!-- Bulk Action Info -->
+        <div id="bulkActionInfo" style="display: none; background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <span style="font-weight: 600;"><span id="selectedCount">0</span>개 선택됨</span>
         </div>
 
         <div class="content-section">
@@ -297,14 +302,36 @@
 </div>
 
 <script>
-    const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-    const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+    const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+    const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || '';
 
     function toggleSelectAll() {
         const selectAll = document.getElementById('selectAll');
         const checkboxes = document.querySelectorAll('.community-checkbox');
         checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        updateSelectedCount();
     }
+
+    function updateSelectedCount() {
+        const selectedCount = getSelectedIds().length;
+        const bulkActionInfo = document.getElementById('bulkActionInfo');
+        const countSpan = document.getElementById('selectedCount');
+
+        if (selectedCount > 0) {
+            bulkActionInfo.style.display = 'block';
+            countSpan.textContent = selectedCount;
+        } else {
+            bulkActionInfo.style.display = 'none';
+        }
+    }
+
+    // Add event listeners to all checkboxes
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.community-checkbox');
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateSelectedCount);
+        });
+    });
 
     function getSelectedIds() {
         const checkboxes = document.querySelectorAll('.community-checkbox:checked');

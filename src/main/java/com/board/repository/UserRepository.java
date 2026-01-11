@@ -28,4 +28,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByCreatedAtAfter(LocalDateTime dateTime);
 
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    long countByLastLoginAtAfter(LocalDateTime dateTime);
+
+    long countByEnabled(boolean enabled);
+
+    java.util.List<User> findTop10ByOrderByCreatedAtDesc();
 }

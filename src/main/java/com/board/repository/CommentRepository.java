@@ -29,4 +29,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     long countByCreatedAtAfter(LocalDateTime dateTime);
 
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    // 대시보드 통계용
+    @Query("SELECT c FROM Comment c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.board ORDER BY c.createdAt DESC")
+    List<Comment> findTop10ByOrderByCreatedAtDesc();
 }

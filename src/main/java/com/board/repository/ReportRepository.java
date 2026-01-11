@@ -45,4 +45,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     long countByStatus(String status);
 
     long countByCreatedAtBetween(java.time.LocalDateTime start, java.time.LocalDateTime end);
+
+    // 대시보드 통계용
+    List<Report> findTop10ByStatusOrderByCreatedAtDesc(ReportStatus status);
 }
