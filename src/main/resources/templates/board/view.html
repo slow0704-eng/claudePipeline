@@ -886,7 +886,7 @@
         </div>
     </div>
 
-    <script>
+    <script th:inline="javascript">
         // container div에서 데이터 읽기 (즉시 실행)
         const container = document.querySelector('.container');
         const boardId = container ? container.getAttribute('data-board-id') : null;
