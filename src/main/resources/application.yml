@@ -95,6 +95,43 @@ file:
     thumbnail-width: 200
     thumbnail-height: 200
 
+# Springdoc OpenAPI (Swagger) 설정
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    doc-expansion: none
+  show-actuator: false
+  packages-to-scan: com.board.controller
+  paths-to-match: /api/**, /board/**, /auth/**, /comments/**, /likes/**, /messages/**
+
+# ===== APM 설정 (Actuator + Prometheus) =====
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when_authorized
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name:board}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+
 # Logging 기본 설정
 logging:
   pattern:

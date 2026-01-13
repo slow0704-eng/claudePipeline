@@ -42,6 +42,13 @@ spring:
     livereload:
       enabled: false
 
+# Swagger 비활성화 (운영 환경)
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
 # Logging 설정 (운영 환경 - 최소 로깅)
 logging:
   level:

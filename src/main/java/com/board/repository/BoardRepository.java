@@ -350,4 +350,74 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
      */
     @Query("SELECT COALESCE(AVG(b.viewCount), 0) FROM Board b")
     Double avgViewCount();
+
+    // ==================== 피드 관련 메서드 ====================
+
+    /**
+     * FOLLOWING 피드 - 팔로우한 사용자/커뮤니티/해시태그의 게시글
+     */
+    @Query(value = "SELECT DISTINCT b FROM Board b LEFT JOIN FETCH b.user " +
+           "LEFT JOIN BoardHashtag bh ON bh.boardId = b.id " +
+           "WHERE b.isDraft = false AND b.status = 'ACTIVE' " +
+           "AND (b.userId IN :followingUserIds " +
+           "     OR b.communityId IN :communityIds " +
+           "     OR bh.hashtagId IN :hashtagIds) " +
+           "AND b.userId NOT IN :mutedUserIds " +
+           "AND (b.communityId IS NULL OR b.communityId NOT IN :mutedCommunityIds) " +
+           "ORDER BY b.createdAt DESC",
+           countQuery = "SELECT COUNT(DISTINCT b) FROM Board b " +
+           "LEFT JOIN BoardHashtag bh ON bh.boardId = b.id " +
+           "WHERE b.isDraft = false AND b.status = 'ACTIVE' " +
+           "AND (b.userId IN :followingUserIds " +
+           "     OR b.communityId IN :communityIds " +
+           "     OR bh.hashtagId IN :hashtagIds) " +
+           "AND b.userId NOT IN :mutedUserIds " +
+           "AND (b.communityId IS NULL OR b.communityId NOT IN :mutedCommunityIds)")
+    Page<Board> findFollowingFeed(
+            @Param("followingUserIds") List<Long> followingUserIds,
+            @Param("communityIds") List<Long> communityIds,
+            @Param("hashtagIds") List<Long> hashtagIds,
+            @Param("mutedUserIds") List<Long> mutedUserIds,
+            @Param("mutedCommunityIds") List<Long> mutedCommunityIds,
+            Pageable pageable
+    );
+
+    /**
+     * TRENDING 피드 - 인기 게시글 (좋아요 + 댓글 + 조회수 기반)
+     */
+    @Query(value = "SELECT b FROM Board b LEFT JOIN FETCH b.user " +
+           "WHERE b.isDraft = false AND b.status = 'ACTIVE' " +
+           "AND b.createdAt > :since " +
+           "AND b.userId NOT IN :mutedUserIds " +
+           "AND (b.communityId IS NULL OR b.communityId NOT IN :mutedCommunityIds) " +
+           "ORDER BY (b.likeCount * 3 + b.commentCount * 2 + b.viewCount * 0.01) DESC, b.createdAt DESC",
+           countQuery = "SELECT COUNT(b) FROM Board b " +
+           "WHERE b.isDraft = false AND b.status = 'ACTIVE' " +
+           "AND b.createdAt > :since " +
+           "AND b.userId NOT IN :mutedUserIds " +
+           "AND (b.communityId IS NULL OR b.communityId NOT IN :mutedCommunityIds)")
+    Page<Board> findTrendingFeed(
+            @Param("since") LocalDateTime since,
+            @Param("mutedUserIds") List<Long> mutedUserIds,
+            @Param("mutedCommunityIds") List<Long> mutedCommunityIds,
+            Pageable pageable
+    );
+
+    /**
+     * LATEST 피드 - 최신순
+     */
+    @Query(value = "SELECT b FROM Board b LEFT JOIN FETCH b.user " +
+           "WHERE b.isDraft = false AND b.status = 'ACTIVE' " +
+           "AND b.userId NOT IN :mutedUserIds " +
+           "AND (b.communityId IS NULL OR b.communityId NOT IN :mutedCommunityIds) " +
+           "ORDER BY b.createdAt DESC",
+           countQuery = "SELECT COUNT(b) FROM Board b " +
+           "WHERE b.isDraft = false AND b.status = 'ACTIVE' " +
+           "AND b.userId NOT IN :mutedUserIds " +
+           "AND (b.communityId IS NULL OR b.communityId NOT IN :mutedCommunityIds)")
+    Page<Board> findLatestFeed(
+            @Param("mutedUserIds") List<Long> mutedUserIds,
+            @Param("mutedCommunityIds") List<Long> mutedCommunityIds,
+            Pageable pageable
+    );
 }

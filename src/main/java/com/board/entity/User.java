@@ -57,6 +57,12 @@ public class User {
     private String profileImage;
 
     /**
+     * 마지막 로그인 시간
+     */
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
+    /**
      * 탈퇴 시간
      */
     @Column(name = "deleted_at")

@@ -204,7 +204,7 @@ public class AdminDashboardService {
             Map<String, Object> map = new HashMap<>();
             map.put("id", board.getId());
             map.put("title", truncate(board.getTitle(), 30));
-            map.put("author", board.getAuthor().getNickname());
+            map.put("author", board.getNickname() != null ? board.getNickname() : board.getAuthor());
             map.put("viewCount", board.getViewCount());
             map.put("likeCount", board.getLikeCount());
             map.put("createdAt", board.getCreatedAt().format(formatter));
@@ -217,7 +217,7 @@ public class AdminDashboardService {
             Map<String, Object> map = new HashMap<>();
             map.put("boardId", comment.getBoard().getId());
             map.put("content", truncate(comment.getContent(), 50));
-            map.put("author", comment.getAuthor().getNickname());
+            map.put("author", comment.getNickname());
             map.put("boardTitle", truncate(comment.getBoard().getTitle(), 20));
             map.put("createdAt", comment.getCreatedAt().format(formatter));
             return map;
@@ -228,9 +228,9 @@ public class AdminDashboardService {
         activity.put("recentReports", recentReports.stream().map(report -> {
             Map<String, Object> map = new HashMap<>();
             map.put("targetType", report.getTargetType().name());
-            map.put("reportType", report.getReportType().name());
-            map.put("reporter", report.getReporter().getNickname());
-            map.put("reason", truncate(report.getReason(), 30));
+            map.put("reportType", report.getReason().name());
+            map.put("reporterId", report.getReporterId());
+            map.put("reason", truncate(report.getDescription(), 30));
             map.put("priority", "NORMAL"); // 기본 우선순위
             return map;
         }).toList());
@@ -269,7 +269,7 @@ public class AdminDashboardService {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", board.getId());
                 map.put("title", truncate(board.getTitle(), 40));
-                map.put("author", board.getAuthor().getNickname());
+                map.put("author", board.getNickname() != null ? board.getNickname() : board.getAuthor());
                 map.put("viewCount", board.getViewCount());
                 map.put("likeCount", board.getLikeCount());
                 map.put("commentCount", board.getCommentCount());

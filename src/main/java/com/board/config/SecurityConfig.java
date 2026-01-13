@@ -28,7 +28,9 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring()
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico", "/static/**");
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico", "/static/**")
+                // Swagger UI 리소스
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**");
     }
 
     @Bean
@@ -52,7 +54,13 @@ public class SecurityConfig {
                     .requestMatchers("/auth/login", "/auth/register", "/auth/find-username", "/auth/find-password", "/auth/reset-password").permitAll()
 
                     // Legal pages - 모든 사용자 접근 가능
-                    .requestMatchers("/legal/**").permitAll();
+                    .requestMatchers("/legal/**").permitAll()
+
+                    // Swagger UI
+                    .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
+
+                    // Actuator endpoints (APM/Prometheus)
+                    .requestMatchers("/actuator/**").permitAll();
 
                 // Debug tools - 개발 환경에서만 허용
                 if (isDevEnvironment) {
@@ -81,6 +89,8 @@ public class SecurityConfig {
                 .requestMatchers("/messages/**").hasAnyRole("MEMBER", "ADMIN")
                 .requestMatchers("/api/shares/**").hasAnyRole("MEMBER", "ADMIN")
                 .requestMatchers("/mypage/**").hasAnyRole("MEMBER", "ADMIN")
+                .requestMatchers("/feed/**").hasAnyRole("MEMBER", "ADMIN")
+                .requestMatchers("/timeline/**").hasAnyRole("MEMBER", "ADMIN")
 
                 // Community - member only (must come before public /community patterns)
                 .requestMatchers("/community/new", "/community/*/edit", "/community/*/delete").hasAnyRole("MEMBER", "ADMIN")
