@@ -86,28 +86,6 @@ public class AdminController {
         return "admin/dashboard";
     }
 
-    // ==================== 대시보드 API ====================
-
-    /**
-     * 대시보드 통계 API
-     */
-    @GetMapping("/dashboard/api/stats")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> getDashboardStats() {
-        try {
-            Map<String, Object> stats = adminDashboardService.getDashboardStats();
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", stats
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", e.getMessage()
-            ));
-        }
-    }
-
     /**
      * 종합 통계 페이지
      */
