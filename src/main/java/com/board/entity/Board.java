@@ -91,7 +91,7 @@ public class Board {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "reaction_counts", columnDefinition = "jsonb")
-    private String reactionCounts = "{\"LIKE\":0,\"HELPFUL\":0,\"FUNNY\":0,\"WOW\":0,\"SAD\":0,\"ANGRY\":0,\"THINKING\":0,\"CELEBRATE\":0}";
+    private String reactionCounts = "{\"LIKE\":0,\"LOVE\":0,\"HAHA\":0,\"WOW\":0,\"SAD\":0,\"ANGRY\":0}";
 
     @Column(name = "comment_count")
     private Integer commentCount = 0;
