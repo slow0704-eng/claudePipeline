@@ -4,10 +4,11 @@
  */
 
 :root {
-    /* Primary Colors */
-    --color-primary: #007bff;
-    --color-primary-dark: #0056b3;
-    --color-primary-light: #e7f3ff;
+    /* Primary Colors - Modern Purple-Blue Gradient Theme */
+    --color-primary: #667eea;
+    --color-primary-dark: #5a67d8;
+    --color-primary-light: #e8ebff;
+    --color-primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 
     /* Secondary Colors */
     --color-secondary: #6c757d;
@@ -104,4 +105,27 @@
     --container-lg: 960px;
     --container-xl: 1140px;
     --container-2xl: 1320px;
+
+    /* Touch Target - WCAG 2.5.5 AAA compliance */
+    --touch-target-min: 44px;
+    --touch-target-comfortable: 48px;
+
+    /* Responsive Font Sizes (using clamp for fluid typography) */
+    --font-size-responsive-sm: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    --font-size-responsive-base: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+    --font-size-responsive-lg: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+    --font-size-responsive-xl: clamp(1.25rem, 1rem + 1.25vw, 1.75rem);
+    --font-size-responsive-2xl: clamp(1.5rem, 1.25rem + 1.25vw, 2rem);
+
+    /* Mobile-first breakpoints */
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+
+    /* Safe area insets for notched devices */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
 }

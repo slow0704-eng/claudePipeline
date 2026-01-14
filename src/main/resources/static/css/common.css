@@ -5,16 +5,16 @@
 
 /* ========== CSS 변수 ========== */
 :root {
-    /* 색상 */
+    /* 색상 - variables.css와 통합 */
     --primary-color: #667eea;
-    --primary-dark: #5568d3;
+    --primary-dark: #5a67d8;
     --secondary-color: #764ba2;
     --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --gradient-dark: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
 
-    /* 버튼 색상 */
-    --btn-blue: #007bff;
-    --btn-blue-hover: #0056b3;
+    /* 버튼 색상 - 새로운 primary 적용 */
+    --btn-blue: #667eea;
+    --btn-blue-hover: #5a67d8;
     --btn-success: #28a745;
     --btn-danger: #dc3545;
     --btn-warning: #ffc107;
@@ -37,21 +37,25 @@
     --border-light: #eeeeee;
     --border-radius-sm: 5px;
     --border-radius-md: 8px;
-    --border-radius-lg: 10px;
-    --border-radius-xl: 15px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
 
     /* 그림자 */
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 
     /* 전환 효과 */
     --transition-base: 0.3s ease;
     --transition-fast: 0.2s ease;
 
     /* 레이아웃 */
-    --header-height: 60px;
+    --header-height: 64px;
     --container-max-width: 1200px;
+
+    /* 터치 타겟 (WCAG 2.5.5) */
+    --touch-target-min: 44px;
+    --touch-target-comfortable: 48px;
 }
 
 /* ========== 리셋 ========== */
@@ -401,9 +405,17 @@ input, textarea, select {
 /* 모바일 메뉴 토글 */
 .mobile-menu-toggle {
     display: none;
-    padding: 8px;
+    padding: 12px;
     color: white;
-    font-size: 20px;
+    font-size: 22px;
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+    border-radius: var(--border-radius-md);
+    transition: var(--transition-fast);
+}
+
+.mobile-menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* 모바일 메뉴 */
@@ -414,25 +426,30 @@ input, textarea, select {
     max-height: 0;
     overflow: hidden;
     transition: max-height var(--transition-base);
+    box-shadow: var(--shadow-lg);
 }
 
 .mobile-menu.show {
-    max-height: 500px;
+    max-height: 600px;
+    overflow-y: auto;
 }
 
 .mobile-nav-list {
-    padding: 10px 0;
+    padding: 12px 0;
 }
 
 .mobile-nav-list li a,
 .mobile-nav-list li button {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 20px;
+    gap: 12px;
+    padding: 14px 20px;
+    min-height: var(--touch-target-comfortable);
     color: var(--text-primary);
     width: 100%;
     text-align: left;
+    font-size: 15px;
+    transition: var(--transition-fast);
 }
 
 .mobile-nav-list li a:hover,
@@ -440,9 +457,21 @@ input, textarea, select {
     background-color: var(--bg-light);
 }
 
+.mobile-nav-list li a:active,
+.mobile-nav-list li button:active {
+    background-color: var(--border-light);
+}
+
+.mobile-nav-list li i {
+    width: 20px;
+    text-align: center;
+    color: var(--primary-color);
+}
+
 .mobile-nav-list .mobile-write-btn {
     color: var(--primary-color);
     font-weight: 600;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
 }
 
 .mobile-nav-list .mobile-logout-btn {
@@ -452,7 +481,7 @@ input, textarea, select {
 .mobile-nav-list .divider {
     height: 1px;
     background-color: var(--border-light);
-    margin: 10px 20px;
+    margin: 8px 20px;
 }
 
 /* ========== 푸터 스타일 ========== */
@@ -608,7 +637,9 @@ input, textarea, select {
     }
 
     .mobile-menu-toggle {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .mobile-menu {
@@ -616,11 +647,58 @@ input, textarea, select {
     }
 
     .header-actions {
-        gap: 5px;
+        gap: 6px;
     }
 
     .header-btn {
-        padding: 8px;
+        padding: 10px;
+        min-width: var(--touch-target-min);
+        min-height: var(--touch-target-min);
+        border-radius: var(--border-radius-md);
+    }
+
+    .header-btn i {
+        font-size: 18px;
+    }
+
+    /* 알림 드롭다운 모바일 */
+    .notification-dropdown {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-height: 70vh;
+        border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
+        margin-top: 0;
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .profile-dropdown {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
+        animation: slideUp 0.3s ease;
+    }
+
+    .dropdown-menu a,
+    .dropdown-logout-btn {
+        min-height: var(--touch-target-comfortable);
+        padding: 14px 20px;
     }
 
     /* 푸터 */
@@ -638,24 +716,26 @@ input, textarea, select {
     /* 레이아웃 */
     .main-content,
     .container {
-        padding: 10px;
+        padding: 12px;
     }
 
     .page-wrapper {
         padding: 20px;
+        border-radius: var(--border-radius-lg);
     }
 
     .scroll-to-top {
         bottom: 20px;
         right: 20px;
-        width: 45px;
-        height: 45px;
+        width: 48px;
+        height: 48px;
+        border-radius: var(--border-radius-lg);
     }
 }
 
 @media (max-width: 480px) {
     .header-container {
-        padding: 0 15px;
+        padding: 0 12px;
     }
 
     .header-logo .logo-link span {
@@ -663,7 +743,28 @@ input, textarea, select {
     }
 
     .page-wrapper {
-        padding: 15px;
+        padding: 16px;
         border-radius: var(--border-radius-md);
+    }
+
+    .header-btn {
+        padding: 8px;
+    }
+}
+
+/* 터치 디바이스 개선 */
+@media (hover: none) and (pointer: coarse) {
+    .header-btn,
+    .nav-link,
+    .mobile-nav-list li a,
+    .mobile-nav-list li button,
+    .dropdown-menu a,
+    .dropdown-logout-btn {
+        min-height: var(--touch-target-min);
+    }
+
+    .scroll-to-top {
+        width: 52px;
+        height: 52px;
     }
 }
