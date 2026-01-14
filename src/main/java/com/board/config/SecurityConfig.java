@@ -40,7 +40,7 @@ public class SecurityConfig {
         http
             // CSRF 설정
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**", "/auth/login")  // REST API, 로그인은 CSRF 예외
+                .ignoringRequestMatchers("/api/**", "/auth/login", "/bookmarks/**", "/likes/**", "/comments/**", "/reports/**")  // REST API, 로그인은 CSRF 예외
             )
             .authorizeHttpRequests(auth -> {
                 auth
