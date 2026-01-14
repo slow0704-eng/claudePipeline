@@ -1542,20 +1542,29 @@
                 .then(response => response.json())
                 .then(data => {
                     // 전체 통계 업데이트
-                    document.getElementById('stat-internal').textContent = data.internalShares || 0;
-                    document.getElementById('stat-external').textContent = data.totalExternalShares || 0;
-                    document.getElementById('stat-total').textContent = data.totalShares || 0;
+                    const statInternal = document.getElementById('stat-internal');
+                    const statExternal = document.getElementById('stat-external');
+                    const statTotal = document.getElementById('stat-total');
+                    if (statInternal) statInternal.textContent = data.internalShares || 0;
+                    if (statExternal) statExternal.textContent = data.totalExternalShares || 0;
+                    if (statTotal) statTotal.textContent = data.totalShares || 0;
 
                     // 플랫폼별 통계 업데이트
-                    document.getElementById('stat-twitter').textContent = data.twitterShares || 0;
-                    document.getElementById('stat-facebook').textContent = data.facebookShares || 0;
-                    document.getElementById('stat-linkedin').textContent = data.linkedinShares || 0;
-                    document.getElementById('stat-kakao').textContent = data.kakaoShares || 0;
-                    document.getElementById('stat-linkcopy').textContent = data.linkCopyShares || 0;
-                    document.getElementById('stat-qrcode').textContent = data.qrCodeShares || 0;
+                    const stats = {
+                        'stat-twitter': data.twitterShares,
+                        'stat-facebook': data.facebookShares,
+                        'stat-linkedin': data.linkedinShares,
+                        'stat-kakao': data.kakaoShares,
+                        'stat-linkcopy': data.linkCopyShares,
+                        'stat-qrcode': data.qrCodeShares
+                    };
+                    Object.entries(stats).forEach(([id, value]) => {
+                        const el = document.getElementById(id);
+                        if (el) el.textContent = value || 0;
+                    });
                 })
                 .catch(error => {
-                    console.error('Failed to load share statistics:', error);
+                    console.log('Share statistics not available');
                 });
         }
 
@@ -1626,17 +1635,21 @@
         // 페이지 로드 시 공유 정보 불러오기
         window.addEventListener('DOMContentLoaded', function() {
             const boardId = [[${board.id}]];
+            const shareCountEl = document.getElementById('shareCount');
+            const shareBtnEl = document.getElementById('shareBtn');
+
+            if (!shareCountEl || !shareBtnEl) return;
 
             fetch(`/api/shares/info/${boardId}`)
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('shareCount').textContent = data.shareCount || 0;
+                    shareCountEl.textContent = data.shareCount || 0;
                     if (data.isShared) {
-                        document.getElementById('shareBtn').classList.add('shared');
+                        shareBtnEl.classList.add('shared');
                     }
                 })
                 .catch(error => {
-                    console.error('Failed to load share info:', error);
+                    console.log('Share info not available');
                 });
         });
 
